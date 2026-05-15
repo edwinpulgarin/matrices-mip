@@ -1,0 +1,2263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIP América Latina — Metodología, Avances y Resultados</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --cepal-blue:    #003f7f;
+    --cepal-teal:    #007bbd;
+    --cepal-light:   #e8f4fd;
+    --accent:        #e8a020;
+    --accent2:       #2dbc8a;
+    --gray-dark:     #1a1a2e;
+    --gray-mid:      #4a4a6a;
+    --gray-light:    #f5f7fa;
+    --white:         #ffffff;
+    --border:        #dde3ec;
+
+    --arg:  #e63946;
+    --bra:  #2dc653;
+    --bra2: #66bb6a;
+    --mex:  #e8a020;
+    --ury:  #7b6cf6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--gray-light);
+    color: var(--gray-dark);
+    line-height: 1.65;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--cepal-blue);
+    display: flex; align-items: center; gap: 0;
+    padding: 0 2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    height: 52px;
+  }
+  nav .logo {
+    font-weight: 700; font-size: 1rem; color: var(--white);
+    letter-spacing: .04em; margin-right: 2rem; white-space: nowrap;
+  }
+  nav a {
+    color: rgba(255,255,255,.75); text-decoration: none;
+    font-size: .82rem; font-weight: 500; letter-spacing: .03em;
+    padding: .4rem .85rem; border-radius: 4px;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+  }
+  nav a:hover { background: rgba(255,255,255,.12); color: #fff; }
+  nav .spacer { flex: 1; }
+  nav .tag {
+    background: var(--accent); color: #fff;
+    font-size: .7rem; font-weight: 700;
+    padding: .25rem .7rem; border-radius: 20px; letter-spacing: .05em;
+  }
+
+  /* ── SOURCES TABLE ── */
+  .sources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.2rem; margin-bottom: 2.5rem;
+  }
+  .source-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.4rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .source-flag { font-size: 2rem; flex-shrink: 0; margin-top: .1rem; }
+  .source-acronym {
+    font-size: 1.1rem; font-weight: 900; color: var(--cepal-blue);
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+  }
+  .source-fullname { font-size: .82rem; font-weight: 600; color: var(--gray-dark); margin: .15rem 0 .35rem; }
+  .source-desc { font-size: .8rem; color: var(--gray-mid); line-height: 1.45; }
+  .source-url { font-size: .75rem; color: var(--cepal-teal); margin-top: .35rem; font-family: monospace; }
+
+  /* ── NEXT STEPS ── */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.4rem;
+  }
+  .step-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    position: relative;
+  }
+  .step-number {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--cepal-blue); color: #fff;
+    font-weight: 800; font-size: .85rem;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: .9rem;
+  }
+  .step-card h4 { font-size: .95rem; font-weight: 700; margin-bottom: .45rem; color: var(--gray-dark); }
+  .step-card p  { font-size: .83rem; color: var(--gray-mid); }
+  .step-tag {
+    display: inline-block; margin-top: .7rem;
+    padding: .2rem .65rem; border-radius: 20px;
+    font-size: .72rem; font-weight: 700;
+  }
+  .step-tag.inmediato  { background: #d4f5e5; color: #1a7a4a; }
+  .step-tag.corto      { background: #fff3cd; color: #856404; }
+  .step-tag.mediano    { background: #e3f2fd; color: #0d47a1; }
+  .step-tag.institucional { background: #fce4ec; color: #880e4f; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--cepal-blue) 0%, #00538a 45%, var(--cepal-teal) 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 7rem 2rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  #hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-badge {
+    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+    color: #fff; font-size: .8rem; font-weight: 600; letter-spacing: .1em;
+    padding: .4rem 1.2rem; border-radius: 20px; margin-bottom: 2rem;
+    text-transform: uppercase;
+  }
+  #hero h1 {
+    font-size: clamp(2rem, 5vw, 3.6rem); font-weight: 800;
+    color: #fff; max-width: 820px;
+    line-height: 1.15; margin-bottom: 1.2rem;
+  }
+  #hero h1 span { color: var(--accent); }
+  #hero p {
+    color: rgba(255,255,255,.85); font-size: clamp(.95rem, 2vw, 1.15rem);
+    max-width: 640px; margin-bottom: 2.5rem;
+  }
+  .hero-meta {
+    display: flex; gap: 2.5rem; justify-content: center; flex-wrap: wrap;
+    color: rgba(255,255,255,.7); font-size: .85rem;
+  }
+  .hero-meta span strong { color: #fff; display: block; font-size: 1.4rem; font-weight: 800; }
+
+  .scroll-hint {
+    position: absolute; bottom: 2rem;
+    display: flex; flex-direction: column; align-items: center; gap: .4rem;
+    color: rgba(255,255,255,.5); font-size: .75rem; letter-spacing: .08em;
+    animation: bounce 2s infinite;
+  }
+  .scroll-hint::after {
+    content: '▼'; font-size: .9rem;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    padding: 5rem 2rem;
+    max-width: 1100px; margin: 0 auto;
+  }
+  section.full-width { max-width: 100%; padding-left: 3rem; padding-right: 3rem; }
+  .section-bg { background: var(--white); }
+  .section-wrap { background: var(--white); }
+
+  .section-label {
+    text-transform: uppercase; letter-spacing: .12em;
+    font-size: .75rem; font-weight: 700; color: var(--cepal-teal);
+    margin-bottom: .6rem;
+  }
+  h2.section-title {
+    font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 800;
+    color: var(--cepal-blue); margin-bottom: .8rem;
+  }
+  .section-lead {
+    color: var(--gray-mid); font-size: 1.05rem;
+    max-width: 700px; margin-bottom: 3rem;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 5px;
+    background: linear-gradient(90deg, var(--cepal-blue), var(--cepal-teal), var(--accent2));
+  }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem; margin-bottom: 3rem;
+  }
+  .stat-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.8rem 1.5rem;
+    text-align: center; position: relative; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 4px; background: var(--bar-color, var(--cepal-teal));
+  }
+  .stat-number {
+    font-size: 2.8rem; font-weight: 900; line-height: 1;
+    color: var(--cepal-blue); margin-bottom: .4rem;
+  }
+  .stat-label { font-size: .88rem; color: var(--gray-mid); font-weight: 500; }
+  .stat-sub { font-size: .78rem; color: #aaa; margin-top: .3rem; }
+
+  /* ── COUNTRY CARDS ── */
+  .country-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+  .country-card {
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    transition: transform .2s, box-shadow .2s;
+    background: var(--white);
+  }
+  .country-card:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,.12); }
+  .country-header {
+    padding: 1.2rem 1.5rem;
+    display: flex; align-items: center; gap: .8rem;
+  }
+  .flag { font-size: 1.8rem; }
+  .country-name { font-weight: 800; font-size: 1.1rem; color: #fff; }
+  .country-source { font-size: .78rem; color: rgba(255,255,255,.75); }
+  .country-body { padding: 1.3rem 1.5rem; }
+  .country-body table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  .country-body td { padding: .3rem 0; color: var(--gray-mid); }
+  .country-body td:last-child { text-align: right; font-weight: 600; color: var(--gray-dark); }
+  .country-body tr { border-bottom: 1px solid var(--border); }
+  .country-body tr:last-child { border-bottom: none; }
+  .years-tag {
+    margin-top: 1rem; display: flex; gap: .4rem; flex-wrap: wrap;
+  }
+  .year-pill {
+    background: var(--cepal-light); color: var(--cepal-blue);
+    font-size: .72rem; font-weight: 700; padding: .2rem .55rem;
+    border-radius: 20px;
+  }
+
+  /* ── METHODOLOGY ── */
+  .method-flow {
+    display: flex; align-items: flex-start; gap: 0;
+    overflow-x: auto; padding-bottom: 1rem;
+    margin-bottom: 3rem;
+  }
+  .method-step {
+    min-width: 180px; flex: 1;
+    text-align: center; padding: 1.5rem 1rem;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 12px; position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .method-step + .method-arrow {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 36px; color: var(--cepal-teal); font-size: 1.4rem;
+    flex-shrink: 0; margin-top: 1.5rem;
+  }
+  .method-icon {
+    width: 52px; height: 52px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin: 0 auto 1rem;
+  }
+  .method-step h4 { font-size: .9rem; font-weight: 700; color: var(--cepal-blue); margin-bottom: .4rem; }
+  .method-step p { font-size: .78rem; color: var(--gray-mid); line-height: 1.45; }
+
+  /* ── CHALLENGES ── */
+  .challenges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  .challenge-card {
+    background: var(--white); border-radius: 12px;
+    border: 1px solid var(--border); padding: 1.6rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    border-left: 4px solid var(--accent);
+  }
+  .challenge-card.green { border-left-color: var(--accent2); }
+  .challenge-card.blue  { border-left-color: var(--cepal-teal); }
+  .challenge-card.red   { border-left-color: #e63946; }
+  .challenge-card h4 {
+    font-size: 1rem; font-weight: 700; margin-bottom: .6rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .challenge-card p { font-size: .875rem; color: var(--gray-mid); }
+  .challenge-icon { font-size: 1.3rem; }
+
+  /* ── CHART CONTAINERS ── */
+  .chart-section {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 16px; padding: 2rem;
+    box-shadow: 0 3px 12px rgba(0,0,0,.06);
+    margin-bottom: 2rem;
+  }
+  .chart-section h3 {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--cepal-blue); margin-bottom: .4rem;
+  }
+  .chart-section p { font-size: .85rem; color: var(--gray-mid); margin-bottom: 1.5rem; }
+  .chart-wrap { position: relative; height: 340px; }
+
+  /* ── COVERAGE TABLE ── */
+  .coverage-wrapper { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  table.coverage {
+    width: 100%; border-collapse: collapse; font-size: .88rem;
+  }
+  table.coverage thead { background: var(--cepal-blue); color: #fff; }
+  table.coverage thead th { padding: .9rem 1.1rem; text-align: left; font-weight: 600; letter-spacing: .03em; }
+  table.coverage tbody tr { border-bottom: 1px solid var(--border); }
+  table.coverage tbody tr:nth-child(even) { background: var(--gray-light); }
+  table.coverage tbody tr:hover { background: var(--cepal-light); }
+  table.coverage td { padding: .75rem 1.1rem; }
+  .badge {
+    display: inline-block; padding: .2rem .65rem; border-radius: 20px;
+    font-size: .75rem; font-weight: 700; letter-spacing: .04em;
+  }
+  .badge.ok     { background: #d4f5e5; color: #1a7a4a; }
+  .badge.gap    { background: #ffe8e8; color: #c0392b; }
+  .badge.warn   { background: #fff3cd; color: #856404; }
+
+  /* ── PARSERS ── */
+  .parsers-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.2rem;
+  }
+  .parser-card {
+    background: var(--gray-dark); border-radius: 10px;
+    padding: 1.4rem 1.5rem; color: #cdd9ec;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: .82rem;
+  }
+  .parser-card .fname { color: #7ec8e3; font-size: .9rem; font-weight: 700; margin-bottom: .5rem; }
+  .parser-card .fkv   { display: flex; justify-content: space-between; padding: .15rem 0; border-bottom: 1px solid #2a3a4a; }
+  .parser-card .fkv:last-child { border-bottom: none; }
+  .parser-card .fval  { color: #ffd166; }
+
+  /* ── GAPS ── */
+  .gap-timeline {
+    position: relative; padding-left: 2rem;
+    border-left: 3px solid var(--border);
+  }
+  .gap-item {
+    margin-bottom: 1.8rem; position: relative;
+  }
+  .gap-item::before {
+    content: ''; position: absolute;
+    left: -2.42rem; top: .35rem;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent); border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .gap-item.recoverable::before { background: var(--accent2); box-shadow: 0 0 0 2px var(--accent2); }
+  .gap-item h4 { font-size: .95rem; font-weight: 700; color: var(--gray-dark); margin-bottom: .3rem; }
+  .gap-item p  { font-size: .85rem; color: var(--gray-mid); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--cepal-blue); color: rgba(255,255,255,.7);
+    text-align: center; padding: 2.5rem 1rem;
+    font-size: .85rem;
+  }
+  footer strong { color: #fff; }
+
+  /* ── UTILS ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+  .highlight-box {
+    background: var(--cepal-light); border-left: 4px solid var(--cepal-teal);
+    border-radius: 0 10px 10px 0; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem;
+    font-size: .92rem; color: var(--gray-dark);
+  }
+  .highlight-box strong { color: var(--cepal-blue); }
+
+  .multiplier-legend {
+    display: flex; flex-wrap: wrap; gap: 1rem;
+    margin-bottom: 1.5rem; font-size: .82rem;
+  }
+  .legend-item { display: flex; align-items: center; gap: .4rem; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+  /* ── METHOD UPDATE STRIP ── */
+  .assurance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0 2.4rem;
+  }
+  .assurance-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.15rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .assurance-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 4px; background: var(--assurance-color, var(--cepal-teal));
+  }
+  .assurance-card h4 {
+    color: var(--cepal-blue);
+    font-size: .95rem;
+    margin-bottom: .4rem;
+  }
+  .assurance-card p {
+    color: var(--gray-mid);
+    font-size: .82rem;
+    line-height: 1.45;
+  }
+
+  .repo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1.8rem;
+  }
+  .repo-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .repo-card h4 {
+    color: var(--cepal-blue);
+    font-size: .98rem;
+    margin-bottom: .45rem;
+  }
+  .repo-card p {
+    color: var(--gray-mid);
+    font-size: .84rem;
+  }
+  .repo-paths {
+    background: #0d2b45;
+    color: #d8eefc;
+    border-radius: 12px;
+    padding: 1.3rem 1.5rem;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: .82rem;
+    line-height: 1.8;
+    margin-top: 1.6rem;
+    overflow-x: auto;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">CEPAL · MIP LATAM</div>
+  <a href="#contexto">Contexto</a>
+  <a href="#fuentes">Fuentes</a>
+  <a href="#metodologia">Metodología</a>
+  <a href="#parsers">Pipeline</a>
+  <a href="#resultados">Resultados</a>
+  <a href="#cobertura">Cobertura</a>
+  <a href="#validacion">Validación</a>
+  <a href="#repositorio">Drive</a>
+  <a href="#retos">Retos</a>
+  <a href="#brechas">Brechas</a>
+  <a href="#proximos">Próx. pasos</a>
+  <div class="spacer"></div>
+  <span class="tag">Validación interna · Mayo 2026</span>
+</nav>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-badge">Documento de validación interna · CEPAL</div>
+  <h1>Matrices Insumo-Producto para <span>América Latina</span></h1>
+  <p>Construcción de un pipeline reproducible de Cuadros de Oferta y Utilización para Argentina, Brasil, México y Uruguay — base metodológica para el análisis de economía circular de CEPAL.</p>
+  <div class="hero-meta">
+    <span><strong>34</strong>observaciones país-año</span>
+    <span><strong>4</strong>países procesados</span>
+    <span><strong>34/34</strong>estructura OK</span>
+    <span><strong>263</strong>sectores máx.</span>
+  </div>
+  <div class="scroll-hint">Desplazar</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 1. CONTEXTO -->
+<div style="background:var(--white)">
+<section id="contexto">
+  <div class="section-label">01 · Contexto</div>
+  <h2 class="section-title">¿Por qué construir estas matrices?</h2>
+  <p class="section-lead">Chile y Colombia ya cuentan con MIPs procesadas en el Informe Final de CEPAL sobre economía circular. Para extender el análisis a los cuatro países con mayor peso económico de la región, era necesario construir y estandarizar las matrices desde las fuentes oficiales.</p>
+
+  <div class="highlight-box">
+    <strong>Objetivo de la consultoría:</strong> Proveer a CEPAL de tablas insumo-producto consistentes y comparables para Argentina, Brasil, México y Uruguay, que permitan calcular multiplicadores de producción, demanda y valor agregado para análisis de circularidad económica.
+  </div>
+
+  <div class="assurance-grid">
+    <div class="assurance-card" style="--assurance-color:var(--cepal-teal)">
+      <h4>Precios básicos como criterio rector</h4>
+      <p>La lectura se mantiene a precios básicos cuando la fuente lo permite; cualquier aproximación queda trazada en metodología.</p>
+    </div>
+    <div class="assurance-card" style="--assurance-color:var(--accent2)">
+      <h4>Z solo nacional/doméstica</h4>
+      <p>La matriz intermedia mide encadenamientos internos. El consumo intermedio importado queda separado de Z.</p>
+    </div>
+    <div class="assurance-card" style="--assurance-color:var(--accent)">
+      <h4>Nombres sectoriales obligatorios</h4>
+      <p>Todas las matrices publicadas conservan nombres económicos en filas y columnas; los códigos no quedan solos.</p>
+    </div>
+    <div class="assurance-card" style="--assurance-color:var(--ury)">
+      <h4>Carpeta compartible</h4>
+      <p>El paquete final queda listo para distribuir por Google Drive a un equipo que trabaja con correos Gmail.</p>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card" style="--bar-color: var(--arg)">
+      <div class="stat-number">6</div>
+      <div class="stat-label">Años procesados — Argentina</div>
+      <div class="stat-sub">1997 · 2004 · 2018–2021</div>
+    </div>
+    <div class="stat-card" style="--bar-color: var(--bra)">
+      <div class="stat-number">22</div>
+      <div class="stat-label">Años procesados — Brasil</div>
+      <div class="stat-sub">2000–2009 + 2010–2021</div>
+    </div>
+    <div class="stat-card" style="--bar-color: var(--mex)">
+      <div class="stat-number">4</div>
+      <div class="stat-label">Años procesados — México</div>
+      <div class="stat-sub">2003 · 2008 · 2013 · 2018</div>
+    </div>
+    <div class="stat-card" style="--bar-color: var(--ury)">
+      <div class="stat-number">2</div>
+      <div class="stat-label">Años procesados — Uruguay</div>
+      <div class="stat-sub">2016 · 2017</div>
+    </div>
+    <div class="stat-card" style="--bar-color: var(--accent2)">
+      <div class="stat-number">34</div>
+      <div class="stat-label">Total observaciones procesadas</div>
+      <div class="stat-sub">matrices Z, A, L, g, W</div>
+    </div>
+    <div class="stat-card" style="--bar-color: var(--cepal-teal)">
+      <div class="stat-number">7</div>
+      <div class="stat-label">Parsers desarrollados</div>
+      <div class="stat-sub">INDEC · IBGE · INEGI · BCU · CEPAL</div>
+    </div>
+  </div>
+
+  <div class="country-grid">
+
+    <div class="country-card">
+      <div class="country-header" style="background:linear-gradient(135deg,#74b9ff,#0984e3)">
+        <span class="flag">🇦🇷</span>
+        <div><div class="country-name">Argentina</div><div class="country-source">INDEC + CEPAL</div></div>
+      </div>
+      <div class="country-body">
+        <table>
+          <tr><td>Sectores (1997)</td><td>124 actividades</td></tr>
+          <tr><td>Sectores (2004)</td><td>162 actividades</td></tr>
+          <tr><td>Sectores (2018+)</td><td>107 actividades</td></tr>
+          <tr><td>Clasificación</td><td>CIIU Rev. 3 / CPC 1.1</td></tr>
+          <tr><td>Multiplicador medio 2004</td><td>2.08</td></tr>
+          <tr><td>Multiplicador medio 2021</td><td>2.28</td></tr>
+        </table>
+        <div class="years-tag">
+          <span class="year-pill">1997</span>
+          <span class="year-pill">2004</span>
+          <span class="year-pill">2018</span>
+          <span class="year-pill">2019</span>
+          <span class="year-pill">2020</span>
+          <span class="year-pill">2021</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="country-card">
+      <div class="country-header" style="background:linear-gradient(135deg,#55efc4,#00b894)">
+        <span class="flag">🇧🇷</span>
+        <div><div class="country-name">Brasil</div><div class="country-source">IBGE + CEPAL</div></div>
+      </div>
+      <div class="country-body">
+        <table>
+          <tr><td>Sectores (2000–09)</td><td>49 actividades</td></tr>
+          <tr><td>Sectores (2010–21)</td><td>69 actividades</td></tr>
+          <tr><td>Clasificación</td><td>CNAE 2.0 / SCN 2008</td></tr>
+          <tr><td>Mult. medio 2010</td><td>2.22</td></tr>
+          <tr><td>Mult. medio 2021</td><td>2.42</td></tr>
+        </table>
+        <div class="years-tag">
+          <span class="year-pill">2000–2009</span>
+          <span class="year-pill">2010–2021</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="country-card">
+      <div class="country-header" style="background:linear-gradient(135deg,#fdcb6e,#e17055)">
+        <span class="flag">🇲🇽</span>
+        <div><div class="country-name">México</div><div class="country-source">INEGI + CEPAL</div></div>
+      </div>
+      <div class="country-body">
+        <table>
+          <tr><td>Sectores (2003)</td><td>20 actividades</td></tr>
+          <tr><td>Sectores (2008)</td><td>262 actividades</td></tr>
+          <tr><td>Sectores (2013)</td><td>262 actividades</td></tr>
+          <tr><td>Sectores (2018)</td><td>263 actividades</td></tr>
+          <tr><td>Clasificación</td><td>SCIAN 2018</td></tr>
+          <tr><td>Mult. medio 2018</td><td>1.43</td></tr>
+        </table>
+        <div class="years-tag">
+          <span class="year-pill">2003</span>
+          <span class="year-pill">2008</span>
+          <span class="year-pill">2013</span>
+          <span class="year-pill">2018</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="country-card">
+      <div class="country-header" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7)">
+        <span class="flag">🇺🇾</span>
+        <div><div class="country-name">Uruguay</div><div class="country-source">BCU + CEPAL</div></div>
+      </div>
+      <div class="country-body">
+        <table>
+          <tr><td>Sectores (MIP 2016)</td><td>128 actividades</td></tr>
+          <tr><td>Sectores (COU 2017)</td><td>95 actividades</td></tr>
+          <tr><td>Fuente MIP</td><td>BCU (pre-construida)</td></tr>
+          <tr><td>Fuente COU</td><td>CEPAL Base 2016</td></tr>
+          <tr><td>Mult. medio 2016</td><td>1.61</td></tr>
+        </table>
+        <div class="years-tag">
+          <span class="year-pill">2016 MIP</span>
+          <span class="year-pill">2017 COU</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- FUENTES Y SIGLAS -->
+<section id="fuentes">
+  <div class="section-label">02 · Fuentes de datos</div>
+  <h2 class="section-title">Institutos estadísticos y organismos fuente</h2>
+  <p class="section-lead">Los datos utilizados provienen exclusivamente de fuentes oficiales de cada país más la base estadística de CEPAL. A continuación se detallan los organismos, sus siglas y el tipo de datos aportados.</p>
+
+  <div class="sources-grid">
+
+    <div class="source-card">
+      <div class="source-flag">🇦🇷</div>
+      <div>
+        <div class="source-acronym">INDEC</div>
+        <div class="source-fullname">Instituto Nacional de Estadística y Censos — Argentina</div>
+        <div class="source-desc">Publica los Cuadros de Oferta y Utilización (COU) del Sistema de Cuentas Nacionales de Argentina. Los COU de 2004 siguen la base CIIU Rev. 3 con 162 actividades. Nota: los datos 2007–2015 no están disponibles públicamente por período de intervención institucional.</div>
+        <div class="source-url">indec.gob.ar → Cuentas Nacionales → COU</div>
+      </div>
+    </div>
+
+    <div class="source-card">
+      <div class="source-flag">🇧🇷</div>
+      <div>
+        <div class="source-acronym">IBGE</div>
+        <div class="source-fullname">Instituto Brasileiro de Geografia e Estatística — Brasil</div>
+        <div class="source-desc">Principal organismo estadístico de Brasil. Publica las Tabelas de Recursos e Usos (TRU) del Sistema de Contas Nacionais. A partir de 2010, el nivel 68 (68 actividades según CNAE 2.0) está disponible en FTP público. Los años 2000–2009 se recuperaron de la base CEPAL (SCN 1993).</div>
+        <div class="source-url">ftp.ibge.gov.br → Contas_Nacionais → nivel_68</div>
+      </div>
+    </div>
+
+    <div class="source-card">
+      <div class="source-flag">🇲🇽</div>
+      <div>
+        <div class="source-acronym">INEGI</div>
+        <div class="source-fullname">Instituto Nacional de Estadística y Geografía — México</div>
+        <div class="source-desc">Organismo autónomo responsable del Sistema de Cuentas Nacionales de México. Publica la Matriz Insumo-Producto (MIP) oficial con clasificación SCIAN en formato CSV. Se integraron 2003 y 2008 vía CEPAL/INEGI, y 2013 y 2018 desde datos abiertos INEGI. No se localizó un ZIP público oficial de MIP nacional 2023.</div>
+        <div class="source-url">inegi.org.mx → SCN → MIP</div>
+      </div>
+    </div>
+
+    <div class="source-card">
+      <div class="source-flag">🇺🇾</div>
+      <div>
+        <div class="source-acronym">BCU</div>
+        <div class="source-fullname">Banco Central del Uruguay</div>
+        <div class="source-desc">En Uruguay, el BCU es responsable de las cuentas nacionales (no el INE). Publicó la Matriz Insumo-Producto 2016 en formato Excel con 128 actividades, incluyendo la matriz de Leontief pre-construida. Fuente única para el año base actual.</div>
+        <div class="source-url">bcu.gub.uy → Estadísticas → Cuentas Nacionales → MIP</div>
+      </div>
+    </div>
+
+    <div class="source-card">
+      <div class="source-flag">🌎</div>
+      <div>
+        <div class="source-acronym">CEPAL</div>
+        <div class="source-fullname">Comisión Económica para América Latina y el Caribe — ONU</div>
+        <div class="source-desc">Provee una base armonizada de COUs para varios países de la región. Para este proyecto se utilizaron los COUs de Argentina (2004, 2018–2021), Brasil (2000–2009) y Uruguay (COU 2017), que complementan o sustituyen las fuentes nacionales en períodos no cubiertos.</div>
+        <div class="source-url">cepal.org → Estadísticas → Cuentas Nacionales</div>
+      </div>
+    </div>
+
+    <div class="source-card">
+      <div class="source-flag">📖</div>
+      <div>
+        <div class="source-acronym">COU / TRU / MIP</div>
+        <div class="source-fullname">Cuadro de Oferta y Utilización · Tabla de Recursos y Usos · Matriz Insumo-Producto</div>
+        <div class="source-desc"><strong>COU/TRU:</strong> tabla rectangular con dos matrices — V (oferta/producción por sector) y U (utilización de insumos por sector). Es la fuente primaria. <strong>MIP:</strong> matriz cuadrada sector×sector derivada del COU que muestra los flujos intermedios entre todas las ramas productivas.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="highlight-box" style="margin-top:2rem">
+    <strong>Búsqueda estatal adicional completada:</strong> se revisaron portales oficiales de INDEC/Biblioteca INDEC, INEGI y BCU. El único histórico adicional incorporable encontrado fue MIPAr97 de Argentina (1997). Para México no se encontró un ZIP público oficial de MIP nacional 2023; para Uruguay no se localizaron matrices detalladas 2018+ comparables con la MIP 2016 o el COU 2017.
+  </div>
+
+  <div class="highlight-box">
+    <strong>Glosario de términos clave:</strong>
+    <table style="width:100%; margin-top:.7rem; font-size:.85rem; border-collapse:collapse;">
+      <tr style="border-bottom:1px solid #c5ddf0">
+        <td style="padding:.4rem .6rem; font-weight:700; color:var(--cepal-blue); width:120px">CIIU Rev. 3/4</td>
+        <td style="padding:.4rem .6rem; color:var(--gray-mid)">Clasificación Industrial Internacional Uniforme de todas las Actividades Económicas (ONU). Argentina y Uruguay usan Rev. 3/4; Brasil usa CNAE (adaptación nacional).</td>
+      </tr>
+      <tr style="border-bottom:1px solid #c5ddf0; background:#f8fafc">
+        <td style="padding:.4rem .6rem; font-weight:700; color:var(--cepal-blue)">CNAE 2.0</td>
+        <td style="padding:.4rem .6rem; color:var(--gray-mid)">Clasificación Nacional de Actividades Económicas de Brasil (IBGE). Versión 2.0 vigente desde 2010, base del nivel 68 utilizado.</td>
+      </tr>
+      <tr style="border-bottom:1px solid #c5ddf0">
+        <td style="padding:.4rem .6rem; font-weight:700; color:var(--cepal-blue)">SCIAN 2018</td>
+        <td style="padding:.4rem .6rem; color:var(--gray-mid)">Sistema de Clasificación Industrial de América del Norte, edición 2018. Usado por México (INEGI) con 263 actividades en la MIP.</td>
+      </tr>
+      <tr style="border-bottom:1px solid #c5ddf0; background:#f8fafc">
+        <td style="padding:.4rem .6rem; font-weight:700; color:var(--cepal-blue)">SCN 1993/2008</td>
+        <td style="padding:.4rem .6rem; color:var(--gray-mid)">Sistema de Cuentas Nacionales (ONU). La versión 1993 fue el estándar hasta ~2010; la 2008 es el marco actual. Brasil tiene un quiebre metodológico entre ambas versiones.</td>
+      </tr>
+      <tr style="background:#f8fafc">
+        <td style="padding:.4rem .6rem; font-weight:700; color:var(--cepal-blue)">CPC 1.1</td>
+        <td style="padding:.4rem .6rem; color:var(--gray-mid)">Clasificación Central de Productos (ONU), versión 1.1. Usada junto con CIIU para codificar los productos en los COU de Argentina.</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 3-orig. METODOLOGÍA (renumerada) -->
+<section id="metodologia">
+  <div class="section-label">03 · Metodología</div>
+  <h2 class="section-title">Del COU a la Matriz de Leontief</h2>
+  <p class="section-lead">El proceso parte de los Cuadros de Oferta y Utilización (COU) publicados por cada instituto nacional y deriva la Matriz Insumo-Producto simétrica y sus multiplicadores mediante la metodología estándar de Leontief.</p>
+
+  <div class="highlight-box">
+    <strong>Actualización metodológica:</strong> desde esta versión, la MIP publicada separa explícitamente el componente nacional del importado, usa Z como consumo intermedio nacional/doméstico y exige nombres de sectores económicos en todas las filas y columnas de matrices y vectores.
+  </div>
+
+  <div class="method-flow">
+    <div class="method-step">
+      <div class="method-icon" style="background:#e8f4fd">📥</div>
+      <h4>Fuentes oficiales</h4>
+      <p>Descarga de COU/MIP desde INDEC, IBGE, INEGI, BCU y base CEPAL. Múltiples formatos Excel y CSV.</p>
+    </div>
+    <div class="method-arrow">→</div>
+    <div class="method-step">
+      <div class="method-icon" style="background:#fef9e7">🔧</div>
+      <h4>Parser específico</h4>
+      <p>Lectura y estandarización de matrices V (oferta) y U (utilización) con detección automática de año y formato.</p>
+    </div>
+    <div class="method-arrow">→</div>
+    <div class="method-step">
+      <div class="method-icon" style="background:#eafaf1">⚙️</div>
+      <h4>Construcción Z</h4>
+      <p>Derivación de la matriz de demanda intermedia Z. Ajuste tecnológico por industria (método B).</p>
+    </div>
+    <div class="method-arrow">→</div>
+    <div class="method-step">
+      <div class="method-icon" style="background:#fdf2f8">📐</div>
+      <h4>Matriz A y Leontief</h4>
+      <p>A = Z · diag(g)⁻¹. Matriz inversa de Leontief: L = (I − A)⁻¹. Verificación de convergencia.</p>
+    </div>
+    <div class="method-arrow">→</div>
+    <div class="method-step">
+      <div class="method-icon" style="background:#fffde7">📊</div>
+      <h4>Multiplicadores</h4>
+      <p>Multiplicadores de producción, demanda y valor agregado. Clasificación: Clave, Motor, Base, Isla.</p>
+    </div>
+    <div class="method-arrow">→</div>
+    <div class="method-step">
+      <div class="method-icon" style="background:#e8f5e9">💾</div>
+      <h4>Outputs Excel</h4>
+      <p>Matrices Z, A, L, g, W por año. Series de multiplicadores. Resumen de procesamiento.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="margin-bottom:.8rem; color:var(--cepal-blue)">Clasificación de sectores estratégicos</h3>
+      <p style="color:var(--gray-mid); font-size:.9rem; margin-bottom:1rem">Los multiplicadores se interpretan en el marco de la taxonomía de Hirschman-Rasmussen, que clasifica los sectores según su capacidad de arrastre hacia atrás (demanda de insumos) y hacia adelante (oferta de productos intermedios):</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:.8rem;">
+        <div style="background:#fff3e0; border-radius:8px; padding:.9rem; border-left:3px solid #e8a020">
+          <strong style="color:#c67a00">⚡ Clave</strong>
+          <p style="font-size:.8rem; color:#666; margin-top:.2rem">Alto arrastre hacia atrás y adelante. Sectores estratégicos del sistema productivo.</p>
+        </div>
+        <div style="background:#e8f5e9; border-radius:8px; padding:.9rem; border-left:3px solid #2dbc8a">
+          <strong style="color:#1a7a4a">🔩 Motor</strong>
+          <p style="font-size:.8rem; color:#666; margin-top:.2rem">Alto arrastre hacia atrás, bajo hacia adelante. Grandes demandantes de insumos.</p>
+        </div>
+        <div style="background:#e3f2fd; border-radius:8px; padding:.9rem; border-left:3px solid #007bbd">
+          <strong style="color:#005a8a">🏗️ Base</strong>
+          <p style="font-size:.8rem; color:#666; margin-top:.2rem">Bajo arrastre hacia atrás, alto hacia adelante. Proveedores estratégicos de insumos.</p>
+        </div>
+        <div style="background:#fce4ec; border-radius:8px; padding:.9rem; border-left:3px solid #e63946">
+          <strong style="color:#a50020">🏝️ Isla</strong>
+          <p style="font-size:.8rem; color:#666; margin-top:.2rem">Bajo arrastre en ambas direcciones. Sectores con escasa integración sistémica.</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:.8rem; color:var(--cepal-blue)">Matrices derivadas por año</h3>
+      <p style="color:var(--gray-mid); font-size:.9rem; margin-bottom:1rem">Para cada año procesado se generan las siguientes matrices en formato Excel:</p>
+      <table style="width:100%; border-collapse:collapse; font-size:.85rem;">
+        <thead>
+          <tr style="background:var(--cepal-blue); color:#fff;">
+            <th style="padding:.6rem .8rem; text-align:left">Matriz</th>
+            <th style="padding:.6rem .8rem; text-align:left">Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:.55rem .8rem; font-weight:700; font-family:monospace">Z</td><td style="padding:.55rem .8rem; color:var(--gray-mid)">Demanda intermedia (n×n)</td></tr>
+          <tr style="border-bottom:1px solid var(--border); background:var(--gray-light)"><td style="padding:.55rem .8rem; font-weight:700; font-family:monospace">A</td><td style="padding:.55rem .8rem; color:var(--gray-mid)">Coeficientes técnicos de producción</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:.55rem .8rem; font-weight:700; font-family:monospace">L</td><td style="padding:.55rem .8rem; color:var(--gray-mid)">Inversa de Leontief (I−A)⁻¹</td></tr>
+          <tr style="border-bottom:1px solid var(--border); background:var(--gray-light)"><td style="padding:.55rem .8rem; font-weight:700; font-family:monospace">g</td><td style="padding:.55rem .8rem; color:var(--gray-mid)">Vector de producción bruta total</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:.55rem .8rem; font-weight:700; font-family:monospace">W</td><td style="padding:.55rem .8rem; color:var(--gray-mid)">Vector de valor agregado bruto</td></tr>
+          <tr style="border-bottom:1px solid var(--border); background:var(--gray-light)"><td style="padding:.55rem .8rem; font-weight:700; font-family:monospace">B</td><td style="padding:.55rem .8rem; color:var(--gray-mid)">Coeficientes de distribución de Ghosh, B = diag(g)⁻¹Z</td></tr>
+          <tr><td style="padding:.55rem .8rem; font-weight:700; font-family:monospace">G</td><td style="padding:.55rem .8rem; color:var(--gray-mid)">Inversa de Ghosh, G = (I−B)⁻¹</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 3. PARSERS -->
+<div style="background:var(--white)">
+<section id="parsers">
+  <div class="section-label">04 · Ingeniería de datos</div>
+  <h2 class="section-title">Parsers desarrollados</h2>
+  <p class="section-lead">Cada fuente oficial tiene su propio formato, clasificación sectorial y convención de precios. Se desarrollaron siete parsers completamente independientes con detección automática de año y manejo robusto de errores.</p>
+
+  <div class="parsers-grid">
+    <div class="parser-card">
+      <div class="fname">📄 argentina.py</div>
+      <div class="fkv"><span>Cobertura</span><span class="fval">2004, 2018–2021</span></div>
+      <div class="fkv"><span>Fuente</span><span class="fval">INDEC + CEPAL</span></div>
+      <div class="fkv"><span>Sectores</span><span class="fval">162 / 107 act.</span></div>
+      <div class="fkv"><span>Clasif.</span><span class="fval">CIIU Rev.3 / CPC 1.1</span></div>
+      <div class="fkv"><span>Detección auto</span><span class="fval">2004 vs 2018+</span></div>
+    </div>
+    <div class="parser-card">
+      <div class="fname">📄 argentina_mip97.py</div>
+      <div class="fkv"><span>Cobertura</span><span class="fval">1997</span></div>
+      <div class="fkv"><span>Fuente</span><span class="fval">INDEC MIPAr97</span></div>
+      <div class="fkv"><span>Sectores</span><span class="fval">124 actividades</span></div>
+      <div class="fkv"><span>Tipo</span><span class="fval">MIP simétrica directa</span></div>
+      <div class="fkv"><span>Archivos</span><span class="fval">matriz12 + matriz13 + matriz14</span></div>
+    </div>
+    <div class="parser-card">
+      <div class="fname">📄 brasil.py</div>
+      <div class="fkv"><span>Cobertura</span><span class="fval">2010–2021</span></div>
+      <div class="fkv"><span>Fuente</span><span class="fval">IBGE FTP nivel 68</span></div>
+      <div class="fkv"><span>Sectores</span><span class="fval">69 actividades</span></div>
+      <div class="fkv"><span>Clasif.</span><span class="fval">CNAE 2.0 / SCN 2008</span></div>
+      <div class="fkv"><span>Tablas</span><span class="fval">tab1 (V) + tab2 (U)</span></div>
+    </div>
+    <div class="parser-card">
+      <div class="fname">📄 brasil_early.py</div>
+      <div class="fkv"><span>Cobertura</span><span class="fval">2000–2009</span></div>
+      <div class="fkv"><span>Fuente</span><span class="fval">CEPAL Base 2000</span></div>
+      <div class="fkv"><span>Sectores</span><span class="fval">49 actividades</span></div>
+      <div class="fkv"><span>Clasif.</span><span class="fval">CNAE 1.0 / SCN 1993</span></div>
+      <div class="fkv"><span>Formato</span><span class="fval">107×51 (V, U, W)</span></div>
+    </div>
+    <div class="parser-card">
+      <div class="fname">📄 mexico_mip.py</div>
+      <div class="fkv"><span>Cobertura</span><span class="fval">2003 · 2008 · 2013 · 2018</span></div>
+      <div class="fkv"><span>Fuente</span><span class="fval">CEPAL (2003/2008) + INEGI CSV</span></div>
+      <div class="fkv"><span>Sectores</span><span class="fval">20 / 262–263 actividades</span></div>
+      <div class="fkv"><span>Clasif.</span><span class="fval">SCIAN 2018</span></div>
+      <div class="fkv"><span>2008</span><span class="fval">Excel IxI DOMESTICA RAMA</span></div>
+    </div>
+    <div class="parser-card">
+      <div class="fname">📄 uruguay_mip.py</div>
+      <div class="fkv"><span>Cobertura</span><span class="fval">2016</span></div>
+      <div class="fkv"><span>Fuente</span><span class="fval">BCU (MIP pre-construida)</span></div>
+      <div class="fkv"><span>Sectores</span><span class="fval">128 actividades</span></div>
+      <div class="fkv"><span>Tipo</span><span class="fval">MIP simétrica directa</span></div>
+      <div class="fkv"><span>Archivos</span><span class="fval">producto_detallada + leontief</span></div>
+    </div>
+    <div class="parser-card">
+      <div class="fname">📄 uruguay_cou.py</div>
+      <div class="fkv"><span>Cobertura</span><span class="fval">2017</span></div>
+      <div class="fkv"><span>Fuente</span><span class="fval">CEPAL COU Base 2016</span></div>
+      <div class="fkv"><span>Sectores</span><span class="fval">95 actividades</span></div>
+      <div class="fkv"><span>W derivado</span><span class="fval">g − U.sum(axis=0)</span></div>
+      <div class="fkv"><span>Archivos</span><span class="fval">Produccion_pb_C + Utilizacion</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem" class="highlight-box">
+    <strong>Pipeline reproducible:</strong> Un único comando <code style="background:#d0e8f5; padding:.1em .4em; border-radius:4px; font-size:.9em">py -3 -X utf8 main.py</code> procesa los 4 países. Cada parser puede ejecutarse de forma independiente con <code style="background:#d0e8f5; padding:.1em .4em; border-radius:4px; font-size:.9em">--pais {nombre}</code>. Los outputs son completamente regenerables desde las fuentes.
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- 4. RESULTADOS -->
+<section id="resultados">
+  <div class="section-label">05 · Resultados</div>
+  <h2 class="section-title">Multiplicadores de producción</h2>
+  <p class="section-lead">El multiplicador de producción de Leontief indica cuántos pesos/reales/pesos mexicanos de producción total genera en la economía un peso de demanda final en ese sector. Valores más altos indican mayor integración sistémica.</p>
+
+  <div class="chart-section">
+    <h3>Evolución del multiplicador medio de producción — Brasil (2000–2021)</h3>
+    <p>Brasil muestra la serie temporal más larga. Hay un quiebre estructural en 2010 por cambio de clasificación (CNAE 1.0 → 2.0) y de base contable (SCN 1993 → SCN 2008), por lo que las dos series no son directamente comparables.</p>
+    <div class="multiplier-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#66bb6a"></div> Brasil early 2000–2009 (SCN 1993, 49 sect.)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2dbc8a"></div> Brasil 2010–2021 (SCN 2008, 69 sect.)</div>
+    </div>
+    <div class="chart-wrap"><canvas id="chartBrasil"></canvas></div>
+  </div>
+
+  <div class="chart-section">
+    <h3>Multiplicadores medios de producción — Comparación entre países</h3>
+    <p>Comparación de los valores disponibles por país. Argentina y Brasil presentan multiplicadores en torno a 2.2–2.4, mientras que México y Uruguay muestran valores menores, consistentes con estructuras productivas más orientadas al mercado externo y menor encadenamiento doméstico.</p>
+    <div class="chart-wrap"><canvas id="chartComparacion"></canvas></div>
+  </div>
+
+  <div class="two-col" style="margin-top:2rem">
+    <div class="chart-section">
+      <h3>Argentina — Evolución 1997–2021</h3>
+      <p>Discontinuidad metodológica entre MIPAr97, COU 2004 y COU 2018+.</p>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartArgentina"></canvas></div>
+    </div>
+    <div class="chart-section">
+      <h3>México — Multiplicadores por sector 2018</h3>
+      <p>Con 263 sectores y menor integración doméstica, México refleja una economía altamente exportadora.</p>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartMexico"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 5. COBERTURA -->
+<div style="background:var(--white)">
+<section id="cobertura">
+  <div class="section-label">06 · Cobertura</div>
+  <h2 class="section-title">Estado de procesamiento por país y año</h2>
+  <p class="section-lead">La cobertura alcanzada representa el máximo posible con fuentes disponibles públicamente. Las brechas restantes requieren solicitud oficial a institutos estadísticos nacionales.</p>
+
+  <div class="coverage-wrapper">
+    <table class="coverage">
+      <thead>
+        <tr>
+          <th>País / Serie</th>
+          <th>Período</th>
+          <th>Años OK</th>
+          <th>Sectores</th>
+          <th>Fuente</th>
+          <th>Mult. medio</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>🇦🇷 Argentina MIPAr97 (INDEC)</td>
+          <td>1997</td>
+          <td>1</td>
+          <td>124 act.</td>
+          <td>INDEC Biblioteca MIPAr97</td>
+          <td>1.751</td>
+          <td><span class="badge ok">PROCESADO</span></td>
+        </tr>
+        <tr>
+          <td>🇦🇷 Argentina (INDEC)</td>
+          <td>2004</td>
+          <td>1</td>
+          <td>162 act.</td>
+          <td>INDEC / CEPAL</td>
+          <td>2.076</td>
+          <td><span class="badge ok">PROCESADO</span></td>
+        </tr>
+        <tr>
+          <td>🇦🇷 Argentina — brecha</td>
+          <td>2005–2017</td>
+          <td>0</td>
+          <td>—</td>
+          <td>No disponible públicamente</td>
+          <td>—</td>
+          <td><span class="badge gap">BRECHA</span></td>
+        </tr>
+        <tr>
+          <td>🇦🇷 Argentina (CEPAL)</td>
+          <td>2018–2021</td>
+          <td>4</td>
+          <td>107 act.</td>
+          <td>CEPAL Base 2004</td>
+          <td>2.22–2.28</td>
+          <td><span class="badge ok">PROCESADO</span></td>
+        </tr>
+        <tr>
+          <td>🇧🇷 Brasil early (CEPAL)</td>
+          <td>2000–2009</td>
+          <td>10</td>
+          <td>49 act.</td>
+          <td>CEPAL Base 2000 / SCN 1993</td>
+          <td>2.51–2.61</td>
+          <td><span class="badge ok">PROCESADO</span></td>
+        </tr>
+        <tr>
+          <td>🇧🇷 Brasil (IBGE)</td>
+          <td>2010–2021</td>
+          <td>12</td>
+          <td>69 act.</td>
+          <td>IBGE FTP nivel 68 / SCN 2008</td>
+          <td>2.22–2.42</td>
+          <td><span class="badge ok">PROCESADO</span></td>
+        </tr>
+        <tr>
+          <td>🇧🇷 Brasil nivel 68 2022+</td>
+          <td>2022–2023</td>
+          <td>0</td>
+          <td>—</td>
+          <td>IBGE publica solo nivel 12</td>
+          <td>—</td>
+          <td><span class="badge warn">PARCIAL</span></td>
+        </tr>
+        <tr>
+          <td>🇲🇽 México (CEPAL/INEGI)</td>
+          <td>2003 · 2008 · 2013 · 2018</td>
+          <td>4</td>
+          <td>20 / 262–263 act.</td>
+          <td>CEPAL + INEGI MIP oficial</td>
+          <td>1.43–1.63</td>
+          <td><span class="badge ok">PROCESADO</span></td>
+        </tr>
+        <tr>
+          <td>🇲🇽 México 2023</td>
+          <td>2023</td>
+          <td>0</td>
+          <td>—</td>
+          <td>INEGI: ZIP público no localizado</td>
+          <td>—</td>
+          <td><span class="badge warn">PENDIENTE</span></td>
+        </tr>
+        <tr>
+          <td>🇺🇾 Uruguay MIP (BCU)</td>
+          <td>2016</td>
+          <td>1</td>
+          <td>128 act.</td>
+          <td>BCU MIP pre-construida</td>
+          <td>1.614</td>
+          <td><span class="badge ok">PROCESADO</span></td>
+        </tr>
+        <tr>
+          <td>🇺🇾 Uruguay COU (CEPAL)</td>
+          <td>2017</td>
+          <td>1</td>
+          <td>95 act.</td>
+          <td>CEPAL COU Base 2016</td>
+          <td>2.171</td>
+          <td><span class="badge ok">PROCESADO</span></td>
+        </tr>
+        <tr>
+          <td>🇺🇾 Uruguay 2018+</td>
+          <td>2018–2024</td>
+          <td>0</td>
+          <td>—</td>
+          <td>BCU/CEPAL no ha publicado</td>
+          <td>—</td>
+          <td><span class="badge gap">BRECHA</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- 6. VALIDACIÓN MATEMÁTICA -->
+<section id="validacion">
+  <div class="section-label">07 · Validación matemática</div>
+  <h2 class="section-title">Consistencia interna de las MIP</h2>
+  <p class="section-lead">Se agregó una batería reproducible de pruebas sobre los Excel procesados para verificar estructura, alineación sectorial, no negatividad, coherencia de Leontief, coherencia de Ghosh y cierres contables sectoriales. El reporte agregado queda en <code style="background:#e8f4fd; padding:.1em .4em; border-radius:4px">output/tablas/validacion_matematica_mip.xlsx</code> y el detalle por país-año en <code style="background:#e8f4fd; padding:.1em .4em; border-radius:4px">output/tablas/validacion_detallada_mip.xlsx</code>.</p>
+
+  <div class="stats-grid">
+    <div class="stat-card" style="--bar-color: var(--accent2)">
+      <div class="stat-number">34</div>
+      <div class="stat-label">MIP revisadas</div>
+      <div class="stat-sub">Z, A, L, g, W</div>
+    </div>
+    <div class="stat-card" style="--bar-color: var(--bra)">
+      <div class="stat-number">34</div>
+      <div class="stat-label">Validación estructural OK</div>
+      <div class="stat-sub">cuadratura, etiquetas, A y Leontief</div>
+    </div>
+    <div class="stat-card" style="--bar-color: var(--accent)">
+      <div class="stat-number">34</div>
+      <div class="stat-label">Nombres sectoriales OK</div>
+      <div class="stat-sub">filas, columnas y vectores</div>
+    </div>
+    <div class="stat-card" style="--bar-color: var(--cepal-teal)">
+      <div class="stat-number">0</div>
+      <div class="stat-label">Errores críticos</div>
+      <div class="stat-sub">no bloquea los entregables</div>
+    </div>
+  </div>
+
+  <div class="coverage-wrapper">
+    <table class="coverage">
+      <thead>
+        <tr>
+          <th>Prueba</th>
+          <th>Criterio</th>
+          <th>Resultado</th>
+          <th>Lectura técnica</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Dimensión cuadrada</td>
+          <td>Z, A y L deben ser n×n</td>
+          <td><span class="badge ok">34/34</span></td>
+          <td>Todas las matrices tienen estructura sector×sector.</td>
+        </tr>
+        <tr>
+          <td>Alineación de etiquetas</td>
+          <td>Filas/columnas y vectores deben compartir sectores</td>
+          <td><span class="badge ok">34/34</span></td>
+          <td>Los vectores g y W están alineados con las matrices.</td>
+        </tr>
+        <tr>
+          <td>Nombres sectoriales</td>
+          <td>Las etiquetas no pueden ser solo códigos</td>
+          <td><span class="badge ok">34/34</span></td>
+          <td>Todas las matrices publicadas tienen nombres económicos en filas y columnas; los códigos se conservan solo como prefijo.</td>
+        </tr>
+        <tr>
+          <td>Coeficientes técnicos</td>
+          <td>A ≈ Z/g</td>
+          <td><span class="badge ok">34/34</span></td>
+          <td>Las matrices A son consistentes con producción bruta.</td>
+        </tr>
+        <tr>
+          <td>Identidad de Leontief</td>
+          <td>(I − A)L ≈ I</td>
+          <td><span class="badge ok">34/34</span></td>
+          <td>La inversa de Leontief es matemáticamente coherente.</td>
+        </tr>
+        <tr>
+          <td>No negatividad estricta</td>
+          <td>Z, A y g no deberían tener valores negativos</td>
+          <td><span class="badge warn">33/34</span></td>
+          <td>Uruguay COU 2017 trae 47 celdas negativas pequeñas en Z/A; máximo absoluto: 35.75 millones UYU.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col" style="margin-top:2rem">
+    <div class="highlight-box">
+      <strong>Validación de Leontief:</strong><br>
+      Se comprueba que los coeficientes técnicos cumplan <code>A = Z · diag(g)⁻¹</code> y que la inversa satisfaga <code>(I − A)L = I</code>. Esta prueba asegura que los multiplicadores de producción se derivan de una matriz técnicamente consistente.
+    </div>
+    <div class="highlight-box">
+      <strong>Validación de Ghosh:</strong><br>
+      Se construye <code>B = diag(g)⁻¹ · Z</code>, que distribuye la producción vendida por cada sector, y se valida <code>(I − B)G = I</code>. Esta mirada complementa Leontief con encadenamientos hacia adelante.
+    </div>
+  </div>
+
+  <div class="coverage-wrapper" style="margin-top:2rem">
+    <table class="coverage">
+      <thead>
+        <tr>
+          <th>Hoja generada</th>
+          <th>Qué contiene</th>
+          <th>Uso recomendado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Z_MIP</code></td>
+          <td>Flujos intermedios sector × sector</td>
+          <td>Base de toda la contabilidad interindustrial.</td>
+        </tr>
+        <tr>
+          <td><code>A_coef_tecnicos</code> / <code>L_leontief</code></td>
+          <td>Coeficientes técnicos e inversa de Leontief</td>
+          <td>Multiplicadores de demanda y encadenamientos hacia atrás.</td>
+        </tr>
+        <tr>
+          <td><code>B_ghosh_coef</code> / <code>G_ghosh_inversa</code></td>
+          <td>Coeficientes de distribución e inversa de Ghosh</td>
+          <td>Encadenamientos hacia adelante y sensibilidad de oferta.</td>
+        </tr>
+        <tr>
+          <td><code>balances_sectoriales</code></td>
+          <td>Compras, ventas, VA residual y demanda final residual</td>
+          <td>Diagnóstico de cierre contable por sector.</td>
+        </tr>
+        <tr>
+          <td><code>val_A_menos_Zg</code>, <code>val_Leontief</code>, <code>val_Ghosh</code></td>
+          <td>Residuales matriciales de las identidades clave</td>
+          <td>Auditoría numérica y trazabilidad técnica.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="coverage-wrapper" style="margin-top:2rem">
+    <h3 style="margin:0 0 1rem; color:var(--cepal-blue); font-size:1.35rem">Diccionario de validaciones matemáticas aplicadas</h3>
+    <table class="coverage">
+      <thead>
+        <tr>
+          <th>Indicador</th>
+          <th>Qué valida</th>
+          <th>Criterio matemático</th>
+          <th>Cómo se interpreta</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>cuadrada_Z_A_L</code></td>
+          <td>Que las matrices centrales tengan dimensión sector × sector.</td>
+          <td><code>Z</code>, <code>A</code> y <code>L</code> deben tener el mismo número de filas y columnas.</td>
+          <td>Es una condición estructural mínima: sin matrices cuadradas no se pueden calcular inversas, multiplicadores ni encadenamientos sectoriales.</td>
+        </tr>
+        <tr>
+          <td><code>etiquetas_alineadas</code></td>
+          <td>Que filas, columnas y vectores usen el mismo universo sectorial.</td>
+          <td>Los sectores de <code>Z</code>, <code>A</code>, <code>L</code>, <code>g</code> y <code>W</code> deben coincidir en nombre y orden.</td>
+          <td>Evita cruces falsos entre sectores. Si falla, una industria podría recibir coeficientes o producción de otra.</td>
+        </tr>
+        <tr>
+          <td><code>no_negatividad_Z_A_g</code></td>
+          <td>Que no existan valores negativos en transacciones, coeficientes técnicos o producción bruta.</td>
+          <td><code>Z ≥ 0</code>, <code>A ≥ 0</code> y <code>g &gt; 0</code>, con tolerancia para ruido numérico.</td>
+          <td>Los negativos se marcan como alerta contable. En Uruguay 2017 aparecen por la conversión COU→MIP y por eso el año queda en seguimiento.</td>
+        </tr>
+        <tr>
+          <td><code>max_abs_A_menos_Z_sobre_g</code></td>
+          <td>La consistencia entre la MIP de flujos y la matriz de coeficientes técnicos.</td>
+          <td>Máximo residual absoluto de <code>A - Z · diag(g)⁻¹</code>.</td>
+          <td>Valores cercanos a cero confirman que <code>A</code> fue reconstruida correctamente desde <code>Z</code> y la producción bruta. Las diferencias grandes indicarían problemas de escala, moneda o orientación.</td>
+        </tr>
+        <tr>
+          <td><code>max_abs_Leontief</code></td>
+          <td>Que la inversa de Leontief sea algebraicamente válida.</td>
+          <td>Máximo residual absoluto de <code>(I - A)L - I</code>.</td>
+          <td>Si el residual es casi cero, los multiplicadores de demanda son consistentes. En los resultados, las diferencias están en rangos numéricos tolerables.</td>
+        </tr>
+        <tr>
+          <td><code>max_abs_Ghosh</code></td>
+          <td>Que la inversa de Ghosh sea algebraicamente válida.</td>
+          <td>Con <code>B = diag(g)⁻¹Z</code>, se mide el máximo residual de <code>(I - B)G - I</code>.</td>
+          <td>Permite validar los encadenamientos hacia adelante. Todos los años quedan en precisión de máquina, lo que respalda el uso de <code>G</code>.</td>
+        </tr>
+        <tr>
+          <td><code>celdas_negativas_Z</code></td>
+          <td>La cantidad exacta de flujos intermedios negativos en la matriz <code>Z</code>.</td>
+          <td>Conteo de celdas donde <code>Zᵢⱼ &lt; 0</code>.</td>
+          <td>Es un indicador de localización del problema, no solo una bandera general. El único caso observado es Uruguay 2017, con 47 celdas.</td>
+        </tr>
+        <tr>
+          <td><code>sectores_demanda_final_residual_negativa</code></td>
+          <td>Sectores donde el cierre por ventas deja una demanda final residual negativa.</td>
+          <td>Se calcula <code>demanda final residual = g - ventas intermedias</code> y se cuentan sectores con residual negativo.</td>
+          <td>Es un diagnóstico de cierre y uso económico. No invalida automáticamente la MIP: señala sectores donde las ventas intermedias superan la producción reportada bajo la convención reconstruida.</td>
+        </tr>
+        <tr>
+          <td><code>sectores_va_residual_negativo</code></td>
+          <td>Sectores donde el cierre por compras deja valor agregado residual negativo.</td>
+          <td>Se calcula <code>VA residual = g - compras intermedias</code> y se cuentan sectores con residual negativo.</td>
+          <td>Es una alerta de estructura productiva o de valoración. Solo aparece en Brasil 2011-2014, con un sector por año.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="coverage-wrapper" style="margin-top:2rem; overflow-x:auto">
+    <h3 style="margin:0 0 1rem; color:var(--cepal-blue); font-size:1.35rem">Lectura ejecutiva de resultados por país</h3>
+    <table class="coverage">
+      <thead>
+        <tr>
+          <th>País</th>
+          <th>Cobertura validada</th>
+          <th>Resultado matemático central</th>
+          <th>Alertas de cierre sectorial</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Argentina</td>
+          <td>6 matrices: 1997, 2004, 2018, 2019, 2020 y 2021.</td>
+          <td>Todos los años cumplen cuadratura, etiquetas, no negatividad, Leontief y Ghosh. El mayor residual <code>A - Z/g</code> aparece en 1997 (<code>6.91e-04</code>), consistente con la reconstrucción desde archivos históricos INDEC.</td>
+          <td>No hay celdas negativas en <code>Z</code> ni valor agregado residual negativo. La demanda final residual negativa aparece en años recientes y se conserva como diagnóstico económico, no como falla estructural.</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>22 matrices: serie continua 2000-2021.</td>
+          <td>La serie completa pasa las pruebas estructurales. Leontief y Ghosh quedan en residuales de precisión numérica, lo que permite comparar multiplicadores de forma homogénea a lo largo del tiempo.</td>
+          <td>No hay flujos intermedios negativos. El valor agregado residual negativo aparece solo en 2011-2014, con un sector por año; se mantiene como alerta puntual de cierre contable.</td>
+        </tr>
+        <tr>
+          <td>México</td>
+          <td>4 matrices: 2003, 2008, 2013 y 2018.</td>
+          <td>Todos los años cumplen las identidades principales. Los residuales de Leontief y Ghosh se ubican en magnitudes de máquina, y <code>A - Z/g</code> se mantiene prácticamente nulo.</td>
+          <td>No hay celdas negativas en <code>Z</code> ni valor agregado residual negativo. Solo se observan 4 alertas acumuladas de demanda final residual negativa: 3 en 2008 y 1 en 2013.</td>
+        </tr>
+        <tr>
+          <td>Uruguay</td>
+          <td>2 matrices: 2016 y 2017.</td>
+          <td>2016 pasa todas las pruebas principales. 2017 mantiene cuadratura, etiquetas, Leontief y Ghosh, pero falla no negatividad por 47 celdas negativas en <code>Z</code>.</td>
+          <td>Uruguay 2017 queda como caso a revisar por la conversión COU→MIP. La alerta no bloquea el cálculo de multiplicadores, pero sí exige documentar el tratamiento de negativos antes de usos económicos sensibles.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="coverage-wrapper" style="margin-top:2rem; overflow-x:auto">
+    <h3 style="margin:0 0 .4rem; color:var(--cepal-blue); font-size:1.35rem">Resultados obtenidos por país y año</h3>
+    <p style="margin:.2rem 0 1rem; color:#666; font-size:.95rem">La tabla resume las nueve pruebas solicitadas. Los máximos residuales se muestran en notación científica; valores cercanos a <code>1e-15</code> corresponden a precisión numérica de máquina.</p>
+    <table class="coverage" style="min-width:1180px">
+      <thead>
+        <tr>
+          <th>País</th>
+          <th>Año</th>
+          <th><code>cuadrada_Z_A_L</code></th>
+          <th><code>etiquetas_alineadas</code></th>
+          <th><code>no_negatividad_Z_A_g</code></th>
+          <th><code>max_abs_A_menos_Z_sobre_g</code></th>
+          <th><code>max_abs_Leontief</code></th>
+          <th><code>max_abs_Ghosh</code></th>
+          <th><code>celdas_negativas_Z</code></th>
+          <th><code>sectores_demanda_final_residual_negativa</code></th>
+          <th><code>sectores_va_residual_negativo</code></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Argentina</td>
+          <td>1997</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>6.91e-04</td>
+          <td>4.93e-12</td>
+          <td>1.11e-15</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Argentina</td>
+          <td>2004</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>2.22e-16</td>
+          <td>1.33e-15</td>
+          <td>1.64e-15</td>
+          <td>0</td>
+          <td>43</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Argentina</td>
+          <td>2018</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.39e-16</td>
+          <td>1.89e-15</td>
+          <td>1.69e-15</td>
+          <td>0</td>
+          <td>30</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Argentina</td>
+          <td>2019</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>2.22e-16</td>
+          <td>2.00e-15</td>
+          <td>2.00e-15</td>
+          <td>0</td>
+          <td>29</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Argentina</td>
+          <td>2020</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>3.33e-16</td>
+          <td>1.44e-15</td>
+          <td>1.33e-15</td>
+          <td>0</td>
+          <td>28</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Argentina</td>
+          <td>2021</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>2.22e-16</td>
+          <td>1.22e-15</td>
+          <td>1.68e-15</td>
+          <td>0</td>
+          <td>28</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2000</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.11e-16</td>
+          <td>8.88e-16</td>
+          <td>6.66e-16</td>
+          <td>0</td>
+          <td>13</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2001</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.67e-16</td>
+          <td>8.88e-16</td>
+          <td>9.99e-16</td>
+          <td>0</td>
+          <td>12</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2002</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.39e-16</td>
+          <td>9.99e-16</td>
+          <td>8.88e-16</td>
+          <td>0</td>
+          <td>12</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2003</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.67e-16</td>
+          <td>1.78e-15</td>
+          <td>1.33e-15</td>
+          <td>0</td>
+          <td>12</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2004</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>2.22e-16</td>
+          <td>1.11e-15</td>
+          <td>1.33e-15</td>
+          <td>0</td>
+          <td>12</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2005</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.11e-16</td>
+          <td>8.88e-16</td>
+          <td>7.77e-16</td>
+          <td>0</td>
+          <td>11</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2006</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.11e-16</td>
+          <td>1.11e-15</td>
+          <td>8.88e-16</td>
+          <td>0</td>
+          <td>11</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2007</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.67e-16</td>
+          <td>1.11e-15</td>
+          <td>1.11e-15</td>
+          <td>0</td>
+          <td>12</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2008</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.67e-16</td>
+          <td>1.11e-15</td>
+          <td>7.77e-16</td>
+          <td>0</td>
+          <td>12</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2009</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>2.22e-16</td>
+          <td>8.88e-16</td>
+          <td>6.83e-16</td>
+          <td>0</td>
+          <td>14</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2010</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>8.33e-17</td>
+          <td>1.33e-15</td>
+          <td>1.11e-15</td>
+          <td>0</td>
+          <td>19</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2011</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>5.55e-17</td>
+          <td>1.11e-15</td>
+          <td>8.88e-16</td>
+          <td>0</td>
+          <td>21</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2012</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.11e-16</td>
+          <td>1.11e-15</td>
+          <td>1.33e-15</td>
+          <td>0</td>
+          <td>21</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2013</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.11e-16</td>
+          <td>1.78e-15</td>
+          <td>1.78e-15</td>
+          <td>0</td>
+          <td>21</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2014</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>8.33e-17</td>
+          <td>1.55e-15</td>
+          <td>1.85e-15</td>
+          <td>0</td>
+          <td>20</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2015</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>5.55e-17</td>
+          <td>1.11e-15</td>
+          <td>1.65e-15</td>
+          <td>0</td>
+          <td>18</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2016</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>8.33e-17</td>
+          <td>1.44e-15</td>
+          <td>9.99e-16</td>
+          <td>0</td>
+          <td>15</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2017</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>6.94e-17</td>
+          <td>1.55e-15</td>
+          <td>1.33e-15</td>
+          <td>0</td>
+          <td>16</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2018</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.67e-16</td>
+          <td>1.67e-15</td>
+          <td>1.67e-15</td>
+          <td>0</td>
+          <td>16</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2019</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.11e-16</td>
+          <td>1.33e-15</td>
+          <td>1.11e-15</td>
+          <td>0</td>
+          <td>16</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2020</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>8.33e-17</td>
+          <td>1.11e-15</td>
+          <td>9.28e-16</td>
+          <td>0</td>
+          <td>17</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Brasil</td>
+          <td>2021</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>8.33e-17</td>
+          <td>1.33e-15</td>
+          <td>1.09e-15</td>
+          <td>0</td>
+          <td>16</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Mexico</td>
+          <td>2003</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>5.55e-17</td>
+          <td>6.66e-16</td>
+          <td>4.44e-16</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Mexico</td>
+          <td>2008</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>1.11e-16</td>
+          <td>1.44e-15</td>
+          <td>1.33e-15</td>
+          <td>0</td>
+          <td>3</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Mexico</td>
+          <td>2013</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>7.51e-13</td>
+          <td>3.11e-15</td>
+          <td>1.33e-15</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Mexico</td>
+          <td>2018</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>4.65e-13</td>
+          <td>3.00e-15</td>
+          <td>2.11e-15</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Uruguay</td>
+          <td>2016</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td>2.55e-04</td>
+          <td>9.86e-04</td>
+          <td>8.88e-16</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>Uruguay</td>
+          <td>2017</td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge ok">OK</span></td>
+          <td><span class="badge warn">REVISAR</span></td>
+          <td>1.11e-16</td>
+          <td>1.78e-15</td>
+          <td>1.33e-15</td>
+          <td>47</td>
+          <td>18</td>
+          <td>0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="highlight-box" style="margin-top:2rem">
+    <strong>Conclusión de validación:</strong> las 34 MIP son utilizables para análisis de multiplicadores porque cumplen cuadratura, alineación sectorial, nombres sectoriales completos y consistencia matricial de Leontief/Ghosh. Uruguay COU 2017 queda marcado como “revisar” por 47 celdas negativas heredadas de la conversión COU→MIP, aunque sus identidades <code>A = Z/g</code>, <code>(I - A)L = I</code> y <code>(I - B)G = I</code> sí pasan con tolerancia numérica. Los residuales negativos de demanda final y valor agregado se conservan como diagnósticos de cierre sectorial para orientar revisiones económicas posteriores.
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 8. GOOGLE DRIVE -->
+<div style="background:var(--white)">
+<section id="repositorio">
+  <div class="section-label">08 · Google Drive y colaboración</div>
+  <h2 class="section-title">Carpeta compartida para el equipo CEPAL</h2>
+  <p class="section-lead">Para el equipo que trabaja con Gmail, Google Drive es suficiente: permite distribuir matrices, metodología, validaciones y presentación en una carpeta única, sin pedir herramientas adicionales.</p>
+
+  <div class="repo-grid">
+    <div class="repo-card">
+      <h4>Carpeta navegable</h4>
+      <p>La entrega usa una estructura simple: <code>MIP/{Pais}/</code>. Dentro de cada país quedan todos los Excel disponibles, sin subcarpetas por año.</p>
+    </div>
+    <div class="repo-card">
+      <h4>Paquete para Drive</h4>
+      <p>El archivo <code>Paquete_MIP_CEPAL_GoogleDrive.zip</code> reúne matrices, validación agregada, metodología y presentación HTML para subirlo como una sola entrega.</p>
+    </div>
+    <div class="repo-card">
+      <h4>Carpeta de código</h4>
+      <p>La carpeta <code>Codigo/</code> contiene <code>main.py</code>, parsers, scripts de validación, generación de Excel y documentación metodológica.</p>
+    </div>
+    <div class="repo-card">
+      <h4>Equipo con Gmail</h4>
+      <p>La recomendación es compartir una carpeta de Google Drive con permisos de lector o comentador. Es suficiente para consulta y revisión metodológica.</p>
+    </div>
+    <div class="repo-card">
+      <h4>Actualizaciones simples</h4>
+      <p>Cuando se regenere el pipeline, se reemplaza el ZIP o se sube una nueva carpeta fechada. Drive conserva historial básico de versiones de archivos.</p>
+    </div>
+  </div>
+
+  <div class="repo-paths">
+    MIP/Argentina/MIP_Argentina_2021.xlsx<br>
+    MIP/Brasil/MIP_Brasil_2021.xlsx<br>
+    MIP/Mexico/MIP_Mexico_2018.xlsx<br>
+    MIP/Uruguay/MIP_Uruguay_2017.xlsx<br>
+    Codigo/main.py<br>
+    output/compartir_gmail/Paquete_MIP_CEPAL_GoogleDrive.zip<br>
+    Presentacion_MIP_CEPAL.html · validacion_matematica_mip.xlsx · METODOLOGIA.md
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- 9. RETOS TÉCNICOS -->
+<section id="retos">
+  <div class="section-label">09 · Retos técnicos</div>
+  <h2 class="section-title">Desafíos enfrentados</h2>
+  <p class="section-lead">La complejidad real del trabajo no está en ejecutar una fórmula, sino en reconciliar fuentes heterogéneas, identificar convenciones de valoración y asegurar coherencia metodológica entre países con sistemas estadísticos distintos.</p>
+
+  <div class="challenges-grid">
+    <div class="challenge-card">
+      <h4><span class="challenge-icon">🏛️</span> Heterogeneidad de fuentes</h4>
+      <p>Cada país publica sus COUs en formatos incompatibles: Excel con estructuras radicalmente distintas (INDEC), FTP con pares de archivos por año (IBGE), CSV plano (INEGI), y hojas multi-tabla (BCU). No existe un estándar regional.</p>
+    </div>
+    <div class="challenge-card green">
+      <h4><span class="challenge-icon">💱</span> Precios básicos vs. comprador</h4>
+      <p>La matriz V (oferta) se publica a precios básicos y la U (utilización) a precios de comprador. El desbalance resultante es normal y esperado, pero requiere documentación explícita para evitar confusión metodológica. Varios institutos mezclan valoraciones sin advertencia.</p>
+    </div>
+    <div class="challenge-card blue">
+      <h4><span class="challenge-icon">🔀</span> Quiebre estructural en Brasil</h4>
+      <p>Brasil tiene dos series discontinuas: 2000–2009 (CNAE 1.0, SCN 1993, 49 sectores) y 2010–2021 (CNAE 2.0, SCN 2008, 69 sectores). Los multiplicadores no son comparables directamente entre series. Se requieren tablas puente de IBGE para análisis de largo plazo.</p>
+    </div>
+    <div class="challenge-card red">
+      <h4><span class="challenge-icon">📭</span> Intervención estadística en Argentina</h4>
+      <p>INDEC estuvo bajo intervención política entre 2007 y 2015. Los años intermedios (2005–2017) no están disponibles en CEPAL ni en el FTP de INDEC. La brecha es estructural y no recuperable sin solicitud oficial institucional.</p>
+    </div>
+    <div class="challenge-card">
+      <h4><span class="challenge-icon">🗂️</span> Clasificaciones sectoriales múltiples</h4>
+      <p>Los cuatro países usan clasificaciones distintas: CIIU Rev. 3 (Argentina), CNAE 2.0 (Brasil), SCIAN 2018 (México) y CIIU Rev. 4 adaptada (Uruguay). La comparabilidad sectorial entre países requiere tablas de concordancia que aún no están construidas.</p>
+    </div>
+    <div class="challenge-card green">
+      <h4><span class="challenge-icon">🔢</span> Codificación de caracteres</h4>
+      <p>Archivos con encoding mixto (Latin-1, UTF-8, CP1252) dentro de la misma carpeta de fuentes. Nombres de sectores con tildes, ñ y caracteres especiales en Excel. Requirió forzar <code>-X utf8</code> y manejo robusto de errores de decodificación.</p>
+    </div>
+    <div class="challenge-card blue">
+      <h4><span class="challenge-icon">🧩</span> México 2008 — formato IxI</h4>
+      <p>CEPAL publica la MIP 2008 de México como una matriz industria × industria en un Excel con estructura idiosincrática: filas 294 (VAB) y 305 (producción total), columnas 6–267 (demanda intermedia). Requirió ingeniería inversa manual del archivo.</p>
+    </div>
+    <div class="challenge-card red">
+      <h4><span class="challenge-icon">⚖️</span> Valor agregado en Uruguay</h4>
+      <p>El COU 2017 de Uruguay (CEPAL) no incluye fila explícita de valor agregado bruto. Se derivó residualmente como W = g − U.sum(axis=0), lo cual es metodológicamente correcto pero introduce ruido numérico en los multiplicadores de VA.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 8. BRECHAS -->
+<div style="background:var(--white)">
+<section id="brechas">
+  <div class="section-label">10 · Brechas identificadas</div>
+  <h2 class="section-title">Brechas y vía de resolución</h2>
+  <p class="section-lead">La cobertura actual es el máximo alcanzable con fuentes públicas. Las brechas identificadas tienen causas concretas y vías de resolución definidas.</p>
+
+  <div class="two-col">
+    <div>
+      <h3 style="margin-bottom:1.2rem; color:var(--cepal-blue)">Brechas no recuperables sin gestión institucional</h3>
+      <div class="gap-timeline">
+        <div class="gap-item">
+          <h4>🇦🇷 Argentina 2005–2017</h4>
+          <p>Brecha real por intervención política en INDEC. Los datos existen pero no están publicados. <strong>Requiere solicitud formal al INDEC</strong> por canales institucionales de CEPAL.</p>
+        </div>
+        <div class="gap-item">
+          <h4>🇦🇷 Argentina 2022+</h4>
+          <p>CEPAL solo tiene datos hasta 2021. <strong>Requiere que INDEC publique</strong> el COU actualizado o solicitud directa.</p>
+        </div>
+        <div class="gap-item">
+          <h4>🇺🇾 Uruguay 2018+</h4>
+          <p>BCU publicó la MIP 2016 pero no ha publicado actualizaciones. CEPAL tiene el COU 2017 pero no años posteriores. <strong>Requiere coordinación con BCU/INE.</strong></p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:1.2rem; color:var(--cepal-blue)">Brechas próximas a resolverse</h3>
+      <div class="gap-timeline">
+        <div class="gap-item recoverable">
+          <h4>🇲🇽 México 2023</h4>
+          <p>No se localizó un ZIP público oficial de MIP nacional 2023 en la búsqueda estatal. <strong>Monitorear programas MIP y datos abiertos de INEGI</strong> antes de ampliar la serie.</p>
+        </div>
+        <div class="gap-item recoverable">
+          <h4>🇧🇷 Brasil 2022–2023 (nivel 68)</h4>
+          <p>IBGE ya publicó el nivel 12 para 2022–2023. El nivel 68 (68 sectores) está en proceso de actualización. <strong>Monitorear FTP de IBGE</strong> — estimado 2026.</p>
+        </div>
+        <div class="gap-item recoverable">
+          <h4>Concordancias sectoriales entre países</h4>
+          <p>Para análisis comparativo entre los cuatro países se necesitan tablas de concordancia CIIU3 ↔ CNAE2 ↔ SCIAN ↔ CIIU4. <strong>Tarea metodológica pendiente</strong> para el siguiente sprint.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:2.5rem; background:linear-gradient(135deg,var(--cepal-blue),var(--cepal-teal)); border-radius:16px; padding:2.5rem; color:#fff;">
+    <h3 style="font-size:1.3rem; margin-bottom:1rem; color:#fff">Valor generado — Resumen ejecutivo</h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem;">
+      <div>
+        <div style="font-size:2rem; font-weight:900; color:var(--accent)">34</div>
+        <div style="font-size:.85rem; opacity:.85">Matrices insumo-producto procesadas y validadas con multiplicadores de Leontief</div>
+      </div>
+      <div>
+        <div style="font-size:2rem; font-weight:900; color:var(--accent)">7</div>
+        <div style="font-size:.85rem; opacity:.85">Parsers desarrollados desde cero para fuentes oficiales de 4 países</div>
+      </div>
+      <div>
+        <div style="font-size:2rem; font-weight:900; color:var(--accent)">100%</div>
+        <div style="font-size:.85rem; opacity:.85">Cobertura de fuentes públicas disponibles — máximo alcanzable sin gestión institucional</div>
+      </div>
+      <div>
+        <div style="font-size:2rem; font-weight:900; color:var(--accent)">∞</div>
+        <div style="font-size:.85rem; opacity:.85">Pipeline reproducible — cualquier año futuro puede procesarse en minutos al publicarse los datos</div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- PRÓXIMOS PASOS -->
+<section id="proximos">
+  <div class="section-label">11 · Próximos pasos</div>
+  <h2 class="section-title">Agenda de trabajo</h2>
+  <p class="section-lead">Con la infraestructura de procesamiento en funcionamiento, los siguientes pasos están orientados al análisis sustantivo de economía circular y a ampliar la cobertura temporal de los países con brechas.</p>
+
+  <div class="steps-grid">
+
+    <div class="step-card">
+      <div class="step-number">1</div>
+      <h4>Tablas de concordancia sectorial</h4>
+      <p>Construir las tablas de correspondencia entre CIIU Rev. 3 (Argentina), CNAE 2.0 (Brasil), SCIAN 2018 (México) y CIIU Rev. 4 (Uruguay). Base necesaria para cualquier comparación cuantitativa entre países.</p>
+      <span class="step-tag inmediato">Inmediato</span>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">2</div>
+      <h4>Análisis de economía circular por país</h4>
+      <p>Calcular indicadores de circularidad a partir de los multiplicadores de Leontief: intensidad de uso de materias primas, encadenamientos hacia atrás y adelante de sectores clave (reciclaje, manufactura, agroindustria).</p>
+      <span class="step-tag inmediato">Inmediato</span>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">3</div>
+      <h4>Comparación regional con Chile y Colombia</h4>
+      <p>Integrar los resultados de Argentina, Brasil, México y Uruguay con las MIPs de Chile y Colombia ya procesadas en el Informe Final de CEPAL. Construir una base comparativa regional de 6 países.</p>
+      <span class="step-tag corto">Corto plazo</span>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">4</div>
+      <h4>Monitorear México 2023</h4>
+      <p>No se localizó un ZIP público oficial de MIP nacional 2023. Si INEGI publica datos abiertos compatibles, el parser existente puede adaptarse sobre la misma lógica CSV.</p>
+      <span class="step-tag corto">Corto plazo</span>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">5</div>
+      <h4>Brasil 2022–2023 nivel 68</h4>
+      <p>IBGE ya publicó el nivel 12 para 2022–2023. El nivel 68 (68 sectores, necesario para consistencia con la serie) está en proceso de elaboración. Monitorear el FTP de IBGE para incorporarlo cuando esté disponible.</p>
+      <span class="step-tag corto">Corto plazo</span>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">6</div>
+      <h4>Solicitud institucional — Argentina 2005–2017</h4>
+      <p>La brecha de 13 años en Argentina (2005–2017) requiere solicitud formal al INDEC por canales institucionales de CEPAL. Los datos existen internamente pero no están publicados. Esta gestión tiene mayor impacto potencial que cualquier otra acción técnica.</p>
+      <span class="step-tag institucional">Gestión institucional</span>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">7</div>
+      <h4>Solicitud institucional — Uruguay 2018+</h4>
+      <p>El BCU no ha publicado actualizaciones de la MIP desde 2016. Dado que el BCU es el organismo responsable de cuentas nacionales en Uruguay, se requiere contacto directo con la División de Estadísticas Económicas del BCU.</p>
+      <span class="step-tag institucional">Gestión institucional</span>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">8</div>
+      <h4>Capítulo metodológico del informe</h4>
+      <p>Documentar formalmente la metodología de construcción para los 4 países: supuestos de valoración, tratamiento de desbalances, decisiones de clasificación y limitaciones de comparabilidad entre series. Insumo directo para el informe final de CEPAL.</p>
+      <span class="step-tag mediano">Mediano plazo</span>
+    </div>
+
+  </div>
+
+  <div style="margin-top:2.5rem; background:var(--cepal-light); border-radius:14px; padding:2rem; border:1px solid #b8d8f0">
+    <h3 style="color:var(--cepal-blue); margin-bottom:.7rem; font-size:1.1rem">Entregables generados en esta etapa</h3>
+    <p style="font-size:.9rem; color:var(--gray-mid); margin-bottom:1rem">Los siguientes archivos están disponibles en <code style="background:#d0e8f5; padding:.1em .4em; border-radius:4px">output/entregables/</code>:</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.8rem; font-size:.85rem;">
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>🇦🇷 MIP_Argentina.xlsx</strong><br>
+        <span style="color:#888">2004, 2018, 2019, 2020, 2021 · 5 hojas + resumen</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>🇦🇷 MIP_Argentina_1997.xlsx</strong><br>
+        <span style="color:#888">1997 · 1 hoja + resumen</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>🇧🇷 MIP_Brasil_2000_2009.xlsx</strong><br>
+        <span style="color:#888">2000–2009 · 10 hojas + resumen</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>🇧🇷 MIP_Brasil_2010_2021.xlsx</strong><br>
+        <span style="color:#888">2010–2021 · 12 hojas + resumen</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>🇧🇷 MIP_Brasil_2000_2021.xlsx</strong><br>
+        <span style="color:#888">2000–2021 · 22 hojas + resumen combinado</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>🇲🇽 MIP_Mexico.xlsx</strong><br>
+        <span style="color:#888">2003, 2008, 2013, 2018 · 4 hojas + resumen</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>🇺🇾 MIP_Uruguay_2016.xlsx</strong><br>
+        <span style="color:#888">2016 · 1 hoja + resumen</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>🇺🇾 MIP_Uruguay_2017.xlsx</strong><br>
+        <span style="color:#888">2017 (COU) · 1 hoja + resumen</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>📊 validacion_matematica_mip.xlsx</strong><br>
+        <span style="color:#888">34 matrices revisadas · 34 OK estructural · nombres sectoriales OK</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>📊 validacion_detallada_mip.xlsx</strong><br>
+        <span style="color:#888">9 pruebas matemáticas por país y año</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>📄 FUENTES_EXTERNAS_HISTORICO.md</strong><br>
+        <span style="color:#888">trazabilidad de búsqueda oficial adicional</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>📁 matrices_insumo_producto/</strong><br>
+        <span style="color:#888">34 Excel país-año con Leontief, Ghosh, balances y validaciones</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>📁 MIP/{Pais}/</strong><br>
+        <span style="color:#888">matrices por país sin subcarpetas por año, listas para Drive</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>💻 Codigo/</strong><br>
+        <span style="color:#888">pipeline, parsers, validaciones y scripts de generación</span>
+      </div>
+      <div style="background:#fff; border-radius:8px; padding:.9rem 1rem; border:1px solid #cde">
+        <strong>📦 Paquete_MIP_CEPAL_GoogleDrive.zip</strong><br>
+        <span style="color:#888">paquete listo para compartir con el equipo por Google Drive/Gmail</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <strong>CEPAL · Matrices Insumo-Producto para América Latina</strong><br>
+  Argentina · Brasil · México · Uruguay &nbsp;|&nbsp; Mayo 2026<br>
+  <span style="font-size:.78rem; opacity:.6">Pipeline MIP V2 — Construcción desde fuentes oficiales: INDEC, IBGE, INEGI, BCU</span>
+</footer>
+
+<!-- CHARTS -->
+<script>
+if (!window.Chart) {
+  document.querySelectorAll('.chart-wrap').forEach(el => {
+    el.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#4a4a6a; font-size:.9rem; text-align:center; padding:1rem">Los gráficos se cargan cuando Chart.js está disponible.</div>';
+  });
+} else {
+const FONT = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.family = FONT;
+Chart.defaults.color = '#4a4a6a';
+
+// Brasil timeline
+const ctxB = document.getElementById('chartBrasil').getContext('2d');
+new Chart(ctxB, {
+  type: 'line',
+  data: {
+    labels: [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,'|',2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021],
+    datasets: [
+      {
+        label: 'Brasil early (SCN 1993, 49 sect.)',
+        data: [2.511,2.595,2.611,2.590,2.585,2.611,2.564,2.550,2.596,2.566,null,null,null,null,null,null,null,null,null,null,null,null,null],
+        borderColor: '#66bb6a', backgroundColor: 'rgba(102,187,106,.12)',
+        tension: .35, fill: true, pointRadius: 5, pointHoverRadius: 7,
+        borderWidth: 2.5
+      },
+      {
+        label: 'Brasil (SCN 2008, 69 sect.)',
+        data: [null,null,null,null,null,null,null,null,null,null,null,2.216,2.219,2.251,2.250,2.245,2.264,2.221,2.225,2.279,2.289,2.300,2.420],
+        borderColor: '#2dbc8a', backgroundColor: 'rgba(45,188,138,.12)',
+        tension: .35, fill: true, pointRadius: 5, pointHoverRadius: 7,
+        borderWidth: 2.5
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { padding: 16, font: { size: 12 } } },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      y: {
+        min: 1.8, max: 3.0,
+        title: { display: true, text: 'Multiplicador medio de producción' },
+        grid: { color: '#e8eef5' }
+      },
+      x: { grid: { color: '#e8eef5' } }
+    }
+  }
+});
+
+// Comparación entre países
+const ctxC = document.getElementById('chartComparacion').getContext('2d');
+new Chart(ctxC, {
+  type: 'bar',
+  data: {
+    labels: ['ARG 1997','ARG 2004','ARG 2018','ARG 2019','ARG 2020','ARG 2021',
+             'BRA 2010','BRA 2015','BRA 2021',
+             'MEX 2003','MEX 2008','MEX 2013','MEX 2018',
+             'URY 2016','URY 2017'],
+    datasets: [{
+      label: 'Multiplicador medio de producción',
+      data: [1.751,2.076,2.236,2.230,2.244,2.280,
+             2.216,2.264,2.420,
+             1.628,1.511,1.518,1.434,
+             1.614,2.171],
+      backgroundColor: [
+        '#a7c7e7','#74b9ff','#0984e3','#0984e3','#0984e3','#0984e3',
+        '#55efc4','#00b894','#00b894',
+        '#f6d365','#fdcb6e','#e17055','#e17055',
+        '#a29bfe','#6c5ce7'
+      ],
+      borderRadius: 6, borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(3)}` } }
+    },
+    scales: {
+      y: {
+        min: 1.0, max: 2.7,
+        title: { display: true, text: 'Multiplicador' },
+        grid: { color: '#e8eef5' }
+      },
+      x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// Argentina
+const ctxA = document.getElementById('chartArgentina').getContext('2d');
+new Chart(ctxA, {
+  type: 'line',
+  data: {
+    labels: [1997,'','','','','','',2004,'','','','','','','',2018,2019,2020,2021],
+    datasets: [{
+      label: 'Mult. producción',
+      data: [1.751,null,null,null,null,null,null,2.076,null,null,null,null,null,null,null,2.236,2.230,2.244,2.280],
+      borderColor: '#0984e3', backgroundColor: 'rgba(9,132,227,.1)',
+      tension: .3, fill: true, pointRadius: 5, spanGaps: false,
+      borderWidth: 2.5
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { min: 1.6, max: 2.6, grid: { color: '#e8eef5' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Mexico distribution
+const ctxM = document.getElementById('chartMexico').getContext('2d');
+new Chart(ctxM, {
+  type: 'bar',
+  data: {
+    labels: ['< 1.2','1.2–1.4','1.4–1.6','1.6–1.8','1.8–2.0','> 2.0'],
+    datasets: [
+      { label: '2003', data: [5,4,4,5,2,0], backgroundColor: 'rgba(246,211,101,.75)', borderRadius:4 },
+      { label: '2008', data: [12,48,72,68,42,20], backgroundColor: 'rgba(232,160,32,.7)', borderRadius:4 },
+      { label: '2013', data: [10,45,75,72,40,20], backgroundColor: 'rgba(225,112,85,.7)', borderRadius:4 },
+      { label: '2018', data: [18,55,80,62,32,16], backgroundColor: 'rgba(99,110,250,.7)', borderRadius:4 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position:'top', labels:{ font:{size:11}, padding:10 } } },
+    scales: {
+      y: { title: { display:true, text:'# sectores' }, grid:{color:'#e8eef5'} },
+      x: { title: { display:true, text:'Rango multiplicador' }, grid:{display:false} }
+    }
+  }
+});
+}
+</script>
+
+</body>
+</html>

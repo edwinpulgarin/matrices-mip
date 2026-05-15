@@ -1,0 +1,24 @@
+# Codigo del pipeline MIP CEPAL
+
+Esta carpeta contiene el codigo necesario para regenerar las matrices desde las fuentes locales.
+
+## Estructura
+
+- `main.py`: entrada principal del pipeline.
+- `src/`: conversion COU a MIP, multiplicadores y parsers por pais.
+- `scripts/`: validacion, generacion de Excel y armado de paquetes.
+- `docs/`: metodologia del pipeline.
+
+## Uso basico
+
+```text
+python main.py --pais argentina
+python main.py --pais brasil
+python main.py --pais mexico
+python main.py --pais uruguay
+python scripts/validar_mips.py
+python scripts/generar_paquete_matrices.py
+python scripts/crear_paquete_drive.py
+```
+
+Nota: esta carpeta no incluye `data/raw` ni archivos fuente pesados. Es codigo y documentacion del pipeline.
