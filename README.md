@@ -60,7 +60,7 @@ Para una lectura introductoria, usar primero:
 Prueba_Reconstruccion_MIP_Dummies.xlsx
 ```
 
-Este archivo toma un solo caso reconstruido, Brasil 2001, y explica una celda de `Z`, el cierre menor, el paso a `A/L` y un simulador sencillo de choque.
+Este archivo toma un solo caso reconstruido, Brasil 2001, incluye una hoja con el nombre de cada matriz (`V_oferta`, `U_utilizacion`, `D_market_share`, `Z_MIP`, `A_coef_tecnicos`, `L_leontief`, etc.), y explica una celda de `Z`, el cierre menor, el paso a `A/L` y un simulador sencillo de choque.
 
 La version tecnica es:
 

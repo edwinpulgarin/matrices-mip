@@ -192,6 +192,7 @@ def make_workbook() -> Path:
         ["La pregunta", "Si el pais no publico una MIP directa para ese anio, como la reconstruimos desde COU?"],
         ["La idea simple", "El COU dice que productos existen y quien los usa. La MIP traduce eso a sectores que venden y sectores que compran."],
         ["El truco", "Usamos D para repartir cada producto entre los sectores que lo producen."],
+        ["Los nombres", "La hoja 0_Nombres_matrices lista el nombre de cada matriz, su simbolo y para que sirve."],
         ["La celda ejemplo", f"Calculamos cuanto le vende '{c['seller']}' a '{c['buyer']}'."],
         ["El cierre", "Si queda una demanda final negativa muy pequena, la conciliamos con regla trazable; si es material, se deja alerta."],
         ["El simulador", "Despues de tener L, cambiamos demanda final y calculamos impacto en produccion."],
@@ -199,23 +200,45 @@ def make_workbook() -> Path:
     write_table(ws, 4, ["Tema", "Explicacion"], rows, style)
     polish(ws, {1: 22, 2: 110})
 
+    # 0b. Nombres de matrices
+    ws = wb.create_sheet("0_Nombres_matrices")
+    title(ws, "Nombre de las matrices", "Esta es la chuleta para leer el resto del Excel.")
+    rows = [
+        ["V_oferta", "V", "Matriz de oferta/produccion", "Filas = sectores productores; columnas = productos.", "Sale del COU."],
+        ["U_utilizacion", "U", "Matriz de utilizacion intermedia", "Filas = productos; columnas = sectores compradores.", "Sale del COU."],
+        ["Y_demanda_final", "Y", "Matriz de demanda final", "Filas = productos; columnas = componentes de demanda final.", "Sale del COU depurado."],
+        ["q_producto", "q", "Vector de produccion por producto", "Suma de V por columna.", "Se usa para calcular D."],
+        ["D_market_share", "D", "Matriz de participaciones de mercado", "D[i,p] = V[i,p] / q[p].", "Reparte productos entre sectores productores."],
+        ["Z_pre_conciliacion", "Z_pre", "Matriz insumo-producto previa", "Z_pre = D @ U.", "Primera MIP reconstruida antes del cierre menor."],
+        ["ajuste_cierre", "ajuste", "Tabla de conciliacion menor", "Compara demanda final antes/despues y ventas intermedias.", "Solo aparece si hubo cierre menor."],
+        ["Z_MIP / Z_final", "Z", "Matriz insumo-producto final", "Sector vendedor x sector comprador.", "Es la matriz publicada para el anio."],
+        ["A_coef_tecnicos", "A", "Matriz de coeficientes tecnicos", "A[i,j] = Z[i,j] / g[j].", "Insumos requeridos por unidad de produccion."],
+        ["B_ghosh_coef", "B", "Matriz de coeficientes de Ghosh", "B[i,j] = Z[i,j] / g[i].", "Distribucion de ventas del sector vendedor."],
+        ["L_leontief", "L", "Inversa de Leontief", "L = (I - A)^-1.", "Base del simulador de choques de demanda."],
+        ["G_ghosh_inversa", "G", "Inversa de Ghosh", "G = (I - B)^-1.", "Encadenamientos hacia adelante."],
+        ["g_produccion", "g", "Vector de produccion bruta", "Produccion total por sector.", "Escala A, B y los cierres."],
+        ["f_demanda_final", "f", "Vector de demanda final sectorial", "Demanda final transformada a sectores.", "En simulador se modifica con shocks."],
+    ]
+    write_table(ws, 4, ["Nombre en archivo", "Simbolo", "Nombre largo", "Que contiene", "Para que sirve"], rows, style)
+    polish(ws, {1: 26, 2: 12, 3: 34, 4: 58, 5: 54})
+
     # 1. Mapa
     ws = wb.create_sheet("1_Mapa_simple")
     title(ws, "Mapa simple del proceso", "Lee de arriba hacia abajo. Cada paso tiene una hoja con un ejemplo.")
     rows = [
-        [1, "COU", "Tabla de oferta V y utilizacion U.", "Quien produce cada producto y quien lo compra."],
-        [2, "D", "D = V / q.", "Reparte un producto entre sectores productores."],
-        [3, "Z_pre", "Z_pre = D @ U.", "Convierte producto x sector en sector x sector."],
-        [4, "Cierre", "RAS menor cuando aplica.", "Cierra negativos pequenos sin mover valor agregado residual."],
-        [5, "A y L", "A = Z/g; L = (I-A)^-1.", "Prepara multiplicadores y simulador."],
-        [6, "Choque", "Delta g = L @ Delta f.", "Calcula impacto de una variacion de demanda final."],
+        [1, "V_oferta + U_utilizacion", "Matrices V y U.", "Quien produce cada producto y quien lo compra."],
+        [2, "D_market_share", "D = V / q.", "Reparte un producto entre sectores productores."],
+        [3, "Z_pre_conciliacion", "Z_pre = D @ U.", "Convierte producto x sector en sector x sector."],
+        [4, "ajuste_cierre + Z_MIP", "RAS menor cuando aplica.", "Cierra negativos pequenos sin mover valor agregado residual."],
+        [5, "A_coef_tecnicos + L_leontief", "A = Z/g; L = (I-A)^-1.", "Prepara multiplicadores y simulador."],
+        [6, "f_demanda_final + g_produccion", "Delta g = L @ Delta f.", "Calcula impacto de una variacion de demanda final."],
     ]
-    write_table(ws, 4, ["Paso", "Nombre", "Formula", "En palabras"], rows, style)
-    polish(ws, {1: 9, 2: 18, 3: 28, 4: 80})
+    write_table(ws, 4, ["Paso", "Nombre de matriz", "Formula", "En palabras"], rows, style)
+    polish(ws, {1: 9, 2: 32, 3: 32, 4: 80})
 
     # 2. Una celda
     ws = wb.create_sheet("2_Una_celda_Z")
-    title(ws, "Una celda de Z paso a paso", "Ejemplo: sector vendedor Alimentos -> sector comprador Comercio.")
+    title(ws, "Matriz Z_pre: una celda paso a paso", "Ejemplo: sector vendedor Alimentos -> sector comprador Comercio.")
     seller = c["seller"]
     buyer = c["buyer"]
     contrib = pd.DataFrame({
@@ -238,8 +261,8 @@ def make_workbook() -> Path:
     ws["B4"] = seller
     ws["A5"] = "Sector comprador"
     ws["B5"] = buyer
-    ws["A6"] = "Que queremos calcular"
-    ws["B6"] = "Una celda de Z: cuanto vende el sector fila al sector columna."
+    ws["A6"] = "Matriz que queremos calcular"
+    ws["B6"] = "Z_pre_conciliacion: una celda de la MIP antes del cierre menor."
     for row in range(4, 7):
         ws.cell(row, 1).fill = style["sub_fill"]
         ws.cell(row, 1).font = Font(bold=True, color=TEXT)
@@ -252,21 +275,21 @@ def make_workbook() -> Path:
         d = "" if pd.isna(row["D"]) else float(row["D"])
         u = "" if pd.isna(row["U"]) else float(row["U"])
         rows.append([row["producto"], d, u, None])
-    write_table(ws, start, ["Producto", "D: parte producida por Alimentos", "U: uso de Comercio", "Aporte D x U"], rows, style)
+    write_table(ws, start, ["Producto", "Matriz D_market_share: parte producida por Alimentos", "Matriz U_utilizacion: uso de Comercio", "Aporte a Z_pre = D x U"], rows, style)
     for r in range(start + 1, start + 1 + len(display)):
         if ws.cell(r, 1).value == "Otros productos":
             ws.cell(r, 4, float(display.loc[display["producto"] == "Otros productos", "aporte"].iloc[0]))
         else:
             ws.cell(r, 4, f"=B{r}*C{r}")
     total_row = start + len(display) + 2
-    ws.cell(total_row, 3, "Z_pre calculada")
+    ws.cell(total_row, 3, "Matriz Z_pre calculada")
     ws.cell(total_row, 4, f"=SUM(D{start + 1}:D{start + len(display)})")
-    ws.cell(total_row + 1, 3, "Z_pre guardada por pipeline")
+    ws.cell(total_row + 1, 3, "Matriz Z_pre guardada por pipeline")
     ws.cell(total_row + 1, 4, float(c["Z_pre"].loc[seller, buyer]))
     ws.cell(total_row + 2, 3, "Diferencia")
     ws.cell(total_row + 2, 4, f"=D{total_row}-D{total_row + 1}")
     ws.cell(total_row + 4, 1, "Lectura")
-    ws.cell(total_row + 4, 2, "Esta suma es una sola celda de la matriz Z previa. El pipeline repite esto para todos los pares sector-sector.")
+    ws.cell(total_row + 4, 2, "Esta suma es una sola celda de Z_pre_conciliacion. El pipeline repite esto para todos los pares sector-sector.")
     ws.merge_cells(start_row=total_row + 4, start_column=2, end_row=total_row + 4, end_column=4)
     for row in ws.iter_rows(min_row=4, max_row=total_row + 4, max_col=4):
         for cell in row:
@@ -278,19 +301,19 @@ def make_workbook() -> Path:
 
     # 3. Cierre
     ws = wb.create_sheet("3_Cierre_sin_susto")
-    title(ws, "El cierre menor, sin drama", "Caso real: Brasil 2001 tenia un negativo pequeno en Tintas.")
+    title(ws, "Matriz Z_MIP y ajuste_cierre", "Caso real: Brasil 2001 tenia un negativo pequeno en Tintas.")
     s = c["closure_sector"]
     original = float(c["cierre"].loc[s, "demanda_final_original"])
     final = float(c["cierre"].loc[s, "demanda_final_conciliada"])
     g = float(c["cierre"].loc[s, "produccion_bruta_g"])
     rows = [
         ["Sector", s],
-        ["Demanda final antes", original],
-        ["Produccion bruta", g],
+        ["f_demanda_final antes", original],
+        ["g_produccion", g],
         ["Negativo como % de produccion", original / g],
         ["Decision", "Como era pequeno, se lleva a cero con regla documentada."],
-        ["Demanda final despues", final],
-        ["Que no se mueve", "La produccion g y los totales de columna de Z."],
+        ["f_demanda_final despues", final],
+        ["Que no se mueve", "g_produccion y los totales de columna de Z_pre."],
         ["Donde queda la evidencia", "Hojas ajuste_cierre y Z_pre_conciliacion en el Excel final."],
     ]
     write_table(ws, 4, ["Campo", "Valor"], rows, style)
@@ -298,7 +321,7 @@ def make_workbook() -> Path:
     ws["B7"].fill = style["warn_fill"]
     ws["B9"].fill = style["ok_fill"]
     ws["A15"] = "En palabras"
-    ws["B15"] = "No se cambia toda la matriz para que 'se vea bonita'. Se corrige un cierre pequeno, se deja la matriz previa y se registra el ajuste."
+    ws["B15"] = "No se cambia toda la matriz sin registro. Se corrige un cierre pequeno, se deja Z_pre_conciliacion y se documenta ajuste_cierre."
     ws.merge_cells(start_row=15, start_column=2, end_row=15, end_column=4)
     for cell in ws[15]:
         if cell.value is not None:
@@ -307,7 +330,7 @@ def make_workbook() -> Path:
 
     # 4. A y L
     ws = wb.create_sheet("4_De_Z_a_A_L")
-    title(ws, "De Z a coeficientes y multiplicadores", "Ahora que tenemos Z_final, calculamos A y usamos L para impactos.")
+    title(ws, "De Z_MIP a A_coef_tecnicos y L_leontief", "Ahora que tenemos Z_final, calculamos A y usamos L para impactos.")
     buyer = c["buyer"]
     suppliers = c["Z_final"][buyer].sort_values(ascending=False).head(8).index.tolist()
     rows = []
@@ -315,7 +338,7 @@ def make_workbook() -> Path:
     for sup in suppliers:
         z_val = float(c["Z_final"].loc[sup, buyer])
         rows.append([sup, z_val, g_buyer, None])
-    write_table(ws, 4, ["Proveedor fila", f"Z_final hacia {buyer}", f"Produccion de {buyer}", "A = Z / g comprador"], rows, style)
+    write_table(ws, 4, ["Proveedor fila", f"Matriz Z_MIP hacia {buyer}", f"Vector g_produccion de {buyer}", "Matriz A_coef_tecnicos = Z / g comprador"], rows, style)
     for r in range(5, 5 + len(rows)):
         ws.cell(r, 4, f"=B{r}/C{r}")
         ws.cell(r, 4).number_format = "0.0000"
@@ -323,7 +346,7 @@ def make_workbook() -> Path:
     ws["B16"] = "Si A = 0,10, producir 1 unidad del comprador requiere 0,10 unidades del proveedor."
     ws.merge_cells(start_row=16, start_column=2, end_row=16, end_column=4)
     multiplier = float(c["L"][buyer].sum())
-    ws["A18"] = "Multiplicador simple mostrado"
+    ws["A18"] = "Multiplicador simple desde L_leontief"
     ws["B18"] = multiplier
     ws["C18"] = "Suma de la columna/sector en el bloque L visible."
     for row in ws.iter_rows(min_row=4, max_row=18, max_col=4):
@@ -336,10 +359,10 @@ def make_workbook() -> Path:
 
     # 5. Simulador facil
     ws = wb.create_sheet("5_Simulador_facil")
-    title(ws, "Simulador facil", "Cambia las celdas amarillas. El resto se calcula solo.")
+    title(ws, "Simulador facil con L_leontief", "Cambia las celdas amarillas. El resto se calcula solo.")
     sectors = c["sectors"]
     start = 5
-    headers = ["Sector", "g_base", "f_base", "Shock editable", "Delta_f", "Delta_g", "g_nuevo"]
+    headers = ["Sector", "Vector g_base", "Vector f_base", "Shock editable", "Delta_f", "Delta_g = L x Delta_f", "Vector g_nuevo"]
     for col, header in enumerate(headers, 1):
         cell = ws.cell(start, col, header)
         cell.fill = style["header_fill"]
@@ -359,7 +382,7 @@ def make_workbook() -> Path:
         ws.cell(row, 7, f"=B{row}+F{row}")
         ws.cell(row, 4).fill = style["input_fill"]
         ws.cell(row, 4).number_format = "0.0%"
-    ws["I4"] = "L visible"
+    ws["I4"] = "Matriz L_leontief visible"
     ws["I4"].font = Font(bold=True, color=TEXT)
     for col, sector in enumerate(sectors, 10):
         ws.cell(start, col, sector)
@@ -400,15 +423,19 @@ def make_workbook() -> Path:
     ws = wb.create_sheet("6_Glosario")
     title(ws, "Glosario minimo", "La traduccion del lenguaje tecnico.")
     rows = [
-        ["COU", "Cuadro de oferta y utilizacion. Es la fuente antes de tener una MIP."],
-        ["V", "Oferta/produccion: que sector produce que producto."],
-        ["U", "Utilizacion: que producto compra cada sector para producir."],
-        ["Y", "Demanda final: hogares, gobierno, inversion, exportaciones, etc."],
-        ["D", "Matriz de reparto: de producto a sector productor."],
-        ["Z", "Matriz insumo-producto: sector vendedor x sector comprador."],
-        ["A", "Coeficientes tecnicos: insumos requeridos por unidad de produccion."],
-        ["L", "Inversa de Leontief: permite simular choques de demanda."],
-        ["RAS", "Metodo de conciliacion para ajustar filas/columnas manteniendo restricciones."],
+        ["V_oferta / V", "Oferta/produccion: que sector produce que producto."],
+        ["U_utilizacion / U", "Utilizacion: que producto compra cada sector para producir."],
+        ["Y_demanda_final / Y", "Demanda final: hogares, gobierno, inversion, exportaciones, etc."],
+        ["D_market_share / D", "Matriz de reparto: de producto a sector productor."],
+        ["Z_pre_conciliacion / Z_pre", "Matriz insumo-producto antes del cierre menor."],
+        ["Z_MIP / Z", "Matriz insumo-producto final: sector vendedor x sector comprador."],
+        ["A_coef_tecnicos / A", "Coeficientes tecnicos: insumos requeridos por unidad de produccion."],
+        ["L_leontief / L", "Inversa de Leontief: permite simular choques de demanda."],
+        ["B_ghosh_coef / B", "Coeficientes de Ghosh para encadenamientos hacia adelante."],
+        ["G_ghosh_inversa / G", "Inversa de Ghosh."],
+        ["g_produccion / g", "Vector de produccion bruta por sector."],
+        ["f_demanda_final / f", "Vector de demanda final por sector."],
+        ["ajuste_cierre", "Tabla que documenta cierre menor cuando aplica."],
     ]
     write_table(ws, 4, ["Termino", "En palabras"], rows, style)
     polish(ws, {1: 20, 2: 100})
