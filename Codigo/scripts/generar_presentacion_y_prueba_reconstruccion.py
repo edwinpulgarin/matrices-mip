@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from html import escape
 from pathlib import Path
+import unicodedata
 
 import numpy as np
 import pandas as pd
@@ -260,7 +261,7 @@ def generate_html(inventory: pd.DataFrame) -> Path:
         {
             "kicker": "Reconstruidas",
             "title": "Cobertura final de matrices reconstruidas",
-            "claim": "Argentina y Brasil quedan cerradas sin demanda final negativa; Uruguay 2017 queda como caso tecnico pendiente, no como cifra maquillada.",
+            "claim": "Argentina y Brasil quedan cerradas sin demanda final negativa; Uruguay 2017 queda como caso tecnico pendiente, no como cifra forzada.",
             "body": mini_table(reconstructed_rows, ["Pais", "Anios", "Matrices", "Sectores negativos finales", "Fuente"]),
         },
         {
@@ -312,7 +313,7 @@ def generate_html(inventory: pd.DataFrame) -> Path:
         },
         {
             "kicker": "Cierre menor",
-            "title": "Conciliar no significa maquillar",
+            "title": "Conciliar exige trazabilidad",
             "claim": "La regla solo aplica cuando el negativo es pequeno, localizado y documentable; conserva produccion y valor agregado residual.",
             "body": """
               <div class="formula-grid">
@@ -550,18 +551,72 @@ def load_package_sheet(country: str, year: int, sheet_name: str) -> pd.DataFrame
     return pd.read_excel(path, sheet_name=sheet_name, index_col=0)
 
 
-def sample_matrix(country: str, year: int, n: int = 8) -> dict:
-    z = load_package_sheet(country, year, "Z_MIP")
-    l = load_package_sheet(country, year, "L_leontief")
-    g = load_package_sheet(country, year, "g_produccion").iloc[:, 0]
-    f = load_package_sheet(country, year, "f_demanda_final").iloc[:, 0]
-    sectors = list(g.sort_values(ascending=False).head(n).index)
+def plain_text(value: object) -> str:
+    text = unicodedata.normalize("NFKD", str(value))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return text.lower()
+
+
+def find_label(labels, pattern: str):
+    pattern_plain = plain_text(pattern)
+    for label in labels:
+        if pattern_plain in plain_text(label):
+            return label
+    return None
+
+
+def build_brasil_2001_case() -> dict:
+    """Caso piloto: Brasil 2001, reconstruido desde COU."""
+    cou_path = ROOT / "data" / "processed" / "brasil_early" / "cou_brasil_early_2001.xlsx"
+    mip_path = ROOT / "data" / "processed" / "brasil_early" / "mip_brasil_early_2001.xlsx"
+
+    V = pd.read_excel(cou_path, sheet_name="V_oferta", index_col=0).apply(pd.to_numeric, errors="coerce").fillna(0)
+    U = pd.read_excel(cou_path, sheet_name="U_utilizacion", index_col=0).apply(pd.to_numeric, errors="coerce").fillna(0)
+    Y = pd.read_excel(cou_path, sheet_name="Y_demanda_final", index_col=0).apply(pd.to_numeric, errors="coerce").fillna(0)
+    notas = pd.read_excel(cou_path, sheet_name="notas", header=None).iloc[:, 0].dropna().astype(str).tolist()
+
+    Z_pre = pd.read_excel(mip_path, sheet_name="Z_pre_conciliacion", index_col=0).apply(pd.to_numeric, errors="coerce").fillna(0)
+    Z_final = pd.read_excel(mip_path, sheet_name="Z_flujos", index_col=0).apply(pd.to_numeric, errors="coerce").fillna(0)
+    L = pd.read_excel(mip_path, sheet_name="L_leontief", index_col=0).apply(pd.to_numeric, errors="coerce").fillna(0)
+    g = pd.read_excel(mip_path, sheet_name="produccion", index_col=0).iloc[:, 0].pipe(pd.to_numeric, errors="coerce").fillna(0)
+    f = pd.read_excel(mip_path, sheet_name="demanda_final", index_col=0).iloc[:, 0].pipe(pd.to_numeric, errors="coerce").fillna(0)
+    cierre = pd.read_excel(mip_path, sheet_name="ajuste_cierre", index_col=0)
+    for col in cierre.columns:
+        if col != "regla":
+            cierre[col] = pd.to_numeric(cierre[col], errors="coerce")
+
+    desired = ["Comercio", "Alimentos", "Tintas", "Construcao", "Transporte armazenagem", "Agricultura"]
+    sectors = []
+    for pattern in desired:
+        label = find_label(g.index, pattern)
+        if label is not None and label not in sectors:
+            sectors.append(label)
+    for label in g.sort_values(ascending=False).index:
+        if len(sectors) >= 6:
+            break
+        if label not in sectors:
+            sectors.append(label)
+
+    products = list(V.columns)
+    U = U.reindex(index=products, columns=V.index).fillna(0)
+    Y = Y.reindex(index=products).fillna(0)
+    q = V.sum(axis=0).reindex(products).fillna(0)
+    y_product = Y.sum(axis=1).reindex(products).fillna(0)
+
     return {
         "sectors": sectors,
-        "Z": z.loc[sectors, sectors],
-        "L": l.loc[sectors, sectors],
+        "products": products,
+        "V": V.loc[sectors, products],
+        "U_t": U.loc[products, sectors].T,
+        "q": q,
+        "y_product": y_product,
+        "Z_pre": Z_pre.loc[sectors, sectors],
+        "Z_final": Z_final.loc[sectors, sectors],
+        "L": L.loc[sectors, sectors],
         "g": g.loc[sectors],
         "f": f.loc[sectors],
+        "cierre": cierre.loc[sectors],
+        "notas": notas,
     }
 
 
@@ -570,6 +625,10 @@ def generate_workbook(inventory: pd.DataFrame) -> Path:
     wb = Workbook()
     default = wb.active
     wb.remove(default)
+    case = build_brasil_2001_case()
+    sectors = case["sectors"]
+    products = case["products"]
+    n = len(sectors)
 
     thin = Side(style="thin", color="D9E2EC")
     style = {
@@ -581,13 +640,13 @@ def generate_workbook(inventory: pd.DataFrame) -> Path:
 
     # README
     ws = wb.create_sheet("README")
-    sheet_title(ws, "Prueba de reconstruccion MIP finalizadas", "Workbook piloto para explicar matrices reconstruidas, cierres y simulador de choques.")
+    sheet_title(ws, "Prueba de reconstruccion MIP finalizadas", "Caso piloto: Brasil 2001, matriz reconstruida desde COU.")
     readme_rows = [
-        ["Objetivo", "Mostrar, con datos del paquete final, como se separan matrices directas y reconstruidas."],
-        ["Reconstruidas", "Argentina 2004/2018-2021, Brasil 2000-2021 y Uruguay 2017."],
-        ["Directas", "Argentina 1997, Mexico 2003/2008/2013/2018 y Uruguay 2016."],
-        ["Trazabilidad", "Los cierres menores quedan en ajuste_cierre y Z_pre_conciliacion cuando aplican."],
-        ["Simulador", "La hoja Simulador_piloto muestra un choque de demanda con Delta g = L @ Delta f."],
+        ["Caso usado", "Brasil 2001, serie brasil_early, reconstruida desde COU CEPAL Brasil base 2000."],
+        ["Por que este caso", "Es reconstruido, contiene COU procesado, matriz previa al cierre y matriz final conciliada."],
+        ["Ruta algebraica", "V y U -> D -> Z_pre -> cierre menor RAS -> Z_final -> A, L, B/Ghosh -> simulador."],
+        ["Lectura del Excel", "Las hojas Paso_* muestran formulas auditables; Datos_COU conserva todos los productos usados en Z_pre = D @ U."],
+        ["Simulador", "La hoja Paso_5_Simulador muestra un choque de demanda con Delta g = L @ Delta f."],
     ]
     append_table(ws, 4, ["Campo", "Descripcion"], readme_rows, style)
     style_sheet(ws, {1: 24, 2: 105})
@@ -600,76 +659,327 @@ def generate_workbook(inventory: pd.DataFrame) -> Path:
     append_table(ws, 4, inv_headers, inv_rows, style)
     style_sheet(ws, {1: 14, 2: 17, 3: 10, 4: 15, 5: 28, 6: 34, 7: 48, 8: 12, 9: 18, 10: 18, 11: 18, 12: 18, 13: 18, 14: 46})
 
-    # Paso a paso
-    ws = wb.create_sheet("Paso_a_paso")
-    sheet_title(ws, "Paso a paso de reconstruccion", "Ruta metodologica para matrices que no se descargaron directamente como MIP.")
-    steps = [
-        [1, "Lectura de fuente", "Se cargan V, U, Y, W, importaciones y puentes de valoracion cuando existen.", "parser por pais"],
-        [2, "Depuracion", "Se excluyen columnas totales que no son sectores ni componentes de demanda final.", "Argentina UF; Brasil Total do produto"],
-        [3, "Alineacion", "Se alinean codigos, acentos y nombres para que V, U, Y y W compartan universo sectorial.", "Argentina 1512/15120; Brasil 51 sectores"],
-        [4, "Base compatible", "U e Y se llevan a base nacional/precios basicos usando factores publicados por producto.", "factor = produccion domestica pb / oferta total pc"],
-        [5, "Transformacion STI", "Se calcula D, Z, A, L y f_ind bajo tecnologia de industria.", "Z = D @ U"],
-        [6, "Cierre menor", "Solo si el negativo es pequeno, se aplica RAS preservando g y sum_col(Z).", "Brasil 2001-2006; Uruguay 2016"],
-        [7, "Validacion", "Se verifican cuadratura, etiquetas, no negatividad, Leontief, Ghosh y cierres sectoriales.", "validacion_resumen"],
-        [8, "Empaque", "Cada anio queda en un Excel final autocontenido con matrices, multiplicadores y validaciones.", "output/matrices_insumo_producto"],
+    # Caso piloto
+    ws = wb.create_sheet("Caso_Brasil_2001")
+    sheet_title(ws, "Caso piloto: Brasil 2001", "Matriz reconstruida desde COU, con cierre menor documentado.")
+    neg_original = int((case["cierre"]["demanda_final_original"] < -1e-8).sum())
+    neg_final = int((case["cierre"]["demanda_final_conciliada"] < -1e-8).sum())
+    case_rows = [
+        ["Pais/anio", "Brasil 2001"],
+        ["Tipo", "Reconstruida desde COU, no descargada como MIP directa."],
+        ["Fuente base", "COU CEPAL Brasil base 2000, serie brasil_early."],
+        ["Sectores de la matriz completa", 51],
+        ["Productos del COU usados en formulas", len(products)],
+        ["Sectores visibles en el piloto", n],
+        ["Demanda final negativa antes del cierre menor", neg_original],
+        ["Demanda final negativa despues del cierre menor", neg_final],
+        ["Matriz previa", "Z_pre_conciliacion: resultado directo de D @ U."],
+        ["Matriz final", "Z_MIP: matriz posterior a conciliacion menor RAS."],
     ]
-    append_table(ws, 4, ["Paso", "Bloque", "Que se hace", "Evidencia"], steps, style)
-    style_sheet(ws, {1: 9, 2: 24, 3: 82, 4: 42})
+    next_row = append_table(ws, 4, ["Campo", "Valor"], case_rows, style)
+    notes = [[i + 1, note] for i, note in enumerate(case["notas"])]
+    append_table(ws, next_row, ["Nota del COU procesado", "Detalle"], notes, style)
+    style_sheet(ws, {1: 34, 2: 96})
 
-    # Brasil 2001 closure sample
-    ws = wb.create_sheet("Brasil_2001_cierre")
-    sheet_title(ws, "Brasil 2001: ejemplo de cierre menor", "La hoja compara demanda final original y final conciliada, preservando produccion y documentando ajuste.")
-    b_path = MIP_ROOT / "Brasil" / "MIP_Brasil_2001.xlsx"
-    ajuste = pd.read_excel(b_path, sheet_name="ajuste_cierre")
-    ajuste = ajuste.rename(columns={ajuste.columns[0]: "sector"})
-    focus = ajuste.sort_values("ajuste_demanda_final").head(8)
-    rows = focus[[
-        "sector",
-        "produccion_bruta_g",
-        "demanda_final_original",
-        "demanda_final_conciliada",
-        "ajuste_demanda_final",
-        "ventas_intermedias_original",
-        "ventas_intermedias_conciliadas",
-        "ajuste_ventas_intermedias",
-    ]].values.tolist()
+    # Datos COU completos para la muestra
+    ws = wb.create_sheet("Datos_COU")
+    sheet_title(ws, "Datos COU usados por el piloto", "Todos los productos quedan en columnas para que Z_pre = SUMPRODUCT(D, U) sea auditable.")
+    product_start_col = 2
+    product_end_col = product_start_col + len(products) - 1
+    product_end_letter = get_column_letter(product_end_col)
+    header_row = 4
+    v_start_row = 5
+    q_row = v_start_row + n + 1
+    d_label_row = q_row + 2
+    d_start_row = d_label_row + 1
+    u_label_row = d_start_row + n + 2
+    u_start_row = u_label_row + 1
+    y_row = u_start_row + n + 2
+
+    ws.cell(header_row, 1, "Producto")
+    ws.cell(header_row, 1).fill = style["header_fill"]
+    ws.cell(header_row, 1).font = style["header_font"]
+    for c, product in enumerate(products, start=product_start_col):
+        cell = ws.cell(header_row, c, product)
+        cell.fill = style["header_fill"]
+        cell.font = style["header_font"]
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.border = style["border"]
+
+    for i, sector in enumerate(sectors):
+        row = v_start_row + i
+        ws.cell(row, 1, f"V | {sector}")
+        for c, product in enumerate(products, start=product_start_col):
+            ws.cell(row, c, float(case["V"].loc[sector, product]))
+
+    ws.cell(q_row, 1, "q_producto = sum_i V[i,p] matriz completa")
+    for c, product in enumerate(products, start=product_start_col):
+        ws.cell(q_row, c, float(case["q"].loc[product]))
+
+    ws.cell(d_label_row, 1, "D[i,p] = V[i,p] / q[p]")
+    ws.cell(d_label_row, 1).font = Font(bold=True, color="173B73")
+    for i, sector in enumerate(sectors):
+        row = d_start_row + i
+        ws.cell(row, 1, f"D | {sector}")
+        v_row = v_start_row + i
+        for c in range(product_start_col, product_end_col + 1):
+            col = get_column_letter(c)
+            ws.cell(row, c, f"=IF({col}${q_row}=0,0,{col}{v_row}/{col}${q_row})")
+
+    ws.cell(u_label_row, 1, "U[p,j] transpuesta: comprador j en filas, productos p en columnas")
+    ws.cell(u_label_row, 1).font = Font(bold=True, color="173B73")
+    for i, sector in enumerate(sectors):
+        row = u_start_row + i
+        ws.cell(row, 1, f"U | {sector}")
+        for c, product in enumerate(products, start=product_start_col):
+            ws.cell(row, c, float(case["U_t"].loc[sector, product]))
+
+    ws.cell(y_row, 1, "y[p] = suma componentes demanda final por producto")
+    for c, product in enumerate(products, start=product_start_col):
+        ws.cell(y_row, c, float(case["y_product"].loc[product]))
+
+    for row in ws.iter_rows(min_row=4, max_row=y_row, max_col=product_end_col):
+        for cell in row:
+            if cell.value is not None:
+                cell.border = style["border"]
+                if isinstance(cell.value, (int, float)):
+                    cell.number_format = "#,##0.00"
+    ws.freeze_panes = "B5"
+    ws.sheet_view.showGridLines = False
+    ws.column_dimensions["A"].width = 42
+    for c in range(product_start_col, product_end_col + 1):
+        ws.column_dimensions[get_column_letter(c)].width = 13
+
+    # Paso 2: Z previa a cierre
+    ws = wb.create_sheet("Paso_2_Z_pre")
+    sheet_title(ws, "Paso 2: calcular Z_pre desde COU", "Para cada celda: Z_pre[i,j] = SUMPRODUCT(D[i,*], U[*,j]).")
+    calc_col = 2
+    stored_col = calc_col + n + 2
+    diff_col = stored_col + n + 2
+    z_header_row = 5
+    z_start_row = 6
+    for block_col, title in [(calc_col, "Z_pre formula"), (stored_col, "Z_pre guardada"), (diff_col, "Diferencia")]:
+        ws.cell(4, block_col, title)
+        ws.cell(4, block_col).font = Font(bold=True, color="173B73")
+        for j, sector in enumerate(sectors):
+            cell = ws.cell(z_header_row, block_col + j, sector)
+            cell.fill = style["header_fill"]
+            cell.font = style["header_font"]
+            cell.border = style["border"]
+    for i, sector_i in enumerate(sectors):
+        row = z_start_row + i
+        ws.cell(row, 1, sector_i)
+        d_row = d_start_row + i
+        for j, sector_j in enumerate(sectors):
+            u_row = u_start_row + j
+            c_calc = calc_col + j
+            c_stored = stored_col + j
+            c_diff = diff_col + j
+            calc_letter = get_column_letter(c_calc)
+            stored_letter = get_column_letter(c_stored)
+            ws.cell(row, c_calc, f"=SUMPRODUCT(Datos_COU!$B${d_row}:${product_end_letter}${d_row},Datos_COU!$B${u_row}:${product_end_letter}${u_row})")
+            ws.cell(row, c_stored, float(case["Z_pre"].loc[sector_i, sector_j]))
+            ws.cell(row, c_diff, f"={calc_letter}{row}-{stored_letter}{row}")
+    f_header = z_start_row + n + 3
+    f_rows = []
+    for i, sector in enumerate(sectors):
+        f_rows.append([
+            sector,
+            f"=SUMPRODUCT(Datos_COU!$B${d_start_row + i}:${product_end_letter}${d_start_row + i},Datos_COU!$B${y_row}:${product_end_letter}${y_row})",
+            float(case["cierre"].loc[sector, "demanda_final_original"]),
+            None,
+        ])
+    append_table(ws, f_header, ["Sector", "f_pre formula = D @ y", "f_pre guardada", "Diferencia"], f_rows, style)
+    for i in range(n):
+        row = f_header + 1 + i
+        ws.cell(row, 4, f"=B{row}-C{row}")
+    for row in ws.iter_rows(min_row=5, max_row=f_header + n + 1, max_col=diff_col + n):
+        for cell in row:
+            if cell.value is not None:
+                cell.border = style["border"]
+                if isinstance(cell.value, (int, float)):
+                    cell.number_format = "#,##0.0000"
+    style_sheet(ws, {1: 42})
+    for c in range(2, diff_col + n):
+        ws.column_dimensions[get_column_letter(c)].width = 14
+
+    # Paso 3: cierre menor y RAS
+    ws = wb.create_sheet("Paso_3_Cierre_RAS")
+    sheet_title(ws, "Paso 3: cierre menor documentado", "Se conserva g y sum_col(Z); RAS ajusta Z_pre para producir Z_MIP final.")
+    rows = []
+    for i, sector in enumerate(sectors):
+        rows.append([
+            sector,
+            float(case["cierre"].loc[sector, "produccion_bruta_g"]),
+            f"='Paso_2_Z_pre'!B{f_header + 1 + i}",
+            float(case["cierre"].loc[sector, "demanda_final_conciliada"]),
+            None,
+            float(case["cierre"].loc[sector, "ventas_intermedias_original"]),
+            float(case["cierre"].loc[sector, "ventas_intermedias_conciliadas"]),
+            None,
+            None,
+        ])
     append_table(
         ws,
         4,
-        [
-            "Sector",
-            "g",
-            "Demanda final original",
-            "Demanda final final",
-            "Ajuste f",
-            "Ventas Z original",
-            "Ventas Z final",
-            "Ajuste ventas Z",
-        ],
+        ["Sector", "g", "f_original", "f_final", "ajuste_f", "ventas_Z_pre", "ventas_Z_final", "ajuste_Z_ventas", "check_g-Z-f"],
         rows,
         style,
     )
-    style_sheet(ws, {1: 45, 2: 16, 3: 18, 4: 18, 5: 15, 6: 18, 7: 18, 8: 18})
+    for i in range(n):
+        row = 5 + i
+        ws.cell(row, 5, f"=D{row}-C{row}")
+        ws.cell(row, 8, f"=G{row}-F{row}")
+        ws.cell(row, 9, f"=B{row}-G{row}-D{row}")
+    constraints = [
+        ["Filas", "sum_row(Z_final) + f_final = g", "Columna check_g-Z-f debe ser cercana a cero."],
+        ["Columnas", "sum_col(Z_final) = sum_col(Z_pre)", "Asi no se mueve el valor agregado residual."],
+        ["Aplicacion", "Solo negativos pequenos y documentados", "Brasil 2001-2006; Uruguay 2016 por redondeo."],
+    ]
+    append_table(ws, 5 + n + 3, ["Restriccion", "Formula", "Lectura"], constraints, style)
+    style_sheet(ws, {1: 42, 2: 16, 3: 16, 4: 16, 5: 14, 6: 16, 7: 16, 8: 16, 9: 16})
 
-    # Uruguay 2017 alert
-    ws = wb.create_sheet("Uruguay_2017_alerta")
-    sheet_title(ws, "Uruguay 2017: alerta no conciliada", "Los negativos son materiales; se conserva la alerta mientras se busca Y fuente o una MIP directa 2017.")
-    u_path = MIP_ROOT / "Uruguay" / "MIP_Uruguay_2017.xlsx"
-    f_ury = pd.read_excel(u_path, sheet_name="f_demanda_final")
-    f_ury = f_ury.rename(columns={f_ury.columns[0]: "sector", f_ury.columns[1]: "demanda_final"})
-    g_ury = pd.read_excel(u_path, sheet_name="g_produccion")
-    g_ury = g_ury.rename(columns={g_ury.columns[0]: "sector", g_ury.columns[1]: "produccion_bruta_g"})
-    neg = f_ury[f_ury["demanda_final"] < -1e-8].merge(g_ury, on="sector", how="left")
-    neg["negativo_sobre_g"] = neg["demanda_final"] / neg["produccion_bruta_g"]
-    neg["decision"] = "No ajustar mecanicamente; revisar fuente COU/Y"
-    append_table(
-        ws,
-        4,
-        ["Sector", "Demanda final", "Produccion bruta g", "f/g", "Decision"],
-        neg[["sector", "demanda_final", "produccion_bruta_g", "negativo_sobre_g", "decision"]].values.tolist(),
-        style,
-    )
-    style_sheet(ws, {1: 46, 2: 18, 3: 18, 4: 12, 5: 46})
+    # Paso 4: A, Leontief y Ghosh desde Z final
+    ws = wb.create_sheet("Paso_4_A_L_Ghosh")
+    sheet_title(ws, "Paso 4: matrices derivadas desde Z final", "A y B se calculan con formulas; L se muestra como bloque de la inversa completa final.")
+    z_label_row = 4
+    z_header_row = 5
+    z_g_row = 6
+    z_start_row = 7
+    ws.cell(z_label_row, 1, "Z_MIP final")
+    ws.cell(z_label_row, 1).font = Font(bold=True, color="173B73")
+    for j, sector in enumerate(sectors, start=2):
+        ws.cell(z_header_row, j, sector)
+        ws.cell(z_header_row, j).fill = style["header_fill"]
+        ws.cell(z_header_row, j).font = style["header_font"]
+        ws.cell(z_g_row, j, float(case["g"].loc[sector]))
+    ws.cell(z_g_row, 1, "g comprador")
+    ws.cell(z_header_row, n + 3, "g vendedor")
+    ws.cell(z_header_row, n + 3).fill = style["header_fill"]
+    ws.cell(z_header_row, n + 3).font = style["header_font"]
+    for i, sector_i in enumerate(sectors):
+        row = z_start_row + i
+        ws.cell(row, 1, sector_i)
+        ws.cell(row, n + 3, float(case["g"].loc[sector_i]))
+        for j, sector_j in enumerate(sectors, start=2):
+            ws.cell(row, j, float(case["Z_final"].loc[sector_i, sector_j]))
+
+    a_label_row = z_start_row + n + 3
+    a_header_row = a_label_row + 1
+    a_start_row = a_header_row + 1
+    ws.cell(a_label_row, 1, "A_coef_tecnicos = Z[i,j] / g[j]")
+    ws.cell(a_label_row, 1).font = Font(bold=True, color="173B73")
+    for j, sector in enumerate(sectors, start=2):
+        ws.cell(a_header_row, j, sector)
+        ws.cell(a_header_row, j).fill = style["header_fill"]
+        ws.cell(a_header_row, j).font = style["header_font"]
+    for i, sector_i in enumerate(sectors):
+        row = a_start_row + i
+        z_row = z_start_row + i
+        ws.cell(row, 1, sector_i)
+        for j in range(2, n + 2):
+            col = get_column_letter(j)
+            ws.cell(row, j, f"=IF({col}${z_g_row}=0,0,{col}{z_row}/{col}${z_g_row})")
+
+    b_label_row = a_start_row + n + 3
+    b_header_row = b_label_row + 1
+    b_start_row = b_header_row + 1
+    ws.cell(b_label_row, 1, "B_ghosh = Z[i,j] / g[i]")
+    ws.cell(b_label_row, 1).font = Font(bold=True, color="173B73")
+    for j, sector in enumerate(sectors, start=2):
+        ws.cell(b_header_row, j, sector)
+        ws.cell(b_header_row, j).fill = style["header_fill"]
+        ws.cell(b_header_row, j).font = style["header_font"]
+    for i, sector_i in enumerate(sectors):
+        row = b_start_row + i
+        z_row = z_start_row + i
+        ws.cell(row, 1, sector_i)
+        for j in range(2, n + 2):
+            col = get_column_letter(j)
+            ws.cell(row, j, f"=IF(${get_column_letter(n + 3)}{z_row}=0,0,{col}{z_row}/${get_column_letter(n + 3)}{z_row})")
+
+    l_label_row = b_start_row + n + 3
+    l_header_row = l_label_row + 1
+    l_start_row = l_header_row + 1
+    ws.cell(l_label_row, 1, "L_leontief = (I - A)^-1, bloque tomado de la inversa completa")
+    ws.cell(l_label_row, 1).font = Font(bold=True, color="173B73")
+    for j, sector in enumerate(sectors, start=2):
+        ws.cell(l_header_row, j, sector)
+        ws.cell(l_header_row, j).fill = style["header_fill"]
+        ws.cell(l_header_row, j).font = style["header_font"]
+    for i, sector_i in enumerate(sectors):
+        row = l_start_row + i
+        ws.cell(row, 1, sector_i)
+        for j, sector_j in enumerate(sectors, start=2):
+            ws.cell(row, j, float(case["L"].loc[sector_i, sector_j]))
+    ws.cell(l_start_row + n + 1, 1, "Formula Excel sobre matriz completa")
+    ws.cell(l_start_row + n + 1, 2, "=MINVERSE(I - A)")
+    style_sheet(ws, {1: 42, n + 3: 14})
+    for c in range(2, n + 2):
+        ws.column_dimensions[get_column_letter(c)].width = 14
+
+    # Paso 5: simulador
+    ws = wb.create_sheet("Paso_5_Simulador")
+    sheet_title(ws, "Paso 5: simulador piloto de choque", "Choque de demanda final sobre sectores visibles: Delta g = L @ Delta f.")
+    headers = ["Sector", "g_base", "f_base", "shock_pct_editable", "Delta_f", "Delta_g_formula", "g_escenario", "Delta_g_control"]
+    start_row = 5
+    for c, h in enumerate(headers, 1):
+        cell = ws.cell(start_row, c, h)
+        cell.fill = style["header_fill"]
+        cell.font = style["header_font"]
+        cell.border = style["border"]
+    l_values = case["L"].to_numpy(dtype=float)
+    f_values = case["f"].to_numpy(dtype=float)
+    shock = np.array([0.05 if "Alimentos" in str(sector) else 0.0 for sector in sectors])
+    if not shock.any():
+        shock[0] = 0.05
+    delta_f = f_values * shock
+    delta_g = l_values @ delta_f
+    for i, sector in enumerate(sectors):
+        row = start_row + 1 + i
+        ws.cell(row, 1, sector)
+        ws.cell(row, 2, float(case["g"].loc[sector]))
+        ws.cell(row, 3, float(case["f"].loc[sector]))
+        ws.cell(row, 4, float(shock[i]))
+        ws.cell(row, 5, f"=C{row}*D{row}")
+        ws.cell(row, 6, f"=SUMPRODUCT($J{row}:$O{row},$E${start_row + 1}:$E${start_row + n})")
+        ws.cell(row, 7, f"=B{row}+F{row}")
+        ws.cell(row, 8, float(delta_g[i]))
+    ws.cell(4, 10, "Bloque L usado por el simulador")
+    ws.cell(4, 10).font = Font(bold=True, color="173B73")
+    for j, sector in enumerate(sectors, start=10):
+        ws.cell(start_row, j, sector)
+        ws.cell(start_row, j).fill = style["header_fill"]
+        ws.cell(start_row, j).font = style["header_font"]
+        ws.cell(start_row, j).border = style["border"]
+    for i, sector_i in enumerate(sectors):
+        row = start_row + 1 + i
+        for j, sector_j in enumerate(sectors, start=10):
+            ws.cell(row, j, float(case["L"].loc[sector_i, sector_j]))
+    for row in ws.iter_rows(min_row=start_row + 1, max_row=start_row + n, min_col=2, max_col=15):
+        for cell in row:
+            if cell.value is not None:
+                cell.number_format = "0.0000" if cell.column >= 10 else "#,##0.00"
+        ws.cell(row[2].row, 4).number_format = "0.0%"
+    for row in ws.iter_rows(min_row=start_row, max_row=start_row + n, max_col=15):
+        for cell in row:
+            if cell.value is not None:
+                cell.border = style["border"]
+                cell.alignment = Alignment(vertical="center", wrap_text=True)
+    chart = BarChart()
+    chart.title = "Impacto Delta g por sector visible"
+    chart.y_axis.title = "Produccion"
+    chart.x_axis.title = "Sector"
+    data = Reference(ws, min_col=6, min_row=start_row, max_row=start_row + n)
+    cats = Reference(ws, min_col=1, min_row=start_row + 1, max_row=start_row + n)
+    chart.add_data(data, titles_from_data=True)
+    chart.set_categories(cats)
+    chart.height = 7
+    chart.width = 14
+    ws.add_chart(chart, "A15")
+    style_sheet(ws, {1: 42, 2: 14, 3: 14, 4: 18, 5: 14, 6: 16, 7: 16, 8: 16})
+    for c in range(10, 16):
+        ws.column_dimensions[get_column_letter(c)].width = 13
 
     # Validation summary
     ws = wb.create_sheet("Validaciones")
@@ -690,87 +1000,19 @@ def generate_workbook(inventory: pd.DataFrame) -> Path:
     append_table(ws, 4, val_cols, validation[val_cols].replace({np.nan: ""}).values.tolist(), style)
     style_sheet(ws, {1: 18, 2: 10, 3: 12, 4: 20, 5: 20, 6: 18, 7: 18, 8: 20, 9: 18, 10: 18})
 
-    # Simulator pilot
-    ws = wb.create_sheet("Simulador_piloto")
-    sheet_title(ws, "Simulador piloto: choque de demanda", "Muestra reducida con Brasil 2001. En la version final se usara la matriz completa por pais/anio.")
-    sample = sample_matrix("Brasil", 2001, n=8)
-    sectors = sample["sectors"]
-    headers = ["Sector", "g_base", "f_base", "shock_pct_editable", "Delta_f", "Delta_g_formula", "g_escenario", "Delta_g_control_python"]
-    for c, h in enumerate(headers, 1):
-        cell = ws.cell(4, c, h)
-        cell.fill = style["header_fill"]
-        cell.font = style["header_font"]
-        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        cell.border = style["border"]
-
-    l_values = sample["L"].to_numpy(dtype=float)
-    f_values = sample["f"].to_numpy(dtype=float)
-    shock = np.array([0.05 if i == 0 else 0.0 for i in range(len(sectors))])
-    delta_f = f_values * shock
-    delta_g = l_values @ delta_f
-    for r, sector in enumerate(sectors, start=5):
-        i = r - 5
-        ws.cell(r, 1, sector)
-        ws.cell(r, 2, float(sample["g"].iloc[i]))
-        ws.cell(r, 3, float(sample["f"].iloc[i]))
-        ws.cell(r, 4, 0.05 if i == 0 else 0.0)
-        ws.cell(r, 5, f"=C{r}*D{r}")
-        ws.cell(r, 6, f"=SUMPRODUCT($N{r}:$U{r},$E$5:$E$12)")
-        ws.cell(r, 7, f"=B{r}+F{r}")
-        ws.cell(r, 8, float(delta_g[i]))
-        for c in range(1, 9):
-            ws.cell(r, c).border = style["border"]
-            ws.cell(r, c).alignment = Alignment(vertical="center", wrap_text=True)
-        ws.cell(r, 4).number_format = "0.0%"
-    ws["J4"] = "Matriz L muestral"
-    ws["J4"].font = Font(bold=True, color="173B73")
-    for c, sector in enumerate(sectors, start=14):
-        ws.cell(4, c, sector)
-        ws.cell(4, c).fill = style["header_fill"]
-        ws.cell(4, c).font = style["header_font"]
-        ws.cell(4, c).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        ws.cell(4, c).border = style["border"]
-    for r, sector in enumerate(sectors, start=5):
-        ws.cell(r, 13, sector)
-        ws.cell(r, 13).fill = PatternFill("solid", fgColor="EEF4FB")
-        ws.cell(r, 13).font = Font(bold=True, color="173B73")
-        ws.cell(r, 13).border = style["border"]
-        for c, value in enumerate(l_values[r - 5], start=14):
-            ws.cell(r, c, float(value))
-            ws.cell(r, c).number_format = "0.0000"
-            ws.cell(r, c).border = style["border"]
-    for row in ws.iter_rows(min_row=5, max_row=12, min_col=2, max_col=8):
-        for cell in row:
-            if cell.column != 4:
-                cell.number_format = "#,##0.00"
-    style_sheet(ws, {1: 36, 2: 14, 3: 14, 4: 16, 5: 14, 6: 16, 7: 16, 8: 18, 13: 36})
-    for col in range(14, 22):
-        ws.column_dimensions[get_column_letter(col)].width = 13
-
-    # Small chart for simulated delta_g
-    chart = BarChart()
-    chart.title = "Delta g por sector de muestra"
-    chart.y_axis.title = "Impacto"
-    chart.x_axis.title = "Sector"
-    data = Reference(ws, min_col=8, min_row=4, max_row=12)
-    cats = Reference(ws, min_col=1, min_row=5, max_row=12)
-    chart.add_data(data, titles_from_data=True)
-    chart.set_categories(cats)
-    chart.height = 7
-    chart.width = 14
-    ws.add_chart(chart, "A15")
-
     # Formulas sheet
     ws = wb.create_sheet("Formulas")
-    sheet_title(ws, "Formulas clave", "Resumen de identidades usadas por la reconstruccion, validacion y simulacion.")
+    sheet_title(ws, "Formulas clave", "Identidades que se implementan en el Excel piloto.")
     formulas = [
-        ["Market share", "D[i,p] = V[i,p] / q[p]", "Distribuye productos hacia industrias."],
-        ["Flujos intermedios", "Z = D @ U", "Convierte usos por producto en matriz industria x industria."],
-        ["Coeficientes tecnicos", "A = Z @ diag(g)^-1", "Cada columna se normaliza por produccion del comprador."],
-        ["Leontief", "L = (I - A)^-1", "Propaga choques de demanda final."],
-        ["Ghosh", "B = diag(g)^-1 @ Z; G = (I - B)^-1", "Propaga lectura de encadenamientos hacia adelante."],
-        ["Demanda final", "f = D @ Y", "Transforma demanda final por producto a industrias."],
-        ["Simulador", "Delta g = L @ Delta f", "Impacto estimado de un choque de demanda."],
+        ["Producto total", "q[p] = sum_i V[i,p]", "Produccion total por producto en el COU."],
+        ["Market share", "D[i,p] = V[i,p] / q[p]", "Participacion de cada industria en cada producto."],
+        ["Flujos previos", "Z_pre[i,j] = SUMPRODUCT(D[i,*], U[*,j])", "Operacion visible en Paso_2_Z_pre."],
+        ["Demanda final previa", "f_pre[i] = SUMPRODUCT(D[i,*], y[*])", "Transforma demanda final por producto a industrias."],
+        ["Cierre menor", "RAS(Z_pre) con filas g - f_final y columnas sum_col(Z_pre)", "Produce Z_MIP final sin mover el valor agregado residual."],
+        ["Coeficientes tecnicos", "A[i,j] = Z_final[i,j] / g[j]", "Cada columna se normaliza por produccion del comprador."],
+        ["Ghosh", "B[i,j] = Z_final[i,j] / g[i]", "Cada fila se normaliza por produccion del vendedor."],
+        ["Leontief", "L = (I - A)^-1", "La inversa se calcula sobre la matriz completa final."],
+        ["Simulador", "Delta g = L @ Delta f", "Impacto estimado de un choque de demanda final."],
     ]
     append_table(ws, 4, ["Bloque", "Formula", "Lectura"], formulas, style)
     style_sheet(ws, {1: 24, 2: 42, 3: 70})
