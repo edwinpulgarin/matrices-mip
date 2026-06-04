@@ -11,6 +11,8 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
     Uruguay/
   Codigo/
   Presentacion_MIP_CEPAL.html
+  Presentacion_Reconstruccion_MIP_Simulador.html
+  Prueba_Reconstruccion_MIP_Finalizadas.xlsx
   METODOLOGIA.md
   indice_matrices.xlsx
   validacion_matematica_mip.xlsx
@@ -25,6 +27,15 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
 
 Total de matrices: 34
 
+## Matrices directas vs reconstruidas
+
+El repositorio separa dos tipos de matrices:
+
+- **Directas:** la entidad fuente publica una MIP o matriz equivalente que se parsea, normaliza, valida y empaqueta. Incluye Argentina 1997, Mexico 2003/2008/2013/2018 y Uruguay 2016.
+- **Reconstruidas desde COU:** la fuente publica cuadros de oferta y utilizacion, y el pipeline reconstruye una MIP industria x industria bajo el supuesto de tecnologia de industria. Incluye Argentina 2004/2018-2021, Brasil 2000-2021 y Uruguay 2017.
+
+La presentacion `Presentacion_Reconstruccion_MIP_Simulador.html` explica esta separacion, el paso a paso de reconstruccion, los cierres menores documentados y la ruta del simulador de choques.
+
 ## Como navegar
 
 Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada archivo incluye hojas con matriz de flujos, coeficientes tecnicos, inversa de Leontief, Ghosh, produccion, valor agregado, consumo intermedio importado, multiplicadores y validaciones.
@@ -33,11 +44,23 @@ Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada archivo incl
 
 - Las matrices se trabajan a precios basicos cuando la fuente lo permite.
 - `Z` representa consumo intermedio nacional/domestico.
-- El consumo intermedio importado se conserva separado.
+- El ajuste intermedio fuera de `Z` se conserva separado. En MIP directas puede ser consumo intermedio importado; en COU reconstruidos con puente comprador-basico puede incluir importaciones, margenes, impuestos y diferencias de valoracion.
 - Las filas y columnas conservan nombres de sectores economicos.
 - Se validan estructura, alineacion sectorial, Leontief, Ghosh y cierres macro.
+- Los cierres menores de demanda final solo se aplican si son pequenos y quedan trazados en `ajuste_cierre` y `Z_pre_conciliacion`.
 
 Ver `METODOLOGIA.md` para el detalle completo.
+
+## Excel piloto de reconstruccion y simulador
+
+`Prueba_Reconstruccion_MIP_Finalizadas.xlsx` contiene:
+
+- inventario de matrices directas y reconstruidas;
+- paso a paso metodologico;
+- ejemplo de cierre menor en Brasil 2001;
+- alerta documentada de Uruguay 2017;
+- resumen de validaciones matematicas;
+- simulador piloto de choque de demanda con `Delta g = L @ Delta f`.
 
 ## Codigo
 

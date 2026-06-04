@@ -93,6 +93,21 @@ def _label_actividad(codigo, nombre='') -> str:
     return codigo
 
 
+def _codigo_match(codigo) -> list[str]:
+    """Variantes de codigo para empatar oferta y uso cuando cambia un cero final."""
+    codigo = _limpiar(codigo)
+    variantes = [codigo]
+    if re.fullmatch(r'\d+0', codigo or ''):
+        variantes.append(codigo[:-1])
+    return variantes
+
+
+def _serie_columna(df: pd.DataFrame, filas: list[int], col: int,
+                   etiquetas: list[str], nombre: str) -> pd.Series:
+    vals = pd.to_numeric(df.iloc[filas, col], errors='coerce').fillna(0)
+    return pd.Series(vals.values, index=etiquetas[:len(vals)], name=nombre)
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Parsers específicos por formato
 # ──────────────────────────────────────────────────────────────────────────────
@@ -154,11 +169,16 @@ def _parsear_2004(xls: pd.ExcelFile, anio: int, verbose: bool) -> COU:
     U = U_raw.copy()
 
     # ── Final demand Y ────────────────────────────────────────────────────────
-    # Cols after 'UI': CH, CP, EX, INV, VE, UF
-    FD_CODES = {'CH', 'CP', 'EX', 'INV', 'VE', 'UF'}
+    # Cols after 'UI': CH, CP, EX, INV, VE. UF is the aggregate final-use total,
+    # not an additional component.
+    FD_CODES = {'CH', 'CP', 'EX', 'INV', 'VE'}
     fd_cols = [j for j, v in enumerate(row3_u) if str(v).strip() in FD_CODES]
     fd_labels = [str(row3_u.iloc[j]).strip() for j in fd_cols]
     Y = _extraer_submatriz(df_u, prod_rows_u, fd_cols, prod_labels_u, fd_labels)
+
+    demanda_col = next((j for j, v in enumerate(row3_u) if str(v).strip() == 'DEMANDA'), None)
+    demanda_total_pc = _serie_columna(df_u, prod_rows_u, demanda_col, prod_labels_u,
+                                      'demanda_total_pc') if demanda_col is not None else None
 
     # ── Imports M ─────────────────────────────────────────────────────────────
     # Col 3 in U = IMPO
@@ -187,8 +207,15 @@ def _parsear_2004(xls: pd.ExcelFile, anio: int, verbose: bool) -> COU:
         print(f"  2004: V={V.shape}, U={U.shape}, Y={Y.shape}, "
               f"W={len(W)} act, M={len(M)} prod")
 
-    return COU(pais='argentina', anio=anio, moneda='ARS', unidad='miles',
-               V=V, U=U, Y=Y, W=W.to_frame().T, M=M)
+    cou = COU(pais='argentina', anio=anio, moneda='ARS', unidad='miles',
+              V=V, U=U, Y=Y, W=W.to_frame().T, M=M)
+    if demanda_total_pc is not None:
+        q_dom = V.sum(axis=0).reindex(demanda_total_pc.index).fillna(0)
+        cou.demanda_total_pc = demanda_total_pc
+        cou.factor_domestico_pb = q_dom.div(demanda_total_pc.replace(0, np.nan)).fillna(0)
+        cou.notas.append('Y fuente excluye UF porque UF es total de utilizacion final.')
+        cou.notas.append('Factor domestico/precios basicos calculado como OPB/DEMANDA por producto.')
+    return cou
 
 
 def _parsear_2018(xls: pd.ExcelFile, anio: int, verbose: bool) -> COU:
@@ -233,7 +260,14 @@ def _parsear_2018_gen(xls: pd.ExcelFile, hoja_v: str, hoja_u: str,
     row4_u = df_u.iloc[4]
     act_cols_u = _identificar_cols_actividad(row4_u)
     act_codes_u = [str(df_u.iloc[4, j]).strip() for j in act_cols_u]
-    act_labels_u = [label_by_code.get(c, c) for c in act_codes_u]
+    act_labels_u = []
+    for c in act_codes_u:
+        label = None
+        for variante in _codigo_match(c):
+            label = label_by_code.get(variante)
+            if label is not None:
+                break
+        act_labels_u.append(label if label is not None else c)
 
     fila_total_u = next((i for i in range(5, len(df_u))
                          if str(df_u.iloc[i, 0]).strip().lower() == 'total'), 228)
@@ -257,15 +291,23 @@ def _parsear_2018_gen(xls: pd.ExcelFile, hoja_v: str, hoja_u: str,
         fd_cols = list(range(ui_col + 1, len(row4_u)))
         # Exclude trailing empty/DEMANDA
         fd_cols = [j for j in fd_cols
-                   if str(row4_u.iloc[j]).strip() not in ('', 'nan', 'DEMANDA', 'DEMANDA TOTAL')]
+                   if str(row4_u.iloc[j]).strip() not in ('', 'nan', 'UF', 'DEMANDA', 'DEMANDA TOTAL')]
         fd_labels = [str(row4_u.iloc[j]).strip() for j in fd_cols]
         Y = _extraer_submatriz(df_u, prod_rows_u, fd_cols, prod_labels_u, fd_labels)
     else:
         Y = pd.DataFrame(0.0, index=prod_labels_u, columns=['demanda_final'])
 
+    demanda_col = next((j for j, v in enumerate(row4_u) if str(v).strip() == 'DEMANDA'), None)
+    demanda_total_pc = _serie_columna(df_u, prod_rows_u, demanda_col, prod_labels_u,
+                                      'demanda_total_pc') if demanda_col is not None else None
+
     # ── Imports M ─────────────────────────────────────────────────────────────
-    # In 2018, imports are not separated in a single column (merged into U at purchaser prices)
-    M = pd.Series(0.0, index=prod_labels_u, name='importaciones')
+    impo_col = next((j for j, v in enumerate(row4_v) if str(v).strip() == 'IMPO'), None)
+    if impo_col is not None:
+        M = _serie_columna(df_v, prod_rows_v, impo_col, prod_labels_v, 'importaciones')
+        M = M.reindex(prod_labels_u).fillna(0)
+    else:
+        M = pd.Series(0.0, index=prod_labels_u, name='importaciones')
 
     # ── Value added W ─────────────────────────────────────────────────────────
     fila_vab = next((i for i in range(fila_total_u, min(fila_total_u+10, len(df_u)))
@@ -282,8 +324,15 @@ def _parsear_2018_gen(xls: pd.ExcelFile, hoja_v: str, hoja_u: str,
         print(f"  2018: V={V.shape}, U={U.shape}, Y={Y.shape}, "
               f"W={len(W)} act, M={len(M)} prod")
 
-    return COU(pais='argentina', anio=anio, moneda='ARS', unidad='miles',
-               V=V, U=U, Y=Y, W=W.to_frame().T, M=M)
+    cou = COU(pais='argentina', anio=anio, moneda='ARS', unidad='miles',
+              V=V, U=U, Y=Y, W=W.to_frame().T, M=M)
+    if demanda_total_pc is not None:
+        q_dom = V.sum(axis=0).reindex(demanda_total_pc.index).fillna(0)
+        cou.demanda_total_pc = demanda_total_pc
+        cou.factor_domestico_pb = q_dom.div(demanda_total_pc.replace(0, np.nan)).fillna(0)
+        cou.notas.append('Y fuente excluye UF porque UF es total de utilizacion final.')
+        cou.notas.append('Factor domestico/precios basicos calculado como OPB/DEMANDA por producto.')
+    return cou
 
 
 # ──────────────────────────────────────────────────────────────────────────────

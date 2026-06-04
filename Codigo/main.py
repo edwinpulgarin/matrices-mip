@@ -37,7 +37,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.parsers import argentina, argentina_mip97, brasil, mexico, uruguay
 from src.parsers import mexico_mip, uruguay_mip, uruguay_cou, brasil_early
-from src.cou_to_mip import sut_a_iot_industria, verificar_leontief
+from src.cou_to_mip import sut_a_iot_industria, verificar_leontief, ras
 from src.multiplicadores import tabla_multiplicadores_completa, clasificar_sectores
 
 # ── Configuración por país ────────────────────────────────────────────────────
@@ -119,6 +119,13 @@ CONFIG = {
     },
 }
 
+CONCILIACION_CIERRE_MENOR = {
+    # Negativos pequenos y concentrados encontrados despues de corregir parsers.
+    # Se concilian con RAS para preservar g y totales de columna de Z.
+    'brasil_early': {'max_rel_g': 0.02, 'descripcion': 'Brasil 2000-2009: cierre menor de demanda final'},
+    'uruguay': {'max_rel_g': 0.001, 'descripcion': 'Uruguay 2016: redondeo de MIP directa BCU'},
+}
+
 
 def encontrar_archivo(carpeta: Path, anio: int, exts: list) -> Path | None:
     """Busca el archivo de COU para un año dado, probando extensiones."""
@@ -136,7 +143,10 @@ def preparar_cou_nacional(cou):
     Normaliza un COU para construir una MIP domestica:
     - U queda como consumo intermedio nacional/domestico.
     - U_importada conserva el consumo intermedio importado, explicito o estimado.
-    - Y se recalcula como demanda final domestica residual para cerrar q = U + Y.
+    - Si la fuente trae un puente de precios, U e Y se convierten con ese factor
+      y se conserva la demanda final fuente depurada.
+    - Solo se usa demanda final residual como fallback o para productos sin uso
+      comprador publicado pero con produccion domestica positiva.
     """
     productos = [p for p in cou.V.columns if p in cou.U.index]
     industrias = [a for a in cou.V.index if a in cou.U.columns]
@@ -144,29 +154,74 @@ def preparar_cou_nacional(cou):
     U_total = cou.U.reindex(index=productos, columns=industrias).fillna(0).clip(lower=0)
 
     notas = list(getattr(cou, 'notas', []))
-    ya_nacional = any('U usa solo consumo intermedio nacional' in str(n) for n in notas)
-    if getattr(cou, 'U_importada', None) is not None:
-        U_importada = cou.U_importada.reindex(index=productos, columns=industrias).fillna(0).clip(lower=0)
-        U_nacional = U_total if ya_nacional else (U_total - U_importada).clip(lower=0)
-        notas.append('CI importado separado desde matriz explicita de la fuente.')
-    else:
-        M = cou.M.reindex(productos).fillna(0) if cou.M is not None else pd.Series(0.0, index=productos)
-        q_dom = cou.V.sum(axis=0).reindex(productos).fillna(0)
-        oferta_total = (q_dom + M).replace(0, np.nan)
-        share_importado = (M / oferta_total).fillna(0).clip(lower=0, upper=0.95)
-        U_importada = U_total.mul(share_importado, axis=0)
-        U_nacional = (U_total - U_importada).clip(lower=0)
-        if float(M.sum()) > 0:
-            notas.append('CI importado estimado por producto con participacion M/(produccion domestica+M).')
-        else:
-            notas.append('Sin apertura de importaciones intermedias en la fuente; CI importado se deja en cero.')
-
     q_dom = cou.V.sum(axis=0).reindex(productos).fillna(0)
-    cou.U = U_nacional
-    cou.U_importada = U_importada
-    cou.Y = (q_dom - U_nacional.sum(axis=1)).to_frame('demanda_final_domestica_residual')
+    factor_domestico_pb = getattr(cou, 'factor_domestico_pb', None)
+
+    if factor_domestico_pb is not None:
+        factor = factor_domestico_pb.reindex(productos).fillna(0).clip(lower=0)
+        U_nacional = U_total.mul(factor, axis=0)
+        ajuste_intermedio = U_total - U_nacional
+        Y_fuente = cou.Y.reindex(index=productos).fillna(0) if cou.Y is not None else pd.DataFrame(
+            0.0, index=productos, columns=['demanda_final_fuente']
+        )
+        Y_domestica = Y_fuente.mul(factor, axis=0)
+
+        demanda_total_pc = getattr(cou, 'demanda_total_pc', None)
+        if demanda_total_pc is not None:
+            demanda_total_pc = demanda_total_pc.reindex(productos).fillna(0)
+            sin_uso_pc = (demanda_total_pc.abs() <= 1e-8) & (q_dom > 1e-8)
+        else:
+            sin_uso_pc = pd.Series(False, index=productos)
+
+        # Algunos productos de margen/valoracion tienen produccion domestica,
+        # pero no aparecen como fila de uso a precios comprador. En esos casos
+        # el residual explicito cierra el producto sin alterar Z.
+        if sin_uso_pc.any():
+            residual = q_dom - U_nacional.sum(axis=1)
+            Y_domestica.loc[sin_uso_pc, :] = 0
+            Y_domestica.loc[sin_uso_pc, 'ajuste_residual_sin_uso_pc'] = residual.loc[sin_uso_pc]
+
+        cou.U = U_nacional
+        cou.U_importada = ajuste_intermedio
+        cou.Y = Y_domestica
+        notas.append('U e Y se convierten a base domestica/precios basicos con factor publicado por producto.')
+        notas.append('Y conserva componentes fuente depurados; no se reemplaza por residual general.')
+    else:
+        ya_nacional = any('U usa solo consumo intermedio nacional' in str(n) for n in notas)
+        if getattr(cou, 'U_importada', None) is not None:
+            U_importada = cou.U_importada.reindex(index=productos, columns=industrias).fillna(0).clip(lower=0)
+            U_nacional = U_total if ya_nacional else (U_total - U_importada).clip(lower=0)
+            notas.append('CI importado separado desde matriz explicita de la fuente.')
+        else:
+            M = cou.M.reindex(productos).fillna(0) if cou.M is not None else pd.Series(0.0, index=productos)
+            oferta_total = (q_dom + M.abs()).replace(0, np.nan)
+            share_importado = (M.abs() / oferta_total).fillna(0).clip(lower=0, upper=0.95)
+            U_importada = U_total.mul(share_importado, axis=0)
+            U_nacional = (U_total - U_importada).clip(lower=0)
+            if float(M.abs().sum()) > 0:
+                notas.append('CI importado estimado por producto con participacion abs(M)/(produccion domestica+abs(M)).')
+            else:
+                notas.append('Sin apertura de importaciones intermedias en la fuente; CI importado se deja en cero.')
+
+        cou.U = U_nacional
+        cou.U_importada = U_importada
+        if cou.Y is not None and not cou.Y.empty:
+            # Fallback conservador: si no hay puente de precios, se mantiene Y fuente
+            # cuando su balance por producto es compatible; si no, se usa residual.
+            Y_fuente = cou.Y.reindex(index=productos).fillna(0)
+            balance_fuente = q_dom - U_nacional.sum(axis=1) - Y_fuente.sum(axis=1)
+            if balance_fuente.abs().max() <= max(1.0, float(q_dom.max()) * 1e-6):
+                cou.Y = Y_fuente
+                notas.append('Y fuente conservada: balance compatible con U nacional y produccion domestica.')
+            else:
+                cou.Y = (q_dom - U_nacional.sum(axis=1)).to_frame('demanda_final_domestica_residual')
+                notas.append('Y fuente no compatible sin puente de precios; se usa residual documentado.')
+        else:
+            cou.Y = (q_dom - U_nacional.sum(axis=1)).to_frame('demanda_final_domestica_residual')
+
+    U_importada = cou.U_importada
     cou.W = cou.W.reindex(columns=industrias).fillna(0) if cou.W is not None else pd.DataFrame(
-        [cou.V.sum(axis=1) - U_nacional.sum(axis=0) - U_importada.sum(axis=0)],
+        [cou.V.sum(axis=1) - cou.U.sum(axis=0) - U_importada.sum(axis=0)],
         index=['valor_agregado_residual'],
         columns=industrias,
     )
@@ -177,6 +232,109 @@ def preparar_cou_nacional(cou):
     notas.append('Chequeo VA: g = CI nacional + CI importado + valor agregado.')
     cou.notas = notas
     return cou
+
+
+def recalcular_matrices_desde_Z(mip: dict) -> dict:
+    """Recalcula A y L manteniendo Z y g."""
+    Z = mip['Z'].astype(float)
+    g = mip['g'].reindex(Z.index).fillna(0).astype(float)
+    g_safe = g.copy()
+    g_safe[g_safe == 0] = 1
+
+    A_arr = Z.to_numpy(dtype=float) / g_safe.to_numpy(dtype=float)[np.newaxis, :]
+    mip['A'] = pd.DataFrame(A_arr, index=Z.index, columns=Z.columns)
+
+    I = np.eye(len(Z))
+    try:
+        L_arr = np.linalg.inv(I - A_arr)
+    except np.linalg.LinAlgError:
+        L_arr = np.linalg.pinv(I - A_arr)
+    mip['L'] = pd.DataFrame(L_arr, index=Z.index, columns=Z.columns)
+    return mip
+
+
+def conciliar_demanda_final_menor(mip: dict, pais: str, anio: int) -> dict:
+    """
+    Corrige cierres negativos pequenos y aprobados:
+    - fija g;
+    - conserva totales de columna de Z, por tanto no mueve W residual;
+    - redistribuye el cierre negativo sobre sectores con demanda final positiva;
+    - ajusta Z por RAS y recalcula A/L.
+
+    No se aplica a negativos materiales ni a paises no incluidos en
+    CONCILIACION_CIERRE_MENOR.
+    """
+    regla = CONCILIACION_CIERRE_MENOR.get(pais)
+    if regla is None:
+        return mip
+
+    Z = mip['Z'].astype(float).copy()
+    g = mip['g'].reindex(Z.index).fillna(0).astype(float)
+    f = mip.get('f_ind', g - Z.sum(axis=1)).reindex(Z.index).fillna(0).astype(float)
+
+    neg_mask = f < -1e-8
+    if not neg_mask.any():
+        return mip
+
+    rel_neg = (-f[neg_mask] / g[neg_mask].replace(0, np.nan)).replace([np.inf, -np.inf], np.nan).fillna(np.inf)
+    if float(rel_neg.max()) > float(regla['max_rel_g']):
+        mip['ajuste_cierre'] = pd.DataFrame({
+            'sector': f.index,
+            'demanda_final_original': f.values,
+            'demanda_final_conciliada': f.values,
+            'ajuste_demanda_final': 0.0,
+            'estado': 'no_aplicado_negativo_material',
+        }).set_index('sector')
+        return mip
+
+    delta = float(-f[neg_mask].sum())
+    elegibles = (f > 1e-8) & (Z.sum(axis=1) > 1e-8)
+    base_redistribucion = float(f[elegibles].sum())
+    if delta <= 0 or base_redistribucion <= delta:
+        return mip
+
+    f_original = f.copy()
+    f_adj = f.copy()
+    f_adj[neg_mask] = 0.0
+    f_adj[elegibles] = f_adj[elegibles] - delta * (f[elegibles] / base_redistribucion)
+
+    if (f_adj < -1e-8).any():
+        return mip
+
+    row_targets = (g - f_adj).clip(lower=0)
+    col_targets = Z.sum(axis=0).reindex(Z.columns).fillna(0)
+    diff = float(row_targets.sum() - col_targets.sum())
+    if abs(diff) > 1e-6:
+        # Ajuste numerico sobre el mayor row target para igualar masas RAS.
+        idx = row_targets.idxmax()
+        row_targets.loc[idx] = row_targets.loc[idx] - diff
+
+    Z_adj_arr = ras(
+        Z.to_numpy(dtype=float),
+        row_targets.to_numpy(dtype=float),
+        col_targets.to_numpy(dtype=float),
+        max_iter=2000,
+        tol=1e-7,
+    )
+    Z_adj = pd.DataFrame(Z_adj_arr, index=Z.index, columns=Z.columns)
+
+    mip['Z_original_pre_conciliacion'] = Z
+    mip['f_ind_original_pre_conciliacion'] = f_original
+    mip['Z'] = Z_adj
+    mip['f_ind'] = f_adj
+    mip = recalcular_matrices_desde_Z(mip)
+
+    mip['ajuste_cierre'] = pd.DataFrame({
+        'demanda_final_original': f_original,
+        'demanda_final_conciliada': f_adj,
+        'ajuste_demanda_final': f_adj - f_original,
+        'ventas_intermedias_original': Z.sum(axis=1),
+        'ventas_intermedias_conciliadas': Z_adj.sum(axis=1),
+        'ajuste_ventas_intermedias': Z_adj.sum(axis=1) - Z.sum(axis=1),
+        'produccion_bruta_g': g,
+        'regla': regla['descripcion'],
+    })
+    return mip
 
 
 def procesar_pais_anio(pais: str, anio: int, cfg: dict,
@@ -229,6 +387,7 @@ def procesar_pais_anio(pais: str, anio: int, cfg: dict,
             # Calcular f_ind (demanda final sectorial) para verificación.
             # Se conserva el signo para que las validaciones muestren desbalances.
             mip['f_ind'] = mip['g'] - mip['Z'].sum(axis=1)
+            mip = conciliar_demanda_final_menor(mip, pais, anio)
 
             ok = verificar_leontief(mip)
 
@@ -297,6 +456,7 @@ def procesar_pais_anio(pais: str, anio: int, cfg: dict,
             U_importada=cou.U_importada,
             ajustar_ras=False
         )
+        mip = conciliar_demanda_final_menor(mip, pais, anio)
 
         # ── 3. Verificar ──────────────────────────────────────────────────────
         ok = verificar_leontief(mip)
@@ -360,6 +520,10 @@ def guardar_mip_directo(pais: str, anio: int, mip: dict,
             mip['f_ind'].to_frame('demanda_final').to_excel(writer, sheet_name='demanda_final')
         if 'M_intermedia_ind' in mip:
             mip['M_intermedia_ind'].to_frame('ci_importado').to_excel(writer, sheet_name='ci_importado')
+        if 'ajuste_cierre' in mip:
+            mip['ajuste_cierre'].to_excel(writer, sheet_name='ajuste_cierre')
+        if 'Z_original_pre_conciliacion' in mip:
+            mip['Z_original_pre_conciliacion'].to_excel(writer, sheet_name='Z_pre_conciliacion')
         _diagnosticos_mip(mip).to_excel(writer, sheet_name='diagnosticos_macro')
 
     ruta_mult = out_tab / f"multiplicadores_{pais}_{anio}.xlsx"
@@ -384,6 +548,10 @@ def guardar_resultados(pais: str, anio: int, mip: dict,
         mip['W_total'].to_frame('valor_agregado').to_excel(writer, sheet_name='valor_agregado')
         mip['f_ind'].to_frame('demanda_final').to_excel(writer, sheet_name='demanda_final')
         mip['M_intermedia_ind'].to_frame('ci_importado').to_excel(writer, sheet_name='ci_importado')
+        if 'ajuste_cierre' in mip:
+            mip['ajuste_cierre'].to_excel(writer, sheet_name='ajuste_cierre')
+        if 'Z_original_pre_conciliacion' in mip:
+            mip['Z_original_pre_conciliacion'].to_excel(writer, sheet_name='Z_pre_conciliacion')
         _diagnosticos_mip(mip).to_excel(writer, sheet_name='diagnosticos_macro')
 
     # Tabla de multiplicadores

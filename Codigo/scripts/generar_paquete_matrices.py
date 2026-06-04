@@ -77,6 +77,10 @@ def read_processed(path: Path) -> dict:
         data["Mci"] = pd.Series(0.0, index=data["Z"].index, name="ci_importado")
     if "Z_importada" in sheets:
         data["Z_m"] = sheets["Z_importada"].apply(pd.to_numeric, errors="coerce").fillna(0)
+    if "ajuste_cierre" in sheets:
+        data["ajuste_cierre"] = sheets["ajuste_cierre"]
+    if "Z_pre_conciliacion" in sheets:
+        data["Z_pre_conciliacion"] = sheets["Z_pre_conciliacion"].apply(pd.to_numeric, errors="coerce").fillna(0)
     return data
 
 
@@ -151,7 +155,7 @@ def compute_extended(data: dict) -> dict:
         "compras_intermedias_colsum_Z": compras_col,
         "ventas_intermedias_rowsum_Z": ventas_row,
         "demanda_final_f": f,
-        "consumo_intermedio_importado": Mci,
+        "ajuste_intermedio_no_basico": Mci,
         "valor_agregado_W": W,
         "valor_agregado_residual_g_menos_compras_menos_importado": va_residual,
         "demanda_final_residual_g_menos_ventas": fd_residual,
@@ -168,7 +172,7 @@ def compute_extended(data: dict) -> dict:
         "encadenamiento_ghosh_colsum": matrix_from_values(G_values, sectors, sectors).sum(axis=0),
         "produccion_bruta_g": g,
         "valor_agregado_W": W,
-        "consumo_intermedio_importado": Mci,
+        "ajuste_intermedio_no_basico": Mci,
     })
 
     validation_rows = [
@@ -291,7 +295,7 @@ def write_year_file(path: Path, out_path: Path):
         ("archivo_origen", str(path.relative_to(ROOT))),
         ("descripcion_Z", "Matriz insumo-producto / flujos intermedios"),
         ("descripcion_Z", "Z contiene solo consumo intermedio nacional/domestico cuando la fuente permite separarlo o estimarlo."),
-        ("descripcion_CI_importado", "Consumo intermedio importado fuera de Z; cierre VA: g = colsum(Z nacional) + CI importado + W."),
+        ("descripcion_ajuste_intermedio", "Ajuste intermedio fuera de Z. En MIP directas puede ser CI importado; en COU reconstruidos con puente de precios puede incluir importaciones, margenes, impuestos y diferencias de valoracion comprador-basico."),
         ("descripcion_A", "Coeficientes tecnicos de Leontief: A = Z * diag(g)^-1"),
         ("descripcion_L", "Inversa de Leontief: L = (I - A)^-1"),
         ("descripcion_B_ghosh", "Coeficientes de distribucion de Ghosh: B = diag(g)^-1 * Z"),
@@ -308,7 +312,11 @@ def write_year_file(path: Path, out_path: Path):
         sheet_safe(data["g"].to_frame("produccion_bruta"), writer, "g_produccion")
         sheet_safe(data["W"].to_frame("valor_agregado"), writer, "W_valor_agregado")
         sheet_safe(data["f"].to_frame("demanda_final"), writer, "f_demanda_final")
-        sheet_safe(data["Mci"].to_frame("ci_importado"), writer, "CI_importado")
+        sheet_safe(data["Mci"].to_frame("ajuste_intermedio_no_basico"), writer, "ajuste_intermedio")
+        if data.get("ajuste_cierre") is not None:
+            sheet_safe(data["ajuste_cierre"], writer, "ajuste_cierre")
+        if data.get("Z_pre_conciliacion") is not None:
+            sheet_safe(data["Z_pre_conciliacion"], writer, "Z_pre_conciliacion")
         if ext.get("Z_importada") is not None:
             sheet_safe(ext["Z_importada"], writer, "Z_importada")
         sheet_safe(ext["multiplicadores"], writer, "multiplicadores")

@@ -27,6 +27,8 @@ Unidad: millones de BRL a precios corrientes del año respectivo.
 
 import io
 import zipfile
+import re
+import unicodedata
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -84,6 +86,27 @@ def _extraer_matriz(df: pd.DataFrame, n_act: int = 51) -> pd.DataFrame:
     return bloque
 
 
+def _norm_header(v) -> str:
+    s = str(v).replace('\n', ' ').strip()
+    s = re.sub(r'\s+', ' ', s)
+    return ''.join(
+        ch for ch in unicodedata.normalize('NFKD', s.lower())
+        if not unicodedata.combining(ch)
+    )
+
+
+def _cols_demanda_final(df: pd.DataFrame) -> list[int]:
+    cols = []
+    for j in range(1, len(df.columns)):
+        h = str(df.iloc[3, j]).replace('\n', ' ').strip()
+        if h in ('', 'nan', 'None'):
+            break
+        if _norm_header(h) in ('demanda final', 'demanda total'):
+            continue
+        cols.append(j)
+    return cols
+
+
 def parsear(carpeta: Path, anio: int, verbose: bool = False) -> COU:
     """
     Lee el COU de Brasil para un año entre 2000-2009 (CEPAL base 2000).
@@ -121,6 +144,8 @@ def parsear(carpeta: Path, anio: int, verbose: bool = False) -> COU:
                 f"Disponibles: {disponibles[:4]} ...")
 
         df_oferta  = _leer_hoja(zf, oferta_name,  hoja='producao')
+        df_oferta_resumen = _leer_hoja(zf, oferta_name, hoja='oferta')
+        df_importacao = _leer_hoja(zf, oferta_name, hoja='importacao') if 'importacao' in pd.ExcelFile(io.BytesIO(zf.read(oferta_name)), engine='xlrd').sheet_names else None
         df_ci      = _leer_hoja(zf, demanda_name, hoja='CI')
         df_va      = _leer_hoja(zf, demanda_name, hoja='VA')
         df_demanda = _leer_hoja(zf, demanda_name, hoja='demanda')
@@ -132,6 +157,7 @@ def parsear(carpeta: Path, anio: int, verbose: bool = False) -> COU:
 
     # ── U: uso intermedio (productos × actividades) ──────────────────────────
     U = _extraer_matriz(df_ci)               # (107 prod × 51 act)
+    U.columns = V.index.tolist()
 
     # Alinear índices
     prods_comunes = [p for p in V.columns if p in U.index]
@@ -151,16 +177,18 @@ def parsear(carpeta: Path, anio: int, verbose: bool = False) -> COU:
             break
         y_rows.append(i)
         y_labels.append(s)
-    Y_bloque = df_demanda.iloc[y_rows, 1:].apply(pd.to_numeric, errors='coerce').fillna(0)
+    fd_cols = _cols_demanda_final(df_demanda)
+    Y_bloque = df_demanda.iloc[y_rows, fd_cols].apply(pd.to_numeric, errors='coerce').fillna(0)
     Y_bloque.index = y_labels
     Y = Y_bloque.reindex(prods_comunes).fillna(0)
-    Y.columns = [f'DF_{j}' for j in range(len(Y.columns))]
+    Y.columns = [str(df_demanda.iloc[3, j]).replace('\n', ' ').strip() for j in fd_cols]
 
     # ── W: Valor Agregado Bruto (primera fila de VA = "Valor adicionado bruto") ──
     # Fila 5 = "Valor adicionado bruto (PIB)"
     w_vals = df_va.iloc[5, 1:52].apply(pd.to_numeric, errors='coerce').fillna(0)
     act_labels_va = [str(df_va.iloc[3, j]).strip() for j in range(1, 52)]
     W_series = pd.Series(w_vals.values, index=act_labels_va, name='valor_agregado_bruto')
+    W_series.index = V_raw.columns[:len(W_series)]
     W_series = W_series.reindex(acts_comunes).fillna(0)
     W = W_series.to_frame('valor_agregado_bruto').T
     W.columns = acts_comunes
@@ -174,15 +202,52 @@ def parsear(carpeta: Path, anio: int, verbose: bool = False) -> COU:
             empleo = empleo.reindex(acts_comunes).fillna(0)
             break
 
-    # ── M: importaciones (no disponibles en este formato, zeros) ─────────────
+    # ── M: importaciones ─────────────────────────────────────────────────────
     M = pd.Series(0.0, index=prods_comunes, name='importaciones')
+    if df_importacao is not None:
+        imp_rows, imp_labels = [], []
+        for i in range(5, len(df_importacao)):
+            v = df_importacao.iloc[i, 0]
+            if pd.isna(v):
+                continue
+            s = str(v).strip()
+            if s.lower().startswith('total'):
+                break
+            imp_rows.append(i)
+            imp_labels.append(s)
+        # Excluye ajuste CIF/FOB; suma importaciones de bienes y servicios.
+        imp_vals = df_importacao.iloc[imp_rows, 2:4].apply(pd.to_numeric, errors='coerce').fillna(0).sum(axis=1)
+        M = pd.Series(imp_vals.values, index=imp_labels, name='importaciones').reindex(prods_comunes).fillna(0)
+
+    oferta_total_pc = None
+    if df_oferta_resumen is not None:
+        oferta_rows, oferta_labels = [], []
+        for i in range(5, len(df_oferta_resumen)):
+            v = df_oferta_resumen.iloc[i, 0]
+            if pd.isna(v):
+                continue
+            s = str(v).strip()
+            if s.lower().startswith('total'):
+                break
+            oferta_rows.append(i)
+            oferta_labels.append(s)
+        oferta_vals = pd.to_numeric(df_oferta_resumen.iloc[oferta_rows, 1], errors='coerce').fillna(0)
+        oferta_total_pc = pd.Series(oferta_vals.values, index=oferta_labels, name='oferta_total_pc').reindex(prods_comunes).fillna(0)
 
     n_act  = len(acts_comunes)
     n_prod = len(prods_comunes)
     if verbose:
         print(f"  {anio}: V={V.shape}, U={U.shape}, {n_act} act × {n_prod} prod")
 
-    return COU(
+    cou = COU(
         pais='brasil', anio=anio, moneda='BRL', unidad='millones',
         V=V, U=U, Y=Y, W=W, M=M, empleo=empleo,
     )
+    if oferta_total_pc is not None:
+        q_dom = cou.V.sum(axis=0).reindex(cou.V.columns).fillna(0)
+        cou.demanda_total_pc = oferta_total_pc.reindex(cou.V.columns).fillna(0)
+        cou.factor_domestico_pb = q_dom.div(cou.demanda_total_pc.replace(0, np.nan)).fillna(0)
+        cou.notas.append('Columnas agregadas Demanda final/Demanda total excluidas de Y.')
+        cou.notas.append('Etiquetas de U alineadas por posicion con V para evitar perdida por acentos.')
+        cou.notas.append('Factor domestico/precios basicos calculado como produccion domestica/oferta total a precio consumidor.')
+    return cou

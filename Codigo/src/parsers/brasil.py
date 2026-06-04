@@ -42,6 +42,14 @@ COL_DESC     = 1
 COL_DATOS    = 2
 
 
+def _limpiar_header(v) -> str:
+    return str(v).replace('\n', ' ').strip()
+
+
+def _es_total(v) -> bool:
+    return 'total' in _limpiar_header(v).lower()
+
+
 def _leer_hoja(xls: pd.ExcelFile, hoja: str) -> pd.DataFrame:
     return pd.read_excel(xls, sheet_name=hoja, header=None, dtype=str)
 
@@ -50,12 +58,14 @@ def _extraer_nombres_actividades(df: pd.DataFrame) -> list:
     """Lee los nombres de actividades de la fila FILA_ACT, desde COL_DATOS."""
     nombres = []
     for j in range(COL_DATOS, len(df.columns)):
-        v = str(df.iloc[FILA_ACT, j]).strip()
+        v = _limpiar_header(df.iloc[FILA_ACT, j])
         if v in ('', 'nan', 'None'):
+            break
+        if _es_total(v):
             break
         # El nombre puede ser "0191\nAgricultura..." — limpiamos el código
         # Mantenemos el código+nombre para trazabilidad
-        nombre = v.replace('\n', ' — ').strip()
+        nombre = str(df.iloc[FILA_ACT, j]).replace('\n', ' — ').strip()
         nombres.append(nombre)
     return nombres
 
@@ -145,6 +155,13 @@ def parsear(ruta_tab1: Path = None,
         imp_arr = _extraer_bloque(df_imp, n_prod, 1).flatten()
         M = pd.Series(imp_arr, index=noms_prod, name='importacoes')
 
+    # Oferta total a precios de consumidor para convertir usos a base domestica.
+    oferta_total_pc = None
+    if 'oferta' in xls1.sheet_names:
+        df_oferta = _leer_hoja(xls1, 'oferta')
+        oferta_arr = _extraer_bloque(df_oferta, n_prod, 1).flatten()
+        oferta_total_pc = pd.Series(oferta_arr, index=noms_prod, name='oferta_total_pc')
+
     # ── Hoja 'CI': matriz U de consumo intermediário ──────────────────────────
     df_ci = _leer_hoja(xls2, 'CI')
     noms_prod_u = _extraer_nombres_produtos(df_ci, n_prod + 10)  # margen extra
@@ -156,14 +173,19 @@ def parsear(ruta_tab1: Path = None,
     df_dem = _leer_hoja(xls2, 'demanda')
     # Nombres de componentes de demanda final (fila FILA_ACT, cols desde COL_DATOS)
     noms_fd = []
+    fd_cols = []
     for j in range(COL_DATOS, len(df_dem.columns)):
-        v = str(df_dem.iloc[FILA_ACT, j]).strip()
+        v = _limpiar_header(df_dem.iloc[FILA_ACT, j])
         if v in ('', 'nan', 'None'):
             break
-        noms_fd.append(v.replace('\n', ' ').strip())
+        if v.lower() in ('demanda final', 'demanda total'):
+            continue
+        noms_fd.append(v)
+        fd_cols.append(j)
 
     n_fd = len(noms_fd)
-    Y_arr = _extraer_bloque(df_dem, n_prod, n_fd)
+    Y_arr = df_dem.iloc[FILA_DATOS:FILA_DATOS + n_prod, fd_cols]
+    Y_arr = Y_arr.apply(pd.to_numeric, errors='coerce').fillna(0).values
     Y = pd.DataFrame(Y_arr,
                      index=noms_prod_u[:n_prod],
                      columns=noms_fd[:n_fd])
@@ -195,7 +217,7 @@ def parsear(ruta_tab1: Path = None,
         W = pd.DataFrame({'valor_adicionado': np.zeros(n_atv)},
                          index=noms_atv).T
 
-    return COU(
+    cou = COU(
         pais='brasil',
         anio=anio,
         moneda='BRL',
@@ -207,3 +229,12 @@ def parsear(ruta_tab1: Path = None,
         M=M,
         empleo=empleo,
     )
+    if oferta_total_pc is not None:
+        oferta_total_pc = oferta_total_pc.reindex(cou.V.columns).fillna(0)
+        q_dom = cou.V.sum(axis=0).reindex(cou.V.columns).fillna(0)
+        cou.demanda_total_pc = oferta_total_pc
+        cou.factor_domestico_pb = q_dom.div(oferta_total_pc.replace(0, np.nan)).fillna(0)
+        cou.notas.append('Columnas agregadas Demanda final/Demanda total excluidas de Y.')
+        cou.notas.append('Columna Total do produto excluida de actividades.')
+        cou.notas.append('Factor domestico/precios basicos calculado como produccion domestica/oferta total a precio consumidor.')
+    return cou
