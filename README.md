@@ -12,6 +12,7 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
   Codigo/
   Presentacion_MIP_CEPAL.html
   Presentacion_Reconstruccion_MIP_Simulador.html
+  Prueba_Reconstruccion_MIP_Dummies.xlsx
   Prueba_Reconstruccion_MIP_Finalizadas.xlsx
   METODOLOGIA.md
   indice_matrices.xlsx
@@ -52,6 +53,16 @@ Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada archivo incl
 Ver `METODOLOGIA.md` para el detalle completo.
 
 ## Excel piloto de reconstruccion y simulador
+
+Para una lectura introductoria, usar primero:
+
+```text
+Prueba_Reconstruccion_MIP_Dummies.xlsx
+```
+
+Este archivo toma un solo caso reconstruido, Brasil 2001, y explica una celda de `Z`, el cierre menor, el paso a `A/L` y un simulador sencillo de choque.
+
+La version tecnica es:
 
 `Prueba_Reconstruccion_MIP_Finalizadas.xlsx` contiene:
 
