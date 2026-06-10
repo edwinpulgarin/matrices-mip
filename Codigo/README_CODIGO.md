@@ -8,6 +8,8 @@ Esta carpeta contiene el codigo necesario para regenerar las matrices desde las 
 - `src/`: conversion COU a MIP, multiplicadores y parsers por pais.
 - `scripts/`: validacion, generacion de Excel y armado de paquetes.
 - `docs/`: metodologia del pipeline.
+- `FUENTES_EXTERNAS_HISTORICO.md`: fuentes oficiales revisadas, incorporadas y pendientes.
+- `INSTRUCCIONES_DESCARGA.md`: rutas esperadas y paginas oficiales para reponer `data/raw`.
 
 ## Uso basico
 
@@ -22,3 +24,5 @@ python scripts/crear_paquete_drive.py
 ```
 
 Nota: esta carpeta no incluye `data/raw` ni archivos fuente pesados. Es codigo y documentacion del pipeline.
+
+Para contexto de colaboracion, leer primero `../CLAUDE_HANDOFF.md`.

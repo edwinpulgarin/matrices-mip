@@ -15,6 +15,7 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
   Prueba_Reconstruccion_MIP_Dummies.xlsx
   Prueba_Reconstruccion_MIP_Finalizadas.xlsx
   METODOLOGIA.md
+  CLAUDE_HANDOFF.md
   indice_matrices.xlsx
   validacion_matematica_mip.xlsx
   auditoria_cobertura_sectores_mip.xlsx
@@ -40,7 +41,7 @@ La presentacion `Presentacion_Reconstruccion_MIP_Simulador.html` explica esta se
 
 ## Como navegar
 
-Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada archivo empieza con pestañas de trazabilidad:
+Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada archivo empieza con pestanas de trazabilidad:
 
 - `README`: metadatos del libro anual.
 - `fuente_resumen`: fuente utilizada, tipo de matriz y archivo COU procesado cuando aplica.
@@ -62,6 +63,16 @@ Luego vienen las hojas analiticas: `Z_MIP`, coeficientes tecnicos, inversa de Le
 - Un sector con `Z[i,i] = 0` no se elimina automaticamente. Si tiene produccion, valor agregado, ventas, compras o demanda final, debe conservarse; la diagonal cero solo indica que no registra autoconsumo sectorial.
 
 Ver `METODOLOGIA.md` para el detalle completo.
+
+## Handoff para colaboradores
+
+Para que otro colaborador o asistente entre al proyecto sin perder contexto, revisar primero:
+
+```text
+CLAUDE_HANDOFF.md
+```
+
+Ese archivo resume fuentes, matrices directas vs reconstruidas, comandos de reproduccion, validaciones vigentes, puntos sensibles y siguientes pasos.
 
 ## Excel piloto de reconstruccion y simulador
 
@@ -103,4 +114,4 @@ Resultado de la ultima corrida: 34/34 matrices con validacion estructural OK, no
 
 ## Nota de fuentes
 
-La base se construye a partir de fuentes oficiales nacionales y bases CEPAL disponibles localmente en el proyecto original. Revisar `METODOLOGIA.md` y `Codigo/FUENTES_EXTERNAS_HISTORICO.md` para trazabilidad.
+La base se construye a partir de fuentes oficiales nacionales y bases CEPAL disponibles localmente en el proyecto original. Revisar `METODOLOGIA.md`, `CLAUDE_HANDOFF.md` y `Codigo/FUENTES_EXTERNAS_HISTORICO.md` para trazabilidad.

@@ -1,6 +1,6 @@
 # Fuentes externas revisadas para ampliar historico MIP
 
-Fecha de revision: 2026-05-07
+Fecha de revision: 2026-06-10
 
 ## Argentina
 
@@ -30,6 +30,40 @@ la carpeta publica revisada ni en los ZIP CEPAL disponibles localmente.
   de MIPAr97, pero no una serie anual posterior comparable entre 2005 y 2017.
 - Recomendacion: mantener como brecha institucional. Requiere solicitud directa
 a INDEC/CEPAL o acceso a series internas no publicadas.
+
+## Brasil
+
+### Incorporado
+
+- CEPAL, repositorio COU/MIP:
+  - `https://statistics.cepal.org/repository/cou-mip/index.html?lang=es`
+  - Serie usada: Brasil base 2000, anos 2000-2009.
+  - Resultado integrado:
+    - `data/processed/brasil_early/cou_brasil_early_2000.xlsx` a `cou_brasil_early_2009.xlsx`
+    - `data/processed/brasil_early/mip_brasil_early_2000.xlsx` a `mip_brasil_early_2009.xlsx`
+    - `MIP/Brasil/MIP_Brasil_2000.xlsx` a `MIP_Brasil_2009.xlsx`
+- IBGE, Sistema de Contas Nacionais / Tabelas de Recursos e Usos:
+  - `https://www.ibge.gov.br/estatisticas/economicas/comercio/9052-sistema-de-contas-nacionais-brasil.html`
+  - Serie usada: TRU nivel 68, anos 2010-2021.
+  - Resultado integrado:
+    - `data/processed/brasil/cou_brasil_2010.xlsx` a `cou_brasil_2021.xlsx`
+    - `data/processed/brasil/mip_brasil_2010.xlsx` a `mip_brasil_2021.xlsx`
+    - `MIP/Brasil/MIP_Brasil_2010.xlsx` a `MIP_Brasil_2021.xlsx`
+- IBGE, Matriz de Insumo-Produto:
+  - `https://www.ibge.gov.br/estatisticas/economicas/contas-nacionais/9085-matriz-de-insumo-produto.html`
+  - Usada como referencia institucional/metodologica, no como fuente unica de toda la serie anual 2000-2021.
+
+### Decisiones metodologicas aplicadas
+
+- Brasil 2000-2009 se procesa como `brasil_early` porque usa estructura CEPAL/base 2000 y 51 actividades.
+- Brasil 2010-2021 se procesa como `brasil` porque usa estructura IBGE nivel 68.
+- En 2010-2021 se excluye `Total do produto` como actividad economica y se excluyen columnas agregadas `Demanda final` y `Demanda total` como componentes de demanda final.
+- En 2000-2009 se alinean actividades por posicion para conservar las 51 actividades de la fuente.
+- Los cierres menores aplicados en Brasil 2001-2006 quedan trazados en `ajuste_cierre` y `Z_pre_conciliacion`.
+
+### Pendiente
+
+- Brasil 2022+ no esta incorporado. Si se encuentra fuente detallada comparable, debe revisarse si conserva el mismo nivel de actividades, productos y puentes de valoracion antes de empalmarla.
 
 ## Mexico
 
