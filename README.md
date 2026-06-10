@@ -17,6 +17,7 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
   METODOLOGIA.md
   indice_matrices.xlsx
   validacion_matematica_mip.xlsx
+  auditoria_cobertura_sectores_mip.xlsx
 ```
 
 ## Cobertura
@@ -39,7 +40,16 @@ La presentacion `Presentacion_Reconstruccion_MIP_Simulador.html` explica esta se
 
 ## Como navegar
 
-Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada archivo incluye hojas con matriz de flujos, coeficientes tecnicos, inversa de Leontief, Ghosh, produccion, valor agregado, consumo intermedio importado, multiplicadores y validaciones.
+Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada archivo empieza con pestañas de trazabilidad:
+
+- `README`: metadatos del libro anual.
+- `fuente_resumen`: fuente utilizada, tipo de matriz y archivo COU procesado cuando aplica.
+- `cobertura_sectores`: compara sectores/actividades de fuente contra sectores de la MIP final.
+- `cobertura_productos`: aparece en matrices reconstruidas desde COU y documenta productos fuente.
+- `fuente_notas`: notas metodologicas de procesamiento.
+- `src_*`: hojas COU incorporadas solo cuando la matriz fue reconstruida desde COU.
+
+Luego vienen las hojas analiticas: `Z_MIP`, coeficientes tecnicos, inversa de Leontief, Ghosh, produccion, valor agregado, consumo intermedio importado, multiplicadores y validaciones.
 
 ## Criterios metodologicos
 
@@ -49,6 +59,7 @@ Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada archivo incl
 - Las filas y columnas conservan nombres de sectores economicos.
 - Se validan estructura, alineacion sectorial, Leontief, Ghosh y cierres macro.
 - Los cierres menores de demanda final solo se aplican si son pequenos y quedan trazados en `ajuste_cierre` y `Z_pre_conciliacion`.
+- Un sector con `Z[i,i] = 0` no se elimina automaticamente. Si tiene produccion, valor agregado, ventas, compras o demanda final, debe conservarse; la diagonal cero solo indica que no registra autoconsumo sectorial.
 
 Ver `METODOLOGIA.md` para el detalle completo.
 
@@ -84,9 +95,11 @@ El resumen de validacion esta en:
 ```text
 validacion_matematica_mip.xlsx
 validacion_matematica_mip.md
+auditoria_cobertura_sectores_mip.xlsx
+auditoria_cobertura_sectores_mip.md
 ```
 
-Resultado de la ultima corrida: 34/34 matrices con validacion estructural OK y nombres sectoriales OK.
+Resultado de la ultima corrida: 34/34 matrices con validacion estructural OK, nombres sectoriales OK y 0 sectores de fuente pendientes por incorporar en la MIP final.
 
 ## Nota de fuentes
 

@@ -14,7 +14,7 @@ OUT_DIR = ROOT / "output" / "tablas"
 
 
 def parse_country_year(path: Path) -> tuple[str, int] | None:
-    match = re.match(r"mip_(.+)_(\d{4})\.xlsx$", path.name)
+    match = re.match(r"mip_(.+)_(\d{4})(?:_[A-Za-z0-9]+)?\.xlsx$", path.name)
     if not match:
         return None
     return match.group(1), int(match.group(2))
