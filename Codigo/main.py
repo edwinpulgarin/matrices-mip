@@ -23,6 +23,15 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
+# La consola de Windows usa cp1252 por defecto y rompe al imprimir caracteres
+# como →, ─ o acentos. Forzamos UTF-8 para que el pipeline corra en cualquier
+# maquina sin depender de PYTHONIOENCODING.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding='utf-8')
+    except (AttributeError, ValueError):
+        pass
+
 warnings.filterwarnings('ignore', category=UserWarning)
 
 # ── Rutas ─────────────────────────────────────────────────────────────────────
@@ -51,7 +60,7 @@ CONFIG = {
     'argentina': {
         'parser'      : argentina.parsear,
         'carpeta'     : DATA_RAW / 'argentina',
-        'anios'       : list(range(2004, 2022)),
+        'anios'       : list(range(2004, 2023)),
         'moneda'      : 'ARS',
         'exts'        : ['.xls', '.xlsx'],
         'modo_brasil' : False,
