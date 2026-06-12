@@ -15,6 +15,9 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
   Prueba_Reconstruccion_MIP_Dummies.xlsx
   Prueba_Reconstruccion_MIP_Finalizadas.xlsx
   METODOLOGIA.md
+  Metodologia_MIP.tex      # documento metodologico (fuente LaTeX)
+  Metodologia_MIP.pdf      # documento metodologico (PDF)
+  Metodologia_MIP.docx     # documento metodologico (Word)
   CLAUDE_HANDOFF.md
   indice_matrices.xlsx
   validacion_matematica_mip.xlsx
@@ -23,19 +26,19 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
 
 ## Cobertura
 
-- Argentina: 6 matrices (1997-2021).
+- Argentina: 7 matrices (1997-2022).
 - Brasil: 22 matrices (2000-2021).
 - Mexico: 4 matrices (2003-2018).
-- Uruguay: 2 matrices (2016-2017).
+- Uruguay: 3 matrices (2012, 2016-2017).
 
-Total de matrices: 34
+Total de matrices: 36
 
 ## Matrices directas vs reconstruidas
 
 El repositorio separa dos tipos de matrices:
 
 - **Directas:** la entidad fuente publica una MIP o matriz equivalente que se parsea, normaliza, valida y empaqueta. Incluye Argentina 1997, Mexico 2003/2008/2013/2018 y Uruguay 2016.
-- **Reconstruidas desde COU:** la fuente publica cuadros de oferta y utilizacion, y el pipeline reconstruye una MIP industria x industria bajo el supuesto de tecnologia de industria. Incluye Argentina 2004/2018-2021, Brasil 2000-2021 y Uruguay 2017.
+- **Reconstruidas desde COU:** la fuente publica cuadros de oferta y utilizacion, y el pipeline reconstruye una MIP industria x industria bajo el supuesto de tecnologia de industria. Incluye Argentina 2004/2018-2022, Brasil 2000-2021 y Uruguay 2012/2017.
 
 La presentacion `Presentacion_Reconstruccion_MIP_Simulador.html` explica esta separacion, el paso a paso de reconstruccion, los cierres menores documentados y la ruta del simulador de choques.
 
@@ -110,7 +113,7 @@ auditoria_cobertura_sectores_mip.xlsx
 auditoria_cobertura_sectores_mip.md
 ```
 
-Resultado de la ultima corrida: 34/34 matrices con validacion estructural OK, nombres sectoriales OK y 0 sectores de fuente pendientes por incorporar en la MIP final.
+Resultado de la ultima corrida: 36/36 matrices con validacion estructural OK, nombres sectoriales OK y 0 sectores de fuente pendientes por incorporar en la MIP final.
 
 ## Nota de fuentes
 

@@ -1,10 +1,11 @@
-﻿pais,anio,archivo,fuente_excel
+pais,anio,archivo,fuente_excel
 Argentina,1997,MIP\Argentina\MIP_Argentina_1997.xlsx,output\matrices_insumo_producto\Argentina\MIP_Argentina_1997.xlsx
 Argentina,2004,MIP\Argentina\MIP_Argentina_2004.xlsx,output\matrices_insumo_producto\Argentina\MIP_Argentina_2004.xlsx
 Argentina,2018,MIP\Argentina\MIP_Argentina_2018.xlsx,output\matrices_insumo_producto\Argentina\MIP_Argentina_2018.xlsx
 Argentina,2019,MIP\Argentina\MIP_Argentina_2019.xlsx,output\matrices_insumo_producto\Argentina\MIP_Argentina_2019.xlsx
 Argentina,2020,MIP\Argentina\MIP_Argentina_2020.xlsx,output\matrices_insumo_producto\Argentina\MIP_Argentina_2020.xlsx
 Argentina,2021,MIP\Argentina\MIP_Argentina_2021.xlsx,output\matrices_insumo_producto\Argentina\MIP_Argentina_2021.xlsx
+Argentina,2022,MIP\Argentina\MIP_Argentina_2022.xlsx,output\matrices_insumo_producto\Argentina\MIP_Argentina_2022.xlsx
 Brasil,2000,MIP\Brasil\MIP_Brasil_2000.xlsx,output\matrices_insumo_producto\Brasil\MIP_Brasil_2000.xlsx
 Brasil,2001,MIP\Brasil\MIP_Brasil_2001.xlsx,output\matrices_insumo_producto\Brasil\MIP_Brasil_2001.xlsx
 Brasil,2002,MIP\Brasil\MIP_Brasil_2002.xlsx,output\matrices_insumo_producto\Brasil\MIP_Brasil_2002.xlsx
@@ -31,5 +32,6 @@ Mexico,2003,MIP\Mexico\MIP_Mexico_2003.xlsx,output\matrices_insumo_producto\Mexi
 Mexico,2008,MIP\Mexico\MIP_Mexico_2008.xlsx,output\matrices_insumo_producto\Mexico\MIP_Mexico_2008.xlsx
 Mexico,2013,MIP\Mexico\MIP_Mexico_2013.xlsx,output\matrices_insumo_producto\Mexico\MIP_Mexico_2013.xlsx
 Mexico,2018,MIP\Mexico\MIP_Mexico_2018.xlsx,output\matrices_insumo_producto\Mexico\MIP_Mexico_2018.xlsx
+Uruguay,2012,MIP\Uruguay\MIP_Uruguay_2012.xlsx,output\matrices_insumo_producto\Uruguay\MIP_Uruguay_2012.xlsx
 Uruguay,2016,MIP\Uruguay\MIP_Uruguay_2016.xlsx,output\matrices_insumo_producto\Uruguay\MIP_Uruguay_2016.xlsx
 Uruguay,2017,MIP\Uruguay\MIP_Uruguay_2017.xlsx,output\matrices_insumo_producto\Uruguay\MIP_Uruguay_2017.xlsx

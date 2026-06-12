@@ -1,0 +1,577 @@
+\documentclass[11pt,a4paper]{article}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  Metodología para la Reconstrucción de Matrices Insumo-Producto
+%  Argentina · Brasil · México · Uruguay
+%  Proyecto matrices-mip (edwinpulgarin/matrices-mip)
+%  Notación alineada al marco CEPAL "MIP Extendida Ambientalmente" (2025).
+% ─────────────────────────────────────────────────────────────────────────────
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!45!black,
+  urlcolor=blue!50!black,
+  citecolor=blue!45!black,
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small Metodología MIP — Argentina, Brasil, México, Uruguay}
+\lfoot{\small Proyecto \texttt{matrices-mip}}
+\rfoot{\small \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\matname}[1]{\textbf{#1}}
+
+\title{\textbf{Metodología para la Reconstrucción de Matrices\\
+Insumo-Producto a partir de Cuadros de Oferta y Utilización}\\[4pt]
+\large Argentina, Brasil, México y Uruguay}
+\author{Proyecto \texttt{matrices-mip}}
+\date{Corte de datos: junio de 2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+\begin{abstract}
+\noindent
+Este documento describe la metodología empleada para construir y reconstruir
+una serie de \textbf{36 matrices insumo-producto (MIP)} anuales para cuatro
+economías latinoamericanas —Argentina, Brasil, México y Uruguay—, así como las
+fuentes, supuestos, validaciones y límites del trabajo. La serie combina
+matrices \emph{directas} (publicadas por las oficinas nacionales de estadística)
+con matrices \emph{reconstruidas} a partir de Cuadros de Oferta y Utilización
+(COU/SUT) bajo el supuesto de tecnología de industria. La notación sigue el
+marco de la CEPAL para la \emph{Matriz Insumo-Producto Extendida Ambientalmente
+y Huella de Carbono} (2025), de modo que la serie quede lista para una eventual
+extensión ambiental. Se documentan el modelo de Leontief (encadenamientos hacia
+atrás), el modelo de Ghosh (encadenamientos hacia adelante), los multiplicadores
+de producción, la validación matemática y la auditoría de cobertura sectorial.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Objetivos y Alcance}
+% ═════════════════════════════════════════════════════════════════════════════
+
+\subsection{Objetivo general}
+Construir, documentar y validar una serie comparable de matrices insumo-producto
+(MIP) anuales para Argentina, Brasil, México y Uruguay, preservando la
+trazabilidad completa entre cada matriz publicada, su fuente original y las
+transformaciones aplicadas.
+
+\subsection{Objetivos específicos}
+\begin{enumerate}[leftmargin=1.6em]
+  \item Reconstruir matrices industria por industria a partir de los Cuadros de
+        Oferta y Utilización (COU) cuando la oficina nacional no publica una MIP
+        simétrica para el año requerido.
+  \item Incorporar las MIP directas publicadas (México, Uruguay~2016,
+        Argentina~1997) sin alterar sus cifras oficiales, adjuntando el COU de
+        referencia cuando exista.
+  \item Calcular los coeficientes técnicos, la inversa de Leontief, los
+        coeficientes de Ghosh y los multiplicadores de producción de cada matriz.
+  \item Validar la consistencia matemática de cada MIP y auditar que ninguna
+        actividad económica de la fuente quede sin representación en la matriz
+        final.
+  \item Alinear la notación al marco metodológico de la CEPAL para dejar la serie
+        preparada para una extensión ambiental (huella de carbono) futura.
+\end{enumerate}
+
+\subsection{Alcance}
+
+\paragraph{Alcance temporal y geográfico.}
+La serie cubre cuatro países y abarca desde 1997 (Argentina) hasta 2022
+(Argentina), con la cobertura por país descrita en el Cuadro~\ref{tab:inventario}.
+
+\paragraph{Alcance sectorial.}
+El nivel de desagregación lo fija cada fuente nacional y varía por año: Brasil a
+51 actividades (base 2000) o 68 (nivel SCN/IBGE 2010--2021); Argentina entre 107
+y 162; México entre 20 (2003) y 262--263 (rama SCIAN); Uruguay entre 95 y 128. No
+se fuerza una clasificación común entre países: cada matriz conserva la
+desagregación de su fuente.
+
+\paragraph{Alcance de las fuentes.}
+Todas las fuentes son oficiales: INDEC (Argentina), IBGE (Brasil), INEGI
+(México) y BCU (Uruguay), complementadas por el repositorio COU/MIP de la CEPAL.
+El detalle por país está en la Sección~\ref{sec:fuentes}.
+
+\paragraph{Lo que este trabajo NO incluye (aún).}
+La extensión ambiental (matrices de presiones, intensidades de emisión y huella
+de carbono) se describe como marco de referencia en la
+Sección~\ref{sec:ambiental} pero \emph{no} se estima, porque todavía no se
+dispone de vectores de emisiones por sector para estos cuatro países.
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Conceptos Básicos y Notación}
+% ═════════════════════════════════════════════════════════════════════════════
+
+Sea $n$ el número de actividades económicas de una economía. La MIP describe los
+flujos monetarios entre actividades para un año dado.
+
+\subsection{Estructura de la matriz insumo-producto}
+
+\paragraph{Matriz de consumo intermedio.}
+\begin{equation}
+Z =
+\begin{bmatrix}
+z_{11} & z_{12} & \cdots & z_{1n}\\
+z_{21} & z_{22} & \cdots & z_{2n}\\
+\vdots & \vdots & \ddots & \vdots\\
+z_{n1} & z_{n2} & \cdots & z_{nn}
+\end{bmatrix}
+\in \R^{n\times n},
+\end{equation}
+donde $z_{ij}$ es el valor del producto de la actividad $i$ usado como insumo por
+la actividad $j$.
+
+\paragraph{Vectores económicos.}
+El vector de \textbf{producción bruta} $x\in\R^{n}$, la \textbf{demanda final}
+$y\in\R^{n}$ y el \textbf{valor agregado} $v\in\R^{n}$ satisfacen
+\begin{equation}
+y_i = C_i + G_i + I_i + X_i - M_i,
+\end{equation}
+con $C$ consumo de hogares, $G$ consumo de gobierno, $I$ formación bruta de
+capital, $X$ exportaciones y $M$ importaciones. La matriz diagonal de producción
+es $\hat{X}=\diag(x)$.
+
+\subsection{Balance básico}
+El equilibrio contable de la economía establece que la producción de cada
+actividad iguala su uso intermedio más su demanda final:
+\begin{equation}
+x_i = \sum_{j=1}^{n} z_{ij} + y_i, \qquad\text{o en forma matricial}\qquad
+x = Z\,\mathbf{1} + y,
+\label{eq:balance}
+\end{equation}
+donde $\mathbf{1}=[1,\dots,1]^{T}$. Por columnas, la producción iguala el
+consumo intermedio más el valor agregado: $x_j=\sum_i z_{ij}+v_j$.
+
+\subsection{Modelo de Leontief: encadenamientos hacia atrás}
+
+\paragraph{Coeficientes técnicos.}
+\begin{equation}
+a_{ij}=\frac{z_{ij}}{x_j}, \qquad A = Z\,\hat{X}^{-1}\in\R^{n\times n}.
+\end{equation}
+El coeficiente $a_{ij}$ indica cuántas unidades monetarias del producto $i$ se
+requieren para producir una unidad monetaria del producto $j$.
+
+\paragraph{Ecuación fundamental e inversa de Leontief.}
+Sustituyendo $Z=A\hat{X}$ en \eqref{eq:balance} se obtiene $x = Ax + y$, de donde
+\begin{equation}
+(I-A)\,x = y \qquad\Longrightarrow\qquad x = (I-A)^{-1}y = L\,y,
+\end{equation}
+\begin{equation}
+L=(I-A)^{-1}\in\R^{n\times n}.
+\end{equation}
+El elemento $l_{ij}$ representa la producción total —directa e indirecta— del
+sector $i$ necesaria para satisfacer una unidad de demanda final del sector $j$.
+
+\subsection{Modelo de Ghosh: encadenamientos hacia adelante}
+
+\paragraph{Coeficientes de distribución.}
+\begin{equation}
+b_{ij}=\frac{z_{ij}}{x_i}, \qquad B = \hat{X}^{-1}Z\in\R^{n\times n},
+\end{equation}
+donde $b_{ij}$ es la proporción de la producción del sector $i$ que se destina al
+sector $j$ como insumo.
+
+\paragraph{Inversa de Ghosh.}
+\begin{equation}
+G=(I-B)^{-1}\in\R^{n\times n}.
+\end{equation}
+$g_{ij}$ muestra cómo un cambio en la oferta primaria del sector $i$ se propaga
+hacia adelante por toda la cadena productiva.
+
+\subsection{Multiplicadores y encadenamientos}
+
+\paragraph{Multiplicador de producción.}
+\begin{equation}
+MP_j = \sum_{i=1}^{n} l_{ij},
+\end{equation}
+mide el efecto total sobre la producción de la economía ante un aumento unitario
+de la demanda final del sector $j$.
+
+\paragraph{Índices de encadenamiento.}
+\begin{equation}
+BL_j = \frac{\sum_{i} l_{ij}}{\tfrac{1}{n}\sum_{i,j} l_{ij}},
+\qquad
+FL_i = \frac{\sum_{j} g_{ij}}{\tfrac{1}{n}\sum_{i,j} g_{ij}}.
+\end{equation}
+$BL_j$ (backward linkage) mide el poder de arrastre del sector como demandante;
+$FL_i$ (forward linkage) mide su poder de empuje como oferente. La clasificación
+de sectores resulta de cruzar ambos índices:
+\begin{itemize}[leftmargin=1.6em,nosep]
+  \item \textbf{Clave}: $BL>1$ y $FL>1$.
+  \item \textbf{Estratégico hacia atrás}: $BL>1$ y $FL<1$.
+  \item \textbf{Estratégico hacia adelante}: $BL<1$ y $FL>1$.
+  \item \textbf{Independiente}: $BL<1$ y $FL<1$.
+\end{itemize}
+
+\subsection{Resumen de notación}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{cl}
+\toprule
+\textbf{Símbolo} & \textbf{Descripción}\\
+\midrule
+$n$        & Número de actividades económicas\\
+$Z$        & Matriz de consumo intermedio ($n\times n$)\\
+$x$        & Vector de producción bruta ($n\times 1$)\\
+$y$        & Vector de demanda final ($n\times 1$)\\
+$v$        & Vector de valor agregado ($n\times 1$)\\
+$\hat{X}$  & Matriz diagonal de producción, $\diag(x)$\\
+$A$        & Coeficientes técnicos, $A=Z\hat{X}^{-1}$\\
+$L$        & Inversa de Leontief, $L=(I-A)^{-1}$\\
+$B$        & Coeficientes de distribución, $B=\hat{X}^{-1}Z$\\
+$G$        & Inversa de Ghosh, $G=(I-B)^{-1}$\\
+$MP_j$     & Multiplicador de producción del sector $j$\\
+$BL,\,FL$  & Encadenamientos hacia atrás / adelante\\
+\midrule
+\multicolumn{2}{l}{\emph{Objetos del COU (reconstrucción)}}\\
+$V$        & Tabla de oferta/producción (industria $\times$ producto)\\
+$U$        & Tabla de utilización intermedia (producto $\times$ industria)\\
+$q$        & Producción por producto\\
+$g$        & Producción bruta por industria\\
+$D$        & Matriz de participación de mercado (\emph{market share})\\
+\bottomrule
+\end{tabular}
+\caption{Notación utilizada en el documento.}
+\end{table}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{El Cuadro de Oferta y Utilización (COU)}
+% ═════════════════════════════════════════════════════════════════════════════
+
+La mayoría de las matrices de esta serie se reconstruye a partir de Cuadros de
+Oferta y Utilización (COU; en inglés \emph{Supply-Use Tables}, SUT). El COU es el
+insumo primario del Sistema de Cuentas Nacionales y, a diferencia de la MIP,
+distingue \textbf{productos} (filas) de \textbf{industrias/actividades}
+(columnas).
+
+\subsection{Tablas de oferta y utilización}
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{Tabla de oferta} $V$ (industria $\times$ producto): registra qué
+        produce cada industria. La suma por producto da la producción
+        $q=\mathbf{1}^{T}V$.
+  \item \textbf{Tabla de utilización} $U$ (producto $\times$ industria): registra
+        qué productos consume cada industria como insumo intermedio, más la
+        demanda final por componentes.
+\end{itemize}
+
+\subsection{Productos versus industrias}
+Un punto metodológico delicado es no confundir productos con sectores. Un
+producto puede aparecer en la cobertura del COU y no como sector de la MIP final,
+porque la transformación COU$\,\to\,$MIP pasa por la matriz de participación de
+mercado $D$ (Sección~\ref{sec:reconstruccion}).
+
+\subsection{Valoración y origen}
+El COU plantea dos retos de valoración que el procedimiento debe resolver:
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{Precios básicos vs.\ precios de comprador.} La utilización suele
+        publicarse a precios de comprador (incluye márgenes de comercio y
+        transporte e impuestos netos sobre los productos), mientras que la
+        producción está a precios básicos. La MIP doméstica se construye a
+        precios básicos.
+  \item \textbf{Origen doméstico vs.\ importado.} La MIP doméstica solo contempla
+        la tecnología y producción nacional. El uso intermedio importado se
+        separa para que la demanda final quede satisfecha exclusivamente por
+        producción local.
+\end{enumerate}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Metodología de Reconstrucción COU \texorpdfstring{$\to$}{->} MIP}
+\label{sec:reconstruccion}
+% ═════════════════════════════════════════════════════════════════════════════
+
+\subsection{Supuesto de tecnología de industria}
+La transformación de un sistema rectangular oferta-utilización a una MIP
+cuadrada industria por industria emplea el \textbf{supuesto de tecnología de
+industria} (\emph{industry-technology assumption}), que asume que cada industria
+usa la misma estructura de insumos para todos los productos que fabrica. Este
+supuesto preserva la no negatividad de los coeficientes.
+
+\subsection{Matriz de participación de mercado y derivación de \texorpdfstring{$Z$}{Z}}
+Se define la matriz de participación de mercado $D$ a partir de la oferta:
+\begin{equation}
+D = V\,\hat{q}^{-1}, \qquad \hat{q}=\diag(q),
+\end{equation}
+donde $d_{kp}$ es la proporción del producto $p$ fabricada por la industria $k$.
+El consumo intermedio industria por industria se obtiene proyectando la
+utilización nacional por la participación de mercado:
+\begin{equation}
+Z = D\,U_{\text{nacional}}, \qquad
+A = Z\,\hat{g}^{-1},\quad L=(I-A)^{-1},
+\end{equation}
+\begin{equation}
+B=\hat{g}^{-1}Z,\quad G=(I-B)^{-1},\qquad
+f = D\,y_{\text{doméstica}},
+\end{equation}
+con $g$ la producción bruta por industria y $f$ la demanda final ya expresada por
+industria.
+
+\subsection{Tratamiento de precios y de las importaciones}
+Cuando la fuente publica la utilización a precios de comprador, $U$ se reescala
+por producto a precios básicos con un factor
+$\phi_p = q^{\text{pb}}_p / (\text{oferta total}_p - \text{importaciones}_p)$,
+acotado a $\phi_p\le 1$ por la identidad \emph{precio básico} $\le$ \emph{precio
+de comprador}. El uso importado se aísla en $U_{\text{importada}}$ y no entra en
+la MIP doméstica.
+
+\subsection{Cierre de la demanda final y conciliación menor}
+Para que se cumpla oferta $=$ demanda a precios básicos, la demanda final
+doméstica se cierra como residual $y = q^{\text{pb}} - U\mathbf{1}$ cuando la
+fuente no permite una conciliación exacta. La política de conciliación es
+conservadora:
+\begin{itemize}[leftmargin=1.6em,nosep]
+  \item Primero se revisan parsers, totales, códigos y puentes de precios.
+  \item No se alteran cifras para «forzar» resultados.
+  \item Solo se aplica una conciliación menor tipo RAS cuando el desbalance es
+        pequeño, localizado y justificable como cierre o redondeo (por ejemplo,
+        Brasil 2000--2009 y Uruguay~2016).
+  \item Toda conciliación deja traza en las hojas \texttt{ajuste\_cierre} y
+        \texttt{Z\_pre\_conciliacion} del libro Excel.
+\end{itemize}
+
+\subsection{Sectores con diagonal cero}
+Una actividad con $z_{ii}=0$ \emph{no} se elimina automáticamente. Si el sector
+registra producción, valor agregado, ventas, compras o demanda final, se
+conserva; la diagonal nula solo indica ausencia de autoconsumo. Estos casos se
+documentan como \texttt{diagonal\_cero\_con\_flujos} (por ejemplo, Servicios
+Domésticos en Argentina).
+
+\subsection{Resumen del procedimiento}
+\begin{enumerate}[leftmargin=1.6em,nosep]
+  \item Leer y normalizar el COU de la fuente ($V$, $U$, demanda final, VA).
+  \item Separar uso nacional de importado y llevar $U$ a precios básicos.
+  \item Calcular $D=V\hat{q}^{-1}$ y $Z=D\,U_{\text{nacional}}$.
+  \item Derivar $A,L,B,G$ y cerrar la demanda final.
+  \item Verificar la inversa de Leontief y los multiplicadores.
+  \item Empaquetar el resultado en Excel con todas las hojas de trazabilidad.
+\end{enumerate}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Fuentes de Datos por País}
+\label{sec:fuentes}
+% ═════════════════════════════════════════════════════════════════════════════
+
+\paragraph{Argentina (INDEC / CEPAL).}
+MIP directa de 1997 (MIPAr97). COU de 2004 (año base) y 2018--2022. Los años
+2005--2017 \emph{no} están disponibles como COU publicado: el repositorio CEPAL
+solo ofrece 2004, 2018, 2019, 2020 y 2021, e INDEC añade 2022. Ese hueco no puede
+llenarse con fuente pública.
+
+\paragraph{Brasil (IBGE / CEPAL).}
+Serie reconstruida 2000--2021. Para 2000--2009 se usa el COU de la CEPAL con base
+2000; para 2010--2021, las Tablas de Recursos e Usos (TRU) del IBGE a nivel 68.
+
+\paragraph{México (INEGI / CEPAL).}
+MIP directas de 2003, 2008, 2013 y 2018, publicadas por INEGI/CEPAL al nivel de
+rama SCIAN. A 2008 y 2013 se les adjunta su COU matricial de referencia; 2003 y
+2018 no disponen de un COU compatible por rama.
+
+\paragraph{Uruguay (BCU / CEPAL).}
+MIP directa de 2016 (BCU). Reconstrucciones desde COU detallado para 2012 y 2017.
+El COU 2012, publicado por el BCU en una hoja única que apila oferta, utilización
+y valor agregado (134 productos $\times$ 107 industrias), se reconstruye con el
+mismo procedimiento que 2017.
+
+\medskip
+\noindent\textbf{Trazabilidad de fuentes.} Al agregar una fuente nueva se
+actualizan simultáneamente \texttt{FUENTES\_EXTERNAS\_HISTORICO.md}, el handoff
+del proyecto, y las hojas \texttt{fuente\_resumen} y \texttt{fuente\_notas} de los
+libros Excel regenerados.
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Matrices Directas y COU de Referencia}
+% ═════════════════════════════════════════════════════════════════════════════
+
+Las MIP directas se publican tal cual, sin recálculo de sus celdas. Cuando existe
+el COU del mismo marco, se adjunta como \emph{referencia} dentro del mismo libro
+Excel (hojas \texttt{src\_*}), marcando el tipo
+\texttt{MIP\_directa\_con\_COU\_referencia}, sin relabelar la matriz como
+reconstruida y sin tocar la auditoría. Así, cada MIP lleva su COU o, en su
+defecto, una nota de fuente detallada que explica por qué no lo lleva.
+
+\medskip
+\noindent Cobertura de COU sobre las 36 matrices:
+\begin{itemize}[leftmargin=1.6em,nosep]
+  \item \textbf{30 reconstruidas} desde COU (el COU es la fuente y se adjunta).
+  \item \textbf{3 directas con COU de referencia}: México~2008, México~2013,
+        Uruguay~2016.
+  \item \textbf{3 directas sin COU compatible}, con fuente explicada al inicio:
+        México~2003, México~2018, Argentina~1997.
+\end{itemize}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Validación y Auditoría}
+% ═════════════════════════════════════════════════════════════════════════════
+
+\subsection{Validación matemática}
+Cada MIP pasa un conjunto de pruebas estructurales: matrices cuadradas y
+etiquetas alineadas ($Z,A,L$), no negatividad de $Z,A,g$, consistencia de
+$A-Z\hat{g}^{-1}$, reproducción de la inversa de Leontief y de Ghosh, conteo de
+celdas negativas y de sectores con demanda final o valor agregado residual
+negativo.
+
+\subsection{Auditoría de cobertura sectorial}
+Una auditoría independiente verifica que toda actividad presente en la fuente
+quede representada como sector en la MIP final (o quede documentada su exclusión
+con justificación). El objetivo operativo es \emph{cero} actividades de fuente sin
+incorporar.
+
+\subsection{Alertas metodológicas}
+Algunas pruebas son diagnósticas: pueden señalar avisos económicos (por ejemplo,
+demanda final negativa en ciertos productos) sin invalidar el álgebra matricial.
+El caso más sensible es Uruguay, donde el cierre residual a precios básicos genera
+demandas finales negativas en algunos productos; se mantiene la alerta en lugar de
+conciliar cifras materiales.
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Inventario de Matrices}
+% ═════════════════════════════════════════════════════════════════════════════
+
+El Cuadro~\ref{tab:inventario} lista las 36 matrices de la serie con su tipo,
+nivel sectorial y fuente.
+
+\begin{center}
+\small
+\begin{longtable}{llrll}
+\toprule
+\textbf{País} & \textbf{Año} & \textbf{Sect.} & \textbf{Tipo} & \textbf{Fuente} \\
+\midrule
+\endhead
+Argentina & 1997 & 124 & Directa & MIPAr97 INDEC \\
+Argentina & 2004 & 162 & Reconstruida & COU INDEC/CEPAL \\
+Argentina & 2018 & 107 & Reconstruida & COU INDEC/CEPAL \\
+Argentina & 2019 & 107 & Reconstruida & COU INDEC/CEPAL \\
+Argentina & 2020 & 107 & Reconstruida & COU INDEC/CEPAL \\
+Argentina & 2021 & 107 & Reconstruida & COU INDEC/CEPAL \\
+Argentina & 2022 & 107 & Reconstruida & COU INDEC/CEPAL \\
+Brasil & 2000 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2001 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2002 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2003 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2004 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2005 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2006 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2007 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2008 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2009 & 51 & Reconstruida & COU CEPAL base 2000 \\
+Brasil & 2010 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2011 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2012 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2013 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2014 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2015 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2016 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2017 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2018 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2019 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2020 & 68 & Reconstruida & TRU IBGE niv.68 \\
+Brasil & 2021 & 68 & Reconstruida & TRU IBGE niv.68 \\
+México & 2003 & 20 & Directa & MIP INEGI/CEPAL \\
+México & 2008 & 262 & Directa (+COU ref.) & MIP INEGI/CEPAL \\
+México & 2013 & 262 & Directa (+COU ref.) & MIP INEGI/CEPAL \\
+México & 2018 & 263 & Directa & MIP INEGI/CEPAL \\
+Uruguay & 2012 & 107 & Reconstruida & COU detallado BCU \\
+Uruguay & 2016 & 128 & Directa (+COU ref.) & MIP directa BCU \\
+Uruguay & 2017 & 95 & Reconstruida & COU CEPAL/BCU \\
+\bottomrule
+\caption{Inventario de las 36 matrices insumo-producto de la serie. Validación
+estructural: 36/36 OK; auditoría: 0 sectores de fuente pendientes por
+incorporar.}
+\label{tab:inventario}
+\end{longtable}
+\end{center}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Marco de Extensión Ambiental (referencia)}
+\label{sec:ambiental}
+% ═════════════════════════════════════════════════════════════════════════════
+
+La serie está preparada para una extensión ambiental siguiendo el marco de la
+CEPAL. Esta sección documenta ese marco como referencia; \textbf{no} corresponde a
+resultados ya calculados.
+
+\paragraph{Presiones e intensidades.}
+Dada una matriz de presiones ambientales $D_1\in\R^{k\times n}$ (con $k$
+indicadores, por ejemplo emisiones de CO\textsubscript{2}, CH\textsubscript{4} y
+N\textsubscript{2}O en tCO\textsubscript{2}eq), los coeficientes de intensidad
+directa son $D = D_1\hat{X}^{-1}$ y los multiplicadores ambientales totales
+$D_a = D\,L$.
+
+\paragraph{Huella de carbono.}
+Con $\alpha_1=\diag(\gamma_1/x)$ la intensidad de emisiones por sector y
+$m=\alpha_1 L$ el vector de multiplicadores de emisiones, la huella de carbono de
+la demanda final es
+\begin{equation}
+CF = m\cdot y = \sum_{j} m_j\, y_j,
+\end{equation}
+descomponible por componente de demanda ($CF_C, CF_G, CF_I, CF_X$) y por sector.
+
+\paragraph{Requisito pendiente.}
+Implementar esta extensión exige vectores de emisiones por sector
+($\gamma$) para Argentina, Brasil, México y Uruguay, que aún no se han
+incorporado. Para Colombia, la CEPAL los obtiene de IDEAM/UPME.
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Simulador de Choques}
+% ═════════════════════════════════════════════════════════════════════════════
+
+Sobre las matrices publicadas se construyó un simulador que \emph{no} reconstruye
+ni altera matrices, solo las usa como insumo. Considera dos familias de choque:
+\begin{itemize}[leftmargin=1.6em,nosep]
+  \item \textbf{Demanda} (cantidades de Leontief): $\Delta x = L\,\Delta y$,
+        propaga efectos hacia atrás ante un cambio en la demanda final.
+  \item \textbf{Oferta/costos} (precios de Ghosh):
+        $\Delta x' = \Delta v'\,G$, propaga efectos hacia adelante ante un cambio
+        en insumos primarios o valor agregado.
+\end{itemize}
+Las verificaciones algebraicas confirman que un choque unitario a la demanda del
+sector $j$ reproduce exactamente la columna $j$ de $L$ y que el multiplicador de
+demanda coincide con la suma de columna de $L$.
+
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Reglas de Colaboración y Trabajo Futuro}
+% ═════════════════════════════════════════════════════════════════════════════
+
+\paragraph{Reglas para no romper la trazabilidad.}
+\begin{itemize}[leftmargin=1.6em,nosep]
+  \item No reemplazar una matriz publicada sin regenerar validación y auditoría.
+  \item No borrar sectores por diagonal cero.
+  \item No mezclar matrices directas con reconstruidas sin marcar el tipo.
+  \item No presentar ajustes generales de $Z$ como cifras oficiales.
+\end{itemize}
+
+\paragraph{Trabajo futuro.}
+\begin{itemize}[leftmargin=1.6em,nosep]
+  \item Uruguay 2017: conseguir demanda final fuente completa para resolver la
+        alerta de demanda final negativa.
+  \item Extender Brasil y Uruguay a los años más recientes según se publiquen
+        COU/TRU compatibles.
+  \item Incorporar vectores de empleo y de emisiones por sector para activar los
+        multiplicadores de empleo y la extensión ambiental.
+\end{itemize}
+
+\end{document}

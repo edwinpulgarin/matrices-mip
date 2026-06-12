@@ -1,6 +1,34 @@
 # Handoff para Claude y siguientes colaboradores
 
-Fecha de corte: 2026-06-11
+Fecha de corte: 2026-06-12
+
+## Novedades 2026-06-12
+
+- **Serie extendida: Uruguay 2012** reconstruida desde el COU detallado del BCU
+  (`Uruguay_2012_Detallada_COU_C.xlsx` -> `data/raw/uruguay/cou_2012/`). El COU
+  2012 viene en una hoja unica `COU_C` con tres bloques apilados (oferta 134
+  prod x 107 ind; utilizacion con demanda final; valor agregado). Parser nuevo
+  `Codigo/src/parsers/uruguay_cou_2012.py`, que detecta el bloque de VA con su
+  propio encabezado (trae una columna 'Subtotal' que desplaza las industrias).
+  Reconstruccion identica a Uruguay 2017 (precios comprador -> basicos con factor
+  capado en 1.0; demanda final residual). 107 sectores, Leontief OK. Config en
+  `Codigo/main.py`: nueva clave `uruguay_cou_2012` (mapeada a Uruguay en el
+  generador de paquete). La entrega pasa de 35 a **36 matrices**.
+  Regenerado/validado/auditado: 36/36 estructural OK, 0 sectores pendientes.
+- **Argentina 2005-2017: descartado por falta de fuente.** Confirmado a nivel de
+  catalogo CEPAL y de los ZIP de INDEC: solo existen COU de Argentina para 2004
+  (`ARG_COU_2004_2018.zip` = 2004 + 2018) y 2019-2021 (`ARG_COU_2019_2021.zip`),
+  mas 2022 directo de INDEC. Los archivos `sh_cou_06_16.xls`/`sh_cou_08_21.xls`
+  resultaron duplicados de 2004 y 2018 (el sufijo es fecha de publicacion, no
+  rango de anios). El hueco 2005-2017 no se puede llenar con fuente publica.
+- **Documento metodologico completo** en LaTeX/Word/PDF: `Metodologia_MIP.tex`,
+  `Metodologia_MIP.pdf` y `Metodologia_MIP.docx` en la raiz. Sigue el estilo y la
+  notacion del marco CEPAL "MIP Extendida Ambientalmente y Huella de Carbono"
+  (2025) y documenta: objetivos/alcance, notacion (Z, x, y, v, A, L, B, G),
+  el COU, la reconstruccion COU->MIP (market share D, tecnologia de industria,
+  precios, cierre), fuentes por pais, validacion/auditoria, inventario de las 36
+  matrices, el marco de extension ambiental (no estimado) y el simulador. El PDF
+  se compila con tectonic; el docx con pandoc (ver seccion 13).
 
 ## Novedades 2026-06-11
 
@@ -60,9 +88,9 @@ Repositorio: `edwinpulgarin/matrices-mip`
 
 Entrega vigente:
 
-- 35 archivos Excel anuales en `MIP/{Pais}/`.
+- 36 archivos Excel anuales en `MIP/{Pais}/`.
 - 6 matrices directas o equivalentes de fuente.
-- 29 matrices reconstruidas desde COU.
+- 30 matrices reconstruidas desde COU.
 - Todas las matrices publicadas tienen trazabilidad al inicio del libro:
   - `README`
   - `fuente_resumen`
@@ -70,7 +98,7 @@ Entrega vigente:
   - `cobertura_productos` cuando aplica
   - `fuente_notas`
   - `src_*` cuando la matriz fue reconstruida desde COU
-- Validacion estructural: 35/35 OK.
+- Validacion estructural: 36/36 OK.
 - Auditoria de cobertura sectorial: 0 sectores de fuente pendientes por incorporar en la MIP final.
 
 Archivos que conviene leer primero:
@@ -93,6 +121,7 @@ Archivos que conviene leer primero:
 | Brasil | 2000-2009 | Reconstruida desde COU | COU CEPAL Brasil base 2000 |
 | Brasil | 2010-2021 | Reconstruida desde COU | COU/TRU IBGE nivel 68 |
 | Mexico | 2003, 2008, 2013, 2018 | MIP directa | MIP CEPAL/INEGI |
+| Uruguay | 2012 | Reconstruida desde COU | COU detallado BCU 2012 |
 | Uruguay | 2016 | MIP directa | MIP BCU 2016 |
 | Uruguay | 2017 | Reconstruida desde COU | COU CEPAL/BCU 2017 |
 
@@ -338,3 +367,26 @@ Ver `Codigo/docs/revision_fuentes_2026-06_extension_series.md`. Resumen:
   conexion directa). Las acciones quedan documentadas, no ejecutadas.
 - Uruguay 2017 sigue con alerta metodologica hasta conseguir demanda final
   fuente completa o MIP directa equivalente.
+
+## 13. Documento metodologico (LaTeX / Word / PDF)
+
+`Metodologia_MIP.tex` es la fuente del documento metodologico completo. Para
+regenerar el PDF y el Word tras editarlo:
+
+```powershell
+# PDF (motor LaTeX autonomo; descarga paquetes la primera vez)
+tectonic Metodologia_MIP.tex
+# Word (sin necesidad de motor LaTeX)
+py -3 -c "import pypandoc; pypandoc.convert_file('Metodologia_MIP.tex','docx',outputfile='Metodologia_MIP.docx',extra_args=['--toc','--standalone'])"
+```
+
+Notas:
+
+- El toolchain no viene con el repo. `tectonic` es un binario unico (se baja de
+  github.com/tectonic-typesetting/tectonic/releases); `pypandoc` se instala con
+  `py -3 -m pip install pypandoc-binary` (trae pandoc incluido).
+- El inventario de las 36 matrices del documento se genero desde
+  `auditoria_cobertura_sectores_mip.xlsx`. Si cambia el numero de matrices o los
+  conteos sectoriales, actualizar la `longtable` de la seccion "Inventario de
+  Matrices" del `.tex` y recompilar.
+- La notacion sigue el PDF de referencia de la CEPAL (Colombia 2017/2019/2021).

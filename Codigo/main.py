@@ -45,7 +45,7 @@ OUTPUT_GRA = ROOT / "output" / "graficos"
 sys.path.insert(0, str(ROOT))
 
 from src.parsers import argentina, argentina_mip97, brasil, mexico, uruguay
-from src.parsers import mexico_mip, uruguay_mip, uruguay_cou, brasil_early
+from src.parsers import mexico_mip, uruguay_mip, uruguay_cou, brasil_early, uruguay_cou_2012
 from src.cou_to_mip import sut_a_iot_industria, verificar_leontief, ras
 from src.multiplicadores import tabla_multiplicadores_completa, clasificar_sectores
 
@@ -125,6 +125,16 @@ CONFIG = {
         'modo_brasil' : False,
         'modo_mip'    : False,
         'modo_carpeta': True,   # el parser recibe carpeta+anio (no archivo)
+    },
+    'uruguay_cou_2012': {
+        'parser'      : uruguay_cou_2012.parsear,
+        'carpeta'     : DATA_RAW / 'uruguay',
+        'anios'       : [2012],
+        'moneda'      : 'UYU',
+        'exts'        : ['.xlsx'],
+        'modo_brasil' : False,
+        'modo_mip'    : False,
+        'modo_carpeta': True,   # COU detallado 2012 en hoja única (oferta+uso+VA)
     },
 }
 
@@ -635,7 +645,7 @@ def main():
     parser = argparse.ArgumentParser(description='Pipeline COU → MIP → Multiplicadores')
     parser.add_argument('--pais', default='todos',
                         choices=['argentina', 'argentina_mip97', 'brasil', 'brasil_early',
-                                 'mexico', 'uruguay', 'uruguay_cou', 'todos'])
+                                 'mexico', 'uruguay', 'uruguay_cou', 'uruguay_cou_2012', 'todos'])
     parser.add_argument('--anio', type=int, default=None,
                         help='Año específico (default: todos los disponibles)')
     parser.add_argument('--verbose', action='store_true')
