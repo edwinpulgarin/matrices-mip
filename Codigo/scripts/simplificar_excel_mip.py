@@ -387,6 +387,65 @@ def build_source_derivatives(source_sheets: dict[str, pd.DataFrame]) -> dict[str
     }
 
 
+def _code_variants(code: str) -> list[str]:
+    """Variantes de un codigo para emparejar (con/sin ceros, separadores)."""
+    import re
+    code = str(code).strip()
+    out = set()
+    for part in re.split(r"[\/,;]", code):
+        part = part.strip()
+        if not part:
+            continue
+        out.add(part)
+        out.add(part.lstrip("0") or "0")
+    return [c for c in out if c]
+
+
+def build_code_to_name(sectors: list[str]) -> dict[str, str]:
+    """code -> etiqueta completa, a partir de las etiquetas 'codigo — nombre' de la MIP."""
+    import re
+    mapping: dict[str, str] = {}
+    for label in sectors:
+        s = str(label).strip()
+        m = re.match(r"^\s*([0-9][0-9\.\/,\s]*?)\s*(?:—|–|-|---)\s*(.+)$", s)
+        if not m:
+            continue
+        code_part = m.group(1)
+        for v in _code_variants(code_part):
+            mapping.setdefault(v, s)
+    return mapping
+
+
+def enrich_axis(labels: list[str], code_to_name: dict[str, str]) -> list[str]:
+    """Reemplaza etiquetas que son solo codigo por 'codigo — nombre' si hay match."""
+    import re
+    out = []
+    for lab in labels:
+        s = str(lab).strip()
+        # ya tiene nombre (contiene letras de descripcion ademas del codigo)
+        if re.search(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]{3,}", s):
+            out.append(s)
+            continue
+        hit = None
+        for v in _code_variants(s):
+            if v in code_to_name:
+                hit = code_to_name[v]
+                break
+        out.append(hit if hit else s)
+    return out
+
+
+def enrich_frame(df: pd.DataFrame | None, code_to_name: dict[str, str],
+                 rows: bool = False, cols: bool = False) -> pd.DataFrame | None:
+    if df is None or "nota" in getattr(df, "columns", []):
+        return df
+    if rows:
+        df.index = enrich_axis(list(df.index), code_to_name)
+    if cols:
+        df.columns = enrich_axis(list(df.columns), code_to_name)
+    return df
+
+
 def norm_text(text: object) -> str:
     import unicodedata
     t = unicodedata.normalize("NFKD", str(text))
@@ -430,18 +489,30 @@ def demand_bucket(column: object) -> str | None:
         return "X_exportaciones"
     if "import" in n:
         return "M_importaciones"
-    if "gobierno" in n or "governo" in n or "administracion publica" in n or n in {"cg", "cp"}:
+    if (
+        "gobierno" in n or "governo" in n or "consumo publico" in n
+        or ("administra" in n and "publica" in n)   # ES: administración pública / PT: administração pública
+        or n in {"cg", "cp"}
+    ):
         return "G_gasto_publico"
-    if "hogar" in n or "famil" in n or "privado" in n or "isfl" in n or n == "ch":
+    if "hogar" in n or "famil" in n or "privado" in n or "isfl" in n or n in {"ch"}:
         return "C_consumo"
     if (
-        "formacion" in n
+        "formacion" in n          # formación bruta de capital
         or "formacao" in n
         or "capital" in n
-        or "existencia" in n
+        or "fbc" in n             # Fbc Fijo (INDEC)
+        or "fbkf" in n
+        or "inversion" in n
+        or "existencia" in n      # variación de existencias
         or "estoque" in n
+        or "inventario" in n
         or "objetos de valor" in n
-        or n in {"inv", "ve", "ov", "p.51b", "p.52"}
+        or "producto terminado" in n or "productos terminados" in n   # INDEC: existencias
+        or "bienes terminados" in n
+        or "trabajo en curso" in n or "trabajos en curso" in n        # INDEC: obra/trabajo en curso
+        or "obra en curso" in n
+        or n in {"inv", "ve", "ov", "p.51b", "p.52", "p.51", "p.5"}
     ):
         return "I_inversion"
     return None
@@ -624,6 +695,14 @@ def write_workbook(path: Path) -> None:
         x = build_x_components(xls, sectors)
         source_derivatives = build_source_derivatives(source_sheets)
         y = build_y_homologated(xls, sectors, source_sheets, source_derivatives)
+        # Los ejes de PRODUCTO del COU suelen venir solo con codigo; se enriquecen
+        # con el nombre completo (etiquetas 'codigo — nombre' de la MIP) SOLO para
+        # presentacion, despues de todos los calculos, para no alterar reindex.
+        code_to_name = build_code_to_name(sectors)
+        enrich_frame(source_derivatives.get("V_oferta"), code_to_name, cols=True)        # cols=productos
+        enrich_frame(source_derivatives.get("q_produccion_producto"), code_to_name, rows=True)
+        enrich_frame(source_derivatives.get("U_nacional"), code_to_name, rows=True)       # rows=productos
+        enrich_frame(source_derivatives.get("D_market_share"), code_to_name, cols=True)    # cols=productos
         Xhat = build_xhat(x)
         G = build_ghosh_inverse(B)
         linkages = build_linkages(L, G)
@@ -669,6 +748,10 @@ def style_workbook(path: Path) -> None:
             cell.fill = PatternFill("solid", fgColor=NAVY)
             cell.font = Font(size=9, color=WHITE, bold=True)
             cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        # La fila 1 lleva los nombres largos de sector; sin un tope, openpyxl/Excel
+        # la auto-expanden hasta tapar el resto de la hoja. Se fija una altura
+        # razonable (los nombres completos siguen visibles al hacer clic en la celda).
+        ws.row_dimensions[1].height = 64
 
         if ws.title == "Indice":
             ws.freeze_panes = "A2"
