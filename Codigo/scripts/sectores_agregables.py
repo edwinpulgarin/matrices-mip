@@ -25,7 +25,8 @@ import pandas as pd
 REPO = Path(__file__).resolve().parents[2]
 MIP = REPO / "MIP"
 OUT = REPO / "sectores_agregables_revision.xlsx"
-FRAC_PROMEDIO = 0.20  # candidato si su peso < 20% del peso promedio por sector
+FRAC_PROMEDIO = 0.20        # candidato si su peso < 20% del peso promedio por sector
+CONCENTRACION_FUERTE = 25.0  # % del flujo intermedio del sector que va al socio top
 
 
 def read_Z(path: Path) -> pd.DataFrame | None:
@@ -109,6 +110,10 @@ def analizar(path: Path) -> pd.DataFrame:
     # sugerencia por flujo no es confiable (caso servicios domesticos).
     nil = flujo_intermedio_sector < (1e-4 * total)
 
+    # Concentracion: que fraccion del flujo intermedio del sector va al socio top.
+    flujo_sector_safe = np.where(flujo_intermedio_sector > 0, flujo_intermedio_sector, np.nan)
+    concentracion = 100 * flujo_socio / flujo_sector_safe
+
     df = pd.DataFrame({
         "pais": pais,
         "anio": anio,
@@ -119,17 +124,30 @@ def analizar(path: Path) -> pd.DataFrame:
         "diag_autoconsumo": np.diag(znp),
         "sugerencia_por_flujo": sugerencia_flujo,
         "vinculo_flujo_pct": 100 * flujo_socio / total,
+        "concentracion_socio_pct": np.nan_to_num(concentracion, nan=0.0),
         "sugerencia_por_similitud_tecnica": sugerencia_sim,
     })
+    df["flujo_y_similitud_coinciden"] = (
+        df["sugerencia_por_flujo"] == df["sugerencia_por_similitud_tecnica"]
+    )
     df["part_compras_pct"] = 100 * df["ci_compras"] / total
     df["part_ventas_pct"] = 100 * df["ci_ventas"] / total
     # Cuando el sector casi no tiene flujos intermedios, no se sugiere por flujo.
     df.loc[nil, "sugerencia_por_flujo"] = "(sin flujos intermedios — decidir por clasificación)"
     df.loc[nil, "vinculo_flujo_pct"] = 0.0
+    df.loc[nil, "concentracion_socio_pct"] = 0.0
+    df.loc[nil, "flujo_y_similitud_coinciden"] = False
     umbral_pct = FRAC_PROMEDIO * (100.0 / n)   # 20% del peso promedio (1/n)
     df["umbral_pct"] = round(umbral_pct, 4)
     df["candidato_agregar"] = (
         (df["part_compras_pct"] < umbral_pct) & (df["part_ventas_pct"] < umbral_pct)
+    )
+    # Candidato FUERTE/defendible: es pequeno, tiene flujos, y su socio concentra
+    # buena parte de su actividad intermedia (target de fusion claro).
+    df["sin_flujos"] = nil
+    df["candidato_fuerte"] = (
+        df["candidato_agregar"] & (~df["sin_flujos"])
+        & (df["concentracion_socio_pct"] >= CONCENTRACION_FUERTE)
     )
     return df.sort_values("part_compras_pct")
 
@@ -160,6 +178,26 @@ def main() -> None:
         .groupby(["pais", "anio"]).head(10)
     )
 
+    # Candidatos FUERTES: lista corta y defendible para la reunion.
+    cols_fuertes = [
+        "pais", "anio", "sector", "sugerencia_por_flujo",
+        "concentracion_socio_pct", "vinculo_flujo_pct",
+        "flujo_y_similitud_coinciden", "sugerencia_por_similitud_tecnica",
+        "part_compras_pct", "part_ventas_pct",
+    ]
+    fuertes = (
+        full[full["candidato_fuerte"]]
+        .sort_values(["pais", "anio", "concentracion_socio_pct"], ascending=[True, True, False])
+        [cols_fuertes]
+    )
+    resumen_fuertes = (
+        full.groupby(["pais", "anio"])
+        .agg(n_sectores=("sector", "count"),
+             n_candidatos=("candidato_agregar", "sum"),
+             n_fuertes=("candidato_fuerte", "sum"))
+        .reset_index()
+    )
+
     out_path = OUT
     try:
         target = open(out_path, "a")   # falla si esta abierto en Excel (lock)
@@ -169,14 +207,15 @@ def main() -> None:
         print(f"[AVISO] {OUT.name} esta abierto/bloqueado; se escribe en {out_path.name}.")
 
     with pd.ExcelWriter(out_path, engine="openpyxl") as w:
-        resumen.to_excel(w, sheet_name="resumen_por_matriz", index=False)
+        resumen_fuertes.to_excel(w, sheet_name="resumen_por_matriz", index=False)
+        fuertes.round(4).to_excel(w, sheet_name="candidatos_fuertes", index=False)
         top.round(4).to_excel(w, sheet_name="top_candidatos", index=False)
         candidatos.round(4).to_excel(w, sheet_name="todos_los_candidatos", index=False)
         full.round(4).to_excel(w, sheet_name="detalle_todos_sectores", index=False)
 
     print(f"[OK] {out_path}")
-    print(f"Matrices analizadas: {resumen.shape[0]}")
-    print(f"Total sectores: {len(full)}  |  candidatos a agregar: {len(candidatos)}")
+    print(f"Matrices analizadas: {resumen_fuertes.shape[0]}")
+    print(f"Total sectores: {len(full)}  |  candidatos: {len(candidatos)}  |  FUERTES: {len(fuertes)}")
     print("\nResumen por matriz (n_candidatos = sectores con peso < 0.5% en compras y ventas):")
     print(resumen.to_string(index=False))
 
