@@ -47,6 +47,37 @@ def read_x(path: Path, sectors) -> pd.Series:
     return pd.Series(0.0, index=sectors)
 
 
+def read_A(path: Path, sectors) -> np.ndarray | None:
+    """Matriz de coeficientes tecnicos A (estructura de insumos por columna)."""
+    xls = pd.ExcelFile(path)
+    name = next((s for s in ["A_coef_tecnicos"] if s in xls.sheet_names), None)
+    if name is None:
+        return None
+    a = pd.read_excel(path, sheet_name=name, index_col=0)
+    a.index = [str(i).strip() for i in a.index]
+    a.columns = [str(c).strip() for c in a.columns]
+    a = a.reindex(index=sectors, columns=sectors).apply(pd.to_numeric, errors="coerce").fillna(0.0)
+    return a.to_numpy(dtype=float)
+
+
+def socio_similitud(A: np.ndarray | None, sectors: list[str]) -> list[str]:
+    """Para cada sector, el mas parecido por estructura de insumos (coseno de columnas de A)."""
+    if A is None:
+        return ["" for _ in sectors]
+    cols = A  # columna j = receta de insumos del sector j
+    norms = np.linalg.norm(cols, axis=0)
+    out = []
+    for j in range(cols.shape[1]):
+        if norms[j] <= 1e-12:
+            out.append("")
+            continue
+        sims = (cols.T @ cols[:, j]) / (norms * norms[j] + 1e-12)
+        sims[j] = -1.0
+        k = int(np.argmax(sims))
+        out.append(sectors[k] if sims[k] > 0.05 else "")
+    return out
+
+
 def analizar(path: Path) -> pd.DataFrame:
     z = read_Z(path)
     if z is None:
@@ -63,11 +94,20 @@ def analizar(path: Path) -> pd.DataFrame:
     n = len(sectors)
     zmat = z.reindex(index=sectors, columns=sectors).fillna(0.0)
     znp = zmat.to_numpy()
-    # Socio para fusionar: mayor flujo combinado Z[i,j]+Z[j,i] (excluye la diagonal)
+    # Socio por FLUJO: mayor flujo combinado Z[i,j]+Z[j,i] (excluye la diagonal)
     combinado = znp + znp.T
     np.fill_diagonal(combinado, -1.0)
     socio_idx = combinado.argmax(axis=1)
-    sugerencia = [sectors[j] for j in socio_idx]
+    flujo_socio = combinado[np.arange(n), socio_idx]          # valor del mayor vinculo
+    sugerencia_flujo = [sectors[j] for j in socio_idx]
+    # Socio por SIMILITUD tecnica (estructura de insumos)
+    A = read_A(path, sectors)
+    sugerencia_sim = socio_similitud(A, sectors)
+
+    flujo_intermedio_sector = ci_compras.values + ci_ventas.reindex(sectors).values
+    # "sin flujos": el sector casi no participa de la red intermedia -> la
+    # sugerencia por flujo no es confiable (caso servicios domesticos).
+    nil = flujo_intermedio_sector < (1e-4 * total)
 
     df = pd.DataFrame({
         "pais": pais,
@@ -77,10 +117,15 @@ def analizar(path: Path) -> pd.DataFrame:
         "ci_ventas": ci_ventas.reindex(sectors).values,
         "x_produccion": x.values,
         "diag_autoconsumo": np.diag(znp),
-        "sugerencia_agregar_con": sugerencia,
+        "sugerencia_por_flujo": sugerencia_flujo,
+        "vinculo_flujo_pct": 100 * flujo_socio / total,
+        "sugerencia_por_similitud_tecnica": sugerencia_sim,
     })
     df["part_compras_pct"] = 100 * df["ci_compras"] / total
     df["part_ventas_pct"] = 100 * df["ci_ventas"] / total
+    # Cuando el sector casi no tiene flujos intermedios, no se sugiere por flujo.
+    df.loc[nil, "sugerencia_por_flujo"] = "(sin flujos intermedios — decidir por clasificación)"
+    df.loc[nil, "vinculo_flujo_pct"] = 0.0
     umbral_pct = FRAC_PROMEDIO * (100.0 / n)   # 20% del peso promedio (1/n)
     df["umbral_pct"] = round(umbral_pct, 4)
     df["candidato_agregar"] = (
@@ -115,13 +160,21 @@ def main() -> None:
         .groupby(["pais", "anio"]).head(10)
     )
 
-    with pd.ExcelWriter(OUT, engine="openpyxl") as w:
+    out_path = OUT
+    try:
+        target = open(out_path, "a")   # falla si esta abierto en Excel (lock)
+        target.close()
+    except PermissionError:
+        out_path = OUT.with_name(OUT.stem + "_v2.xlsx")
+        print(f"[AVISO] {OUT.name} esta abierto/bloqueado; se escribe en {out_path.name}.")
+
+    with pd.ExcelWriter(out_path, engine="openpyxl") as w:
         resumen.to_excel(w, sheet_name="resumen_por_matriz", index=False)
         top.round(4).to_excel(w, sheet_name="top_candidatos", index=False)
         candidatos.round(4).to_excel(w, sheet_name="todos_los_candidatos", index=False)
         full.round(4).to_excel(w, sheet_name="detalle_todos_sectores", index=False)
 
-    print(f"[OK] {OUT}")
+    print(f"[OK] {out_path}")
     print(f"Matrices analizadas: {resumen.shape[0]}")
     print(f"Total sectores: {len(full)}  |  candidatos a agregar: {len(candidatos)}")
     print("\nResumen por matriz (n_candidatos = sectores con peso < 0.5% en compras y ventas):")
