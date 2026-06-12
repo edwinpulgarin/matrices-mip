@@ -219,7 +219,12 @@ def build_index(
         ("D_market_share", "Matriz D de participacion industria-producto, D = V * diag(q)^-1."),
         ("Z_consumos_intermedios", "Matriz Z de consumos intermedios sector vendedor x sector comprador."),
         ("x_produccion_bruta", "Vector x de produccion bruta y componentes de cierre por sector."),
-        ("y_demanda_final", "Demanda final homologada: C, I, G, X, M, XN y DA = C + I + G + XN."),
+        ("y_demanda_final",
+         "Demanda final por componente, tomada de las columnas del COU/fuente "
+         "(C hogares, G gobierno, FBKF capital fijo, VE variacion de existencias, "
+         "X, M) y repartida a las industrias con la participacion de mercado D. La "
+         "VE puede ser negativa (desacumulacion de inventarios); por eso se separa "
+         "de la FBKF (siempre >= 0). El total reconcilia con el COU; ver glosario."),
         ("X_hat", "Matriz diagonal de produccion bruta, diag(x)."),
         ("A_coef_tecnicos", "Matriz A de coeficientes tecnicos, A = Z * X_hat^-1."),
         ("L_leontief", "Inversa de Leontief, L = (I - A)^-1."),
@@ -484,6 +489,12 @@ def align_series_to_sectors(series: pd.Series, sectors: list[str]) -> pd.Series:
 
 
 def demand_bucket(column: object) -> str | None:
+    """Mapea una columna de demanda final del COU a su componente del SCN.
+
+    Se separa la Formacion Bruta de Capital Fijo (FBKF, siempre >= 0) de la
+    Variacion de Existencias (VE, puede ser negativa cuando se desacumulan
+    inventarios). Mezclarlas produce 'inversion negativa' espuria.
+    """
     n = norm_text(column)
     if "export" in n or n in {"ex", "p.6"}:
         return "X_exportaciones"
@@ -494,27 +505,29 @@ def demand_bucket(column: object) -> str | None:
         or ("administra" in n and "publica" in n)   # ES: administración pública / PT: administração pública
         or n in {"cg", "cp"}
     ):
-        return "G_gasto_publico"
+        return "G_consumo_gobierno"
     if "hogar" in n or "famil" in n or "privado" in n or "isfl" in n or n in {"ch"}:
-        return "C_consumo"
+        return "C_consumo_hogares"
+    # Variacion de existencias / inventarios / objetos de valor (PUEDE ser negativa)
     if (
-        "formacion" in n          # formación bruta de capital
-        or "formacao" in n
-        or "capital" in n
-        or "fbc" in n             # Fbc Fijo (INDEC)
-        or "fbkf" in n
-        or "inversion" in n
-        or "existencia" in n      # variación de existencias
-        or "estoque" in n
-        or "inventario" in n
-        or "objetos de valor" in n
+        "existencia" in n or "estoque" in n or "inventario" in n
+        or "objetos de valor" in n or "objeto de valor" in n
         or "producto terminado" in n or "productos terminados" in n   # INDEC: existencias
         or "bienes terminados" in n
         or "trabajo en curso" in n or "trabajos en curso" in n        # INDEC: obra/trabajo en curso
         or "obra en curso" in n
-        or n in {"inv", "ve", "ov", "p.51b", "p.52", "p.51", "p.5"}
+        or n in {"ve", "ov", "p.52", "p.53"}
     ):
-        return "I_inversion"
+        return "VE_variacion_existencias"
+    # Formacion Bruta de Capital Fijo (FBKF, siempre >= 0)
+    if (
+        "capital fijo" in n or "capital fixo" in n
+        or "fbc" in n or "fbkf" in n
+        or "inversion" in n
+        or ("formacion" in n and "capital" in n) or ("formacao" in n and "capital" in n)
+        or n in {"inv", "p.51", "p.51b"}
+    ):
+        return "FBKF_capital_fijo"
     return None
 
 
@@ -557,7 +570,11 @@ def build_y_homologated(
     y_total_series = pd.to_numeric(y_total[total_col], errors="coerce").fillna(0.0).reindex(sectors).fillna(0.0)
 
     out = pd.DataFrame(index=sectors)
-    for col in ["C_consumo", "I_inversion", "G_gasto_publico", "X_exportaciones"]:
+    COMP_COLS = [
+        "C_consumo_hogares", "G_consumo_gobierno",
+        "FBKF_capital_fijo", "VE_variacion_existencias", "X_exportaciones",
+    ]
+    for col in COMP_COLS:
         out[col] = 0.0
     out["sin_desglose_fuente"] = 0.0
 
@@ -591,10 +608,17 @@ def build_y_homologated(
         out["sin_desglose_fuente"] = y_total_series
 
     out["M_importaciones"] = build_final_imports(source_sheets, derivatives, sectors)
+    # Inversion total (formacion bruta de capital) = FBKF + variacion de existencias.
+    # Puede ser negativa por sector si la desacumulacion de stock supera la FBKF;
+    # eso es valido en el SCN y por eso se muestran ambas piezas por separado.
+    out["inversion_FBKF_mas_VE"] = out["FBKF_capital_fijo"] + out["VE_variacion_existencias"]
     out["XN_exportaciones_netas"] = out["X_exportaciones"] - out["M_importaciones"]
-    out["DA_C_I_G_XN"] = out["C_consumo"] + out["I_inversion"] + out["G_gasto_publico"] + out["XN_exportaciones_netas"]
+    out["DA_demanda_agregada"] = (
+        out["C_consumo_hogares"] + out["G_consumo_gobierno"]
+        + out["inversion_FBKF_mas_VE"] + out["XN_exportaciones_netas"]
+    )
     out["y_demanda_final_total_mip"] = y_total_series
-    out["diferencia_y_mip_menos_DA"] = out["y_demanda_final_total_mip"] - out["DA_C_I_G_XN"]
+    out["diferencia_y_mip_menos_DA"] = out["y_demanda_final_total_mip"] - out["DA_demanda_agregada"]
     out.index.name = "sector"
     return out
 
