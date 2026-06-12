@@ -12,9 +12,12 @@ Fecha de corte: 2026-06-11
   35/35 estructural OK, 0 pendientes.
 
 
-- Todas las 34 matrices abren en una hoja `Indice` (portada) con identificacion
-  y guia de hojas. Orden: Indice -> README -> fuente_resumen -> cobertura ->
-  fuente_notas -> `src_*` (COU cuando aplica) -> matrices -> diagnostico.
+- Las 35 matrices publicadas quedan en formato simplificado de 9 hojas:
+  `Indice`, `COU_Tabla_Original`, `Z_consumos_intermedios`,
+  `x_produccion_bruta`, `y_demanda_final`, `X_hat`, `A_coef_tecnicos`,
+  `L_leontief`, `B_coef_distribucion`. Las validaciones quedan fuera del libro
+  anual, en `validacion_matematica_mip.*` y
+  `auditoria_cobertura_sectores_mip.*`.
 - Nuevo mecanismo de COU de REFERENCIA para MIP directas (`couref`): adjunta el
   COU oficial del mismo marco como `src_*`, marca
   `tipo_matriz = MIP_directa_con_COU_referencia` y no toca la auditoria.
@@ -22,7 +25,7 @@ Fecha de corte: 2026-06-11
 - Mexico 2013 ya lleva su COU matricial INEGI/CEPAL adjunto (parser
   `Codigo/scripts/parser_cou_mexico_2013.py`). El resto de directas siguen
   bloqueadas por disponibilidad de fuente (ver el plan y el checklist).
-- Regenerado y verificado: validacion 34/34 estructural OK, auditoria 0
+- Regenerado y verificado: validacion 35/35 estructural OK, auditoria 0
   sectores pendientes.
 - Notacion alineada al documento CEPAL "Metodologia MIP Extendida
   Ambientalmente y Huella de Carbono" (2025): se renombraron las hojas de
@@ -36,8 +39,9 @@ Fecha de corte: 2026-06-11
   implemento: requiere vectores de emisiones por sector que aun no tenemos
   para Argentina/Brasil/Mexico/Uruguay. Queda descrita en la hoja
   `metodologia` como marco de referencia.
-- Cobertura de COU: **31/34 con COU adjunto** (28 reconstruidas + Mexico 2008,
-  Mexico 2013, Uruguay 2016). Parsers: `Codigo/scripts/parser_cou_mexico_2008.py`
+- Cobertura de COU/fuente: **32/35 con COU o COU de referencia** (29
+  reconstruidas + Mexico 2008, Mexico 2013, Uruguay 2016). Parsers:
+  `Codigo/scripts/parser_cou_mexico_2008.py`
   (COU INEGI 2008, U_dom reconcilia con Z ratio 1.0000) y
   `parser_cou_uruguay_2016.py` (COU BCU 2016 detallado, 95 ind x 110 prod,
   adjunto como referencia oficial; se omite VA por desalineacion del subcuadro).
@@ -63,13 +67,9 @@ Entrega vigente:
 - 35 archivos Excel anuales en `MIP/{Pais}/`.
 - 6 matrices directas o equivalentes de fuente.
 - 29 matrices reconstruidas desde COU.
-- Todas las matrices publicadas tienen trazabilidad al inicio del libro:
-  - `README`
-  - `fuente_resumen`
-  - `cobertura_sectores`
-  - `cobertura_productos` cuando aplica
-  - `fuente_notas`
-  - `src_*` cuando la matriz fue reconstruida desde COU
+- Todas las matrices publicadas tienen trazabilidad al inicio del libro. En la
+  entrega publica simplificada se condensa en `Indice` y
+  `COU_Tabla_Original`; la estructura tecnica completa queda en el pipeline.
 - Validacion estructural: 35/35 OK.
 - Auditoria de cobertura sectorial: 0 sectores de fuente pendientes por incorporar en la MIP final.
 
@@ -197,7 +197,7 @@ Correcciones ya aplicadas:
   encabezado. Se corrigio `Codigo/src/parsers/mexico_mip.py` (lee utf-8-sig con
   fallback a latin-1) y se regeneraron las matrices, el paquete, la validacion y
   la auditoria. Solo cambiaron etiquetas de texto; ningun valor numerico se altero.
-  Verificacion: 0 mojibake en las 34 matrices publicadas y en la auditoria.
+  Verificacion: 0 mojibake en las 35 matrices publicadas y en la auditoria.
 
 No usar como entregable principal cualquier paquete "robusto" que ajuste `Z` de forma general. Ese enfoque solo puede quedar como anexo experimental si el equipo lo aprueba explicitamente.
 
@@ -322,8 +322,8 @@ Salida: resumen en consola (choque directo, impacto total, multiplicador) y
 Excel trazable con hojas `escenario`, `choque_definicion` e `impacto_sector`.
 
 Limitacion actual: el efecto sobre valor agregado solo se estima si la matriz
-trae `W_valor_agregado` con datos (las MIP directas tipo Mexico vienen con VA
-en 0). Los efectos de empleo y emisiones quedan listos en
+trae `v_valor_agregado`/valor agregado con datos (las MIP directas tipo Mexico
+vienen con VA en 0). Los efectos de empleo y emisiones quedan listos en
 `Codigo/src/multiplicadores.py` pero requieren vectores por sector aun no
 incorporados.
 

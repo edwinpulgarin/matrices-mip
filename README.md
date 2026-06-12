@@ -23,34 +23,37 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
 
 ## Cobertura
 
-- Argentina: 6 matrices (1997-2021).
+- Argentina: 7 matrices (1997-2022).
 - Brasil: 22 matrices (2000-2021).
 - Mexico: 4 matrices (2003-2018).
 - Uruguay: 2 matrices (2016-2017).
 
-Total de matrices: 34
+Total de matrices: 35
 
 ## Matrices directas vs reconstruidas
 
 El repositorio separa dos tipos de matrices:
 
 - **Directas:** la entidad fuente publica una MIP o matriz equivalente que se parsea, normaliza, valida y empaqueta. Incluye Argentina 1997, Mexico 2003/2008/2013/2018 y Uruguay 2016.
-- **Reconstruidas desde COU:** la fuente publica cuadros de oferta y utilizacion, y el pipeline reconstruye una MIP industria x industria bajo el supuesto de tecnologia de industria. Incluye Argentina 2004/2018-2021, Brasil 2000-2021 y Uruguay 2017.
+- **Reconstruidas desde COU:** la fuente publica cuadros de oferta y utilizacion, y el pipeline reconstruye una MIP industria x industria bajo el supuesto de tecnologia de industria. Incluye Argentina 2004/2018-2022, Brasil 2000-2021 y Uruguay 2017.
 
 La presentacion `Presentacion_Reconstruccion_MIP_Simulador.html` explica esta separacion, el paso a paso de reconstruccion, los cierres menores documentados y la ruta del simulador de choques.
 
 ## Como navegar
 
-Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada archivo empieza con pestanas de trazabilidad:
+Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada libro anual queda en una estructura breve para explicar:
 
-- `README`: metadatos del libro anual.
-- `fuente_resumen`: fuente utilizada, tipo de matriz y archivo COU procesado cuando aplica.
-- `cobertura_sectores`: compara sectores/actividades de fuente contra sectores de la MIP final.
-- `cobertura_productos`: aparece en matrices reconstruidas desde COU y documenta productos fuente.
-- `fuente_notas`: notas metodologicas de procesamiento.
-- `src_*`: hojas COU incorporadas solo cuando la matriz fue reconstruida desde COU.
+- `Indice`: portada, fuente, tipo de matriz y guia de hojas.
+- `COU_Tabla_Original`: COU/fuente original o notas de fuente cuando no existe COU publico separado.
+- `Z_consumos_intermedios`: matriz `Z` de consumos intermedios.
+- `x_produccion_bruta`: vector `x` y componentes disponibles.
+- `y_demanda_final`: vector `y` y componentes disponibles.
+- `X_hat`: matriz diagonal de produccion, `diag(x)`.
+- `A_coef_tecnicos`: matriz `A = Z * X_hat^-1`.
+- `L_leontief`: inversa de Leontief, `L = (I - A)^-1`.
+- `B_coef_distribucion`: matriz de coeficientes de distribucion, `B = X_hat^-1 * Z`.
 
-Luego vienen las hojas analiticas: `Z_MIP`, coeficientes tecnicos, inversa de Leontief, Ghosh, produccion, valor agregado, consumo intermedio importado, multiplicadores y validaciones.
+Las validaciones matematicas y auditorias se dejan en archivos consolidados separados, no dentro de cada Excel anual.
 
 ## Criterios metodologicos
 
@@ -110,7 +113,7 @@ auditoria_cobertura_sectores_mip.xlsx
 auditoria_cobertura_sectores_mip.md
 ```
 
-Resultado de la ultima corrida: 34/34 matrices con validacion estructural OK, nombres sectoriales OK y 0 sectores de fuente pendientes por incorporar en la MIP final.
+Resultado de la ultima corrida: 35/35 matrices con validacion estructural OK, nombres sectoriales OK y 0 sectores de fuente pendientes por incorporar en la MIP final.
 
 ## Nota de fuentes
 

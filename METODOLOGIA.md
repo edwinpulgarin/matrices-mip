@@ -21,7 +21,7 @@ Construir un repositorio comparable de matrices insumo-producto para Argentina, 
 La base distingue dos rutas:
 
 - **Matrices directas:** la fuente publica una MIP o matriz equivalente. Se parsea, normaliza, valida y empaqueta sin reconstruccion COU. En esta categoria estan Argentina 1997, Mexico 2003/2008/2013/2018 y Uruguay 2016.
-- **Matrices reconstruidas:** la fuente publica cuadros de oferta y utilizacion. El pipeline reconstruye una MIP industria x industria usando el supuesto de tecnologia de industria. En esta categoria estan Argentina 2004/2018-2021, Brasil 2000-2021 y Uruguay 2017.
+- **Matrices reconstruidas:** la fuente publica cuadros de oferta y utilizacion. El pipeline reconstruye una MIP industria x industria usando el supuesto de tecnologia de industria. En esta categoria estan Argentina 2004/2018-2022, Brasil 2000-2021 y Uruguay 2017.
 
 Esta separacion permite responder que matrices vienen directamente de la fuente y cuales dependen de supuestos de transformacion.
 
@@ -142,23 +142,19 @@ output/tablas/validacion_matematica_mip.md
 
 ## Estructura de entregables
 
-Los Excel individuales por pais/anio incluyen:
+Los Excel individuales por pais/anio se publican en una version simplificada para lectura:
 
-- `README`
-- `Z_MIP`
+- `Indice`
+- `COU_Tabla_Original`
+- `Z_consumos_intermedios`
+- `x_produccion_bruta`
+- `y_demanda_final`
+- `X_hat`
 - `A_coef_tecnicos`
 - `L_leontief`
-- `B_ghosh_coef`
-- `G_ghosh_inversa`
-- `g_produccion`
-- `W_valor_agregado`
-- `f_demanda_final`
-- `ajuste_intermedio`
-- `ajuste_cierre` cuando aplica
-- `Z_pre_conciliacion` cuando aplica
-- `multiplicadores`
-- `balances_sectoriales`
-- hojas de validacion
+- `B_coef_distribucion`
+
+Las validaciones, balances diagnosticos y auditorias de cobertura se conservan en archivos consolidados separados para no sobrecargar cada libro anual.
 
 Los Excel consolidados por pais se guardan en:
 

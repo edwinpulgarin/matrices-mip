@@ -67,7 +67,7 @@ def _norm(texto: str) -> str:
 _HOJA_L = "L_leontief"
 _HOJA_A = "A_coef_tecnicos"
 _HOJA_G = "G_ghosh_inversa"
-_HOJA_B = "B_ghosh_coef"
+_HOJA_B = ["B_coef_distribucion", "B_ghosh_coef"]
 _HOJA_Z = "Z_MIP"
 # Nombres de hoja: primero la notacion CEPAL (x, y, v); se mantienen los
 # nombres antiguos (g, f, W) como respaldo para Excel generados antes.
@@ -156,11 +156,13 @@ def cargar_mip(path: str, pais: str = "", anio: str = "") -> MIP:
     L = _leer_matriz_cuadrada(path, _HOJA_L)
     sectores = list(L.index)
 
-    def _try_matriz(h):
-        try:
-            return _leer_matriz_cuadrada(path, h).reindex(index=sectores, columns=sectores).fillna(0.0)
-        except Exception:
-            return pd.DataFrame(0.0, index=sectores, columns=sectores)
+    def _try_matriz(hojas):
+        for h in (hojas if isinstance(hojas, (list, tuple)) else [hojas]):
+            try:
+                return _leer_matriz_cuadrada(path, h).reindex(index=sectores, columns=sectores).fillna(0.0)
+            except Exception:
+                continue
+        return pd.DataFrame(0.0, index=sectores, columns=sectores)
 
     def _try_vector(hojas, cols_total=()):
         for h in (hojas if isinstance(hojas, (list, tuple)) else [hojas]):
@@ -170,9 +172,17 @@ def cargar_mip(path: str, pais: str = "", anio: str = "") -> MIP:
                 continue
         return pd.Series(0.0, index=sectores)
 
-    G = _try_matriz(_HOJA_G)
     A = _try_matriz(_HOJA_A)
     B = _try_matriz(_HOJA_B)
+    G = _try_matriz(_HOJA_G)
+    if float(np.abs(G.to_numpy(dtype=float)).sum()) == 0.0 and float(np.abs(B.to_numpy(dtype=float)).sum()) > 0.0:
+        I = np.eye(len(sectores))
+        b_values = B.to_numpy(dtype=float)
+        try:
+            g_values = np.linalg.inv(I - b_values)
+        except np.linalg.LinAlgError:
+            g_values = np.linalg.pinv(I - b_values)
+        G = pd.DataFrame(g_values, index=sectores, columns=sectores)
     g = _try_vector(_HOJA_G_PROD)
     f = _try_vector(_HOJA_F, _COLS_DEMANDA_TOTAL)
     W = _try_vector(_HOJA_W)
