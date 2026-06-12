@@ -1,6 +1,6 @@
 # Auditoria de cobertura sectorial MIP
 
-Matrices auditadas: 34
+Matrices auditadas: 35
 
 ## Lectura
 
@@ -18,6 +18,7 @@ Matrices auditadas: 34
 | Argentina | argentina       | 2019 | reconstruida_desde_COU           | output\matrices_insumo_producto\Argentina\MIP_Argentina_2019.xlsx | 107          | 107             | 0                      | 0                      | 0                | 18                                |
 | Argentina | argentina       | 2020 | reconstruida_desde_COU           | output\matrices_insumo_producto\Argentina\MIP_Argentina_2020.xlsx | 107          | 107             | 0                      | 0                      | 0                | 18                                |
 | Argentina | argentina       | 2021 | reconstruida_desde_COU           | output\matrices_insumo_producto\Argentina\MIP_Argentina_2021.xlsx | 107          | 107             | 0                      | 0                      | 0                | 18                                |
+| Argentina | argentina       | 2022 | reconstruida_desde_COU           | output\matrices_insumo_producto\Argentina\MIP_Argentina_2022.xlsx | 107          | 107             | 0                      | 0                      | 0                | 18                                |
 | Brasil    | brasil_early    | 2000 | reconstruida_desde_COU           | output\matrices_insumo_producto\Brasil\MIP_Brasil_2000.xlsx       | 51           | 51              | 0                      | 0                      | 0                | 1                                 |
 | Brasil    | brasil_early    | 2001 | reconstruida_desde_COU           | output\matrices_insumo_producto\Brasil\MIP_Brasil_2001.xlsx       | 51           | 51              | 0                      | 0                      | 0                | 1                                 |
 | Brasil    | brasil_early    | 2002 | reconstruida_desde_COU           | output\matrices_insumo_producto\Brasil\MIP_Brasil_2002.xlsx       | 51           | 51              | 0                      | 0                      | 0                | 1                                 |
@@ -41,10 +42,10 @@ Matrices auditadas: 34
 | Brasil    | brasil          | 2020 | reconstruida_desde_COU           | output\matrices_insumo_producto\Brasil\MIP_Brasil_2020.xlsx       | 68           | 68              | 0                      | 0                      | 0                | 1                                 |
 | Brasil    | brasil          | 2021 | reconstruida_desde_COU           | output\matrices_insumo_producto\Brasil\MIP_Brasil_2021.xlsx       | 68           | 68              | 0                      | 0                      | 0                | 1                                 |
 | Mexico    | mexico          | 2003 | MIP_directa_o_fuente_equivalente | output\matrices_insumo_producto\Mexico\MIP_Mexico_2003.xlsx       | 20           | 20              | 0                      | 0                      | 0                | 2                                 |
-| Mexico    | mexico          | 2008 | MIP_directa_o_fuente_equivalente | output\matrices_insumo_producto\Mexico\MIP_Mexico_2008.xlsx       | 262          | 262             | 0                      | 0                      | 0                | 52                                |
-| Mexico    | mexico          | 2013 | MIP_directa_o_fuente_equivalente | output\matrices_insumo_producto\Mexico\MIP_Mexico_2013.xlsx       | 262          | 262             | 0                      | 0                      | 0                | 48                                |
+| Mexico    | mexico          | 2008 | MIP_directa_con_COU_referencia   | output\matrices_insumo_producto\Mexico\MIP_Mexico_2008.xlsx       | 262          | 262             | 0                      | 0                      | 0                | 52                                |
+| Mexico    | mexico          | 2013 | MIP_directa_con_COU_referencia   | output\matrices_insumo_producto\Mexico\MIP_Mexico_2013.xlsx       | 262          | 262             | 0                      | 0                      | 0                | 48                                |
 | Mexico    | mexico          | 2018 | MIP_directa_o_fuente_equivalente | output\matrices_insumo_producto\Mexico\MIP_Mexico_2018.xlsx       | 263          | 263             | 0                      | 0                      | 0                | 38                                |
-| Uruguay   | uruguay         | 2016 | MIP_directa_o_fuente_equivalente | output\matrices_insumo_producto\Uruguay\MIP_Uruguay_2016.xlsx     | 128          | 128             | 0                      | 0                      | 0                | 44                                |
+| Uruguay   | uruguay         | 2016 | MIP_directa_con_COU_referencia   | output\matrices_insumo_producto\Uruguay\MIP_Uruguay_2016.xlsx     | 128          | 128             | 0                      | 0                      | 0                | 44                                |
 | Uruguay   | uruguay_cou     | 2017 | reconstruida_desde_COU           | output\matrices_insumo_producto\Uruguay\MIP_Uruguay_2017.xlsx     | 95           | 95              | 0                      | 0                      | 0                | 8                                 |
 
 No se encontraron diferencias de cobertura sectorial por revisar entre fuente de actividad y MIP final.

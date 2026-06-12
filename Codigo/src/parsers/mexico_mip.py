@@ -74,10 +74,26 @@ def _detectar_nombres(zf: zipfile.ZipFile, nivel: str, anio: int) -> dict:
 
 
 def _leer_csv_zip(zf: zipfile.ZipFile, ruta_interna: str,
-                  encoding: str = 'latin-1') -> pd.DataFrame:
+                  encoding: str | None = None) -> pd.DataFrame:
+    """
+    Lee un CSV interno del ZIP de INEGI.
+
+    Los CSV de INEGI (2013, 2018) vienen en UTF-8 con BOM. Leerlos como
+    latin-1 producia mojibake en las etiquetas (p.ej. 'Mineria' -> 'MinerÃ­a')
+    y dejaba el BOM pegado al primer encabezado ('﻿Descriptores'). Por eso se
+    intenta utf-8-sig primero (descarta el BOM) y solo se cae a latin-1 si el
+    archivo realmente no es UTF-8.
+    """
     data = zf.read(ruta_interna)
-    df = pd.read_csv(io.BytesIO(data), encoding=encoding, index_col=0)
-    return df
+    encodings = [encoding] if encoding else ['utf-8-sig', 'latin-1']
+    ultimo_error = None
+    for enc in encodings:
+        try:
+            return pd.read_csv(io.BytesIO(data), encoding=enc, index_col=0)
+        except (UnicodeDecodeError, UnicodeError) as e:
+            ultimo_error = e
+            continue
+    raise ultimo_error
 
 
 def parsear(ruta_zip: Path, anio: int = 2013,

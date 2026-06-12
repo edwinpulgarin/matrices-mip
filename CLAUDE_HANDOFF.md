@@ -1,6 +1,56 @@
 # Handoff para Claude y siguientes colaboradores
 
-Fecha de corte: 2026-06-10
+Fecha de corte: 2026-06-11
+
+## Novedades 2026-06-11
+
+- **Serie extendida: Argentina 2022** reconstruida desde COU INDEC
+  (`Argentina_sh_cou_2022_06_25.xls` -> `data/raw/argentina/cou_2022.xls`;
+  parser argentina `_parsear_2018_gen`, formato Mat_Of_pc/Mat_Ut_pc). 107
+  sectores, Leontief OK. La entrega pasa de 34 a **35 matrices**. Config en
+  `main.py`: argentina `anios = range(2004, 2023)`. Regenerado/validado/auditado:
+  35/35 estructural OK, 0 pendientes.
+
+
+- Todas las 34 matrices abren en una hoja `Indice` (portada) con identificacion
+  y guia de hojas. Orden: Indice -> README -> fuente_resumen -> cobertura ->
+  fuente_notas -> `src_*` (COU cuando aplica) -> matrices -> diagnostico.
+- Nuevo mecanismo de COU de REFERENCIA para MIP directas (`couref`): adjunta el
+  COU oficial del mismo marco como `src_*`, marca
+  `tipo_matriz = MIP_directa_con_COU_referencia` y no toca la auditoria.
+  Detalle en `Codigo/docs/plan_cou_en_mip_directas.md`.
+- Mexico 2013 ya lleva su COU matricial INEGI/CEPAL adjunto (parser
+  `Codigo/scripts/parser_cou_mexico_2013.py`). El resto de directas siguen
+  bloqueadas por disponibilidad de fuente (ver el plan y el checklist).
+- Regenerado y verificado: validacion 34/34 estructural OK, auditoria 0
+  sectores pendientes.
+- Notacion alineada al documento CEPAL "Metodologia MIP Extendida
+  Ambientalmente y Huella de Carbono" (2025): se renombraron las hojas de
+  vectores a la convencion del marco (g_produccion -> x_produccion_bruta;
+  f_demanda_final -> y_demanda_final; W_valor_agregado -> v_valor_agregado) y
+  se agrego una hoja `metodologia` con simbolos y ecuaciones (Z, x, y, A, L,
+  B, G, multiplicadores, BL/FL). El simulador (`Codigo/src/simulador.py`) se
+  actualizo para leer los nombres nuevos (con respaldo a los antiguos) y para
+  tomar la columna total de la demanda final cuando viene desglosada.
+- La extension ambiental del documento (D1, D, Da, huella de carbono) NO se
+  implemento: requiere vectores de emisiones por sector que aun no tenemos
+  para Argentina/Brasil/Mexico/Uruguay. Queda descrita en la hoja
+  `metodologia` como marco de referencia.
+- Cobertura de COU: **31/34 con COU adjunto** (28 reconstruidas + Mexico 2008,
+  Mexico 2013, Uruguay 2016). Parsers: `Codigo/scripts/parser_cou_mexico_2008.py`
+  (COU INEGI 2008, U_dom reconcilia con Z ratio 1.0000) y
+  `parser_cou_uruguay_2016.py` (COU BCU 2016 detallado, 95 ind x 110 prod,
+  adjunto como referencia oficial; se omite VA por desalineacion del subcuadro).
+  Las 3 restantes NO tienen COU publico disponible y llevan su fuente explicada
+  al inicio (README + fuente_resumen + metodologia + fuente_notas detallada):
+  Mexico 2018 (el release MIP 2018 de INEGI -tabulados_MIP.zip y datos abiertos
+  mip_csv.zip, revisados 2026-06-11- trae solo la MIP simetrica, sin COU),
+  Mexico 2003 (MIP de 20 sectores, sin COU rama compatible) y Argentina 1997
+  (no existe COU publico; CEPAL arranca 2004). Esto cumple la regla del equipo:
+  cada MIP lleva su COU o su fuente al inicio. Ver
+  `Codigo/docs/CHECKLIST_DESCARGA_COU_DIRECTAS.md`.
+
+Fecha de corte anterior: 2026-06-10
 
 Este documento es la puerta de entrada para continuar el proyecto sin perder trazabilidad. El objetivo es que cualquier colaborador pueda distinguir que esta publicado, que fue reconstruido, que fuentes se usaron, que validaciones ya pasaron y donde quedan riesgos metodologicos.
 
@@ -10,9 +60,9 @@ Repositorio: `edwinpulgarin/matrices-mip`
 
 Entrega vigente:
 
-- 34 archivos Excel anuales en `MIP/{Pais}/`.
+- 35 archivos Excel anuales en `MIP/{Pais}/`.
 - 6 matrices directas o equivalentes de fuente.
-- 28 matrices reconstruidas desde COU.
+- 29 matrices reconstruidas desde COU.
 - Todas las matrices publicadas tienen trazabilidad al inicio del libro:
   - `README`
   - `fuente_resumen`
@@ -20,7 +70,7 @@ Entrega vigente:
   - `cobertura_productos` cuando aplica
   - `fuente_notas`
   - `src_*` cuando la matriz fue reconstruida desde COU
-- Validacion estructural: 34/34 OK.
+- Validacion estructural: 35/35 OK.
 - Auditoria de cobertura sectorial: 0 sectores de fuente pendientes por incorporar en la MIP final.
 
 Archivos que conviene leer primero:
@@ -39,7 +89,7 @@ Archivos que conviene leer primero:
 | Pais | Anios | Tipo | Fuente base documentada |
 |---|---:|---|---|
 | Argentina | 1997 | MIP directa | MIPAr97 INDEC |
-| Argentina | 2004, 2018-2021 | Reconstruida desde COU | COU INDEC/CEPAL |
+| Argentina | 2004, 2018-2022 | Reconstruida desde COU | COU INDEC/CEPAL |
 | Brasil | 2000-2009 | Reconstruida desde COU | COU CEPAL Brasil base 2000 |
 | Brasil | 2010-2021 | Reconstruida desde COU | COU/TRU IBGE nivel 68 |
 | Mexico | 2003, 2008, 2013, 2018 | MIP directa | MIP CEPAL/INEGI |
@@ -141,6 +191,13 @@ Correcciones ya aplicadas:
 - Brasil 2000-2009: alineacion por posicion y exclusion de columnas agregadas.
 - Uruguay 2016: MIP directa con conciliacion menor por redondeo.
 - Uruguay 2017: queda como caso sensible; no se concilio porque los negativos son materiales.
+- Mexico 2013 y 2018 (2026-06-10): correccion de origen del encoding. Los CSV de
+  INEGI vienen en UTF-8 con BOM y el parser los leia como latin-1, produciendo
+  mojibake en las etiquetas ('Mineria' -> 'MinerÃ­a') y dejando el BOM pegado al
+  encabezado. Se corrigio `Codigo/src/parsers/mexico_mip.py` (lee utf-8-sig con
+  fallback a latin-1) y se regeneraron las matrices, el paquete, la validacion y
+  la auditoria. Solo cambiaron etiquetas de texto; ningun valor numerico se altero.
+  Verificacion: 0 mojibake en las 34 matrices publicadas y en la auditoria.
 
 No usar como entregable principal cualquier paquete "robusto" que ajuste `Z` de forma general. Ese enfoque solo puede quedar como anexo experimental si el equipo lo aprueba explicitamente.
 
@@ -208,7 +265,7 @@ Verificacion minima de Excel:
 2. Argentina 2005-2017: requiere solicitud directa a INDEC/CEPAL o fuente publica adicional comparable.
 3. Brasil 2022+ y Uruguay 2018+: revisar si existen COU/MIP detallados compatibles con el nivel actual.
 4. Presentacion: mantenerla sincronizada con validaciones y auditoria de cobertura si cambian resultados.
-5. Simulador de choques: construirlo sobre las matrices publicadas con trazabilidad, usando `A`, `L`, `B`, `G`, `g` y `f`.
+5. Simulador de choques: PRIMERA VERSION CONSTRUIDA. Ver seccion 11. Pendiente: integrar vectores de empleo/emisiones por sector cuando esten disponibles y conectar con la presentacion del simulador.
 
 ## 10. Reglas de colaboracion para no romper trazabilidad
 
@@ -218,3 +275,66 @@ Verificacion minima de Excel:
 - No presentar ajustes generales de `Z` como cifras oficiales.
 - Si se modifica un parser, documentar el cambio en `Codigo/docs/` y regenerar al menos un caso de prueba.
 - Si se agrega una fuente externa, guardar URL, fecha de revision, archivo descargado y ruta local.
+
+## 11. Simulador de choques (nuevo, 2026-06-10)
+
+Se construyo la primera version del simulador sobre las matrices ya publicadas.
+No reconstruye ni altera matrices: solo las usa como insumo, preservando
+trazabilidad.
+
+Archivos:
+
+- `Codigo/src/simulador.py`: motor puro (numpy/pandas).
+- `Codigo/scripts/simular_choques.py`: CLI ejecutable.
+
+Dos familias de choque:
+
+- Demanda (modelo de cantidades de Leontief): `Delta_x = L @ Delta_f`.
+  Propaga efectos hacia atras (backward linkages) ante un cambio en la
+  demanda final.
+- Oferta/costos (modelo de precios de Ghosh): `Delta_x' = Delta_v' @ G`.
+  Propaga efectos hacia adelante (forward linkages) ante un cambio en
+  insumos primarios / valor agregado.
+
+El sector del choque se indica por etiqueta exacta o coincidencia parcial;
+el matcher es insensible a mayusculas, acentos y al mojibake de las etiquetas
+de origen (no altera las etiquetas, solo facilita el match).
+
+Verificaciones algebraicas pasadas:
+
+- Choque absoluto unitario a la demanda del sector j reproduce exactamente la
+  columna j de `L` (error 0).
+- Choque de oferta unitario al sector j reproduce exactamente la fila j de `G`
+  (error 0).
+- El efecto multiplicador de demanda coincide con la suma de columna de `L`.
+
+Ejemplo de uso:
+
+```powershell
+py -3 -X utf8 Codigo\scripts\simular_choques.py `
+  --mip "MIP\Mexico\MIP_Mexico_2018.xlsx" `
+  --pais Mexico --anio 2018 --tipo demanda --modo pct `
+  --choque "Edificacion residencial=10" `
+  --salida output\simulaciones\demanda_mexico_2018.xlsx
+```
+
+Salida: resumen en consola (choque directo, impacto total, multiplicador) y
+Excel trazable con hojas `escenario`, `choque_definicion` e `impacto_sector`.
+
+Limitacion actual: el efecto sobre valor agregado solo se estima si la matriz
+trae `W_valor_agregado` con datos (las MIP directas tipo Mexico vienen con VA
+en 0). Los efectos de empleo y emisiones quedan listos en
+`Codigo/src/multiplicadores.py` pero requieren vectores por sector aun no
+incorporados.
+
+## 12. Revision de fuentes 2026-06-10
+
+Ver `Codigo/docs/revision_fuentes_2026-06_extension_series.md`. Resumen:
+
+- Repositorio CEPAL COU/MIP cubre COU 1988-2022 y MIP 1979-2022 para la region:
+  es la via concreta para extender Brasil hacia 2022 y revisar anios adicionales
+  de Uruguay y Argentina.
+- No se pudieron descargar archivos en esta sesion (IBGE/BCU rechazaron
+  conexion directa). Las acciones quedan documentadas, no ejecutadas.
+- Uruguay 2017 sigue con alerta metodologica hasta conseguir demanda final
+  fuente completa o MIP directa equivalente.

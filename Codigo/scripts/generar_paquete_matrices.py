@@ -226,6 +226,49 @@ def source_file_for(source_key: str, year: int) -> Path | None:
     return candidate if candidate.exists() else None
 
 
+def couref_file_for(source_key: str, year: int) -> Path | None:
+    """COU oficial adjuntado como REFERENCIA a una MIP directa (no reconstruye)."""
+    candidate = DATA_PROC / source_key / f"couref_{source_key}_{year}.xlsx"
+    return candidate if candidate.exists() else None
+
+
+# Notas de fuente para MIP directas SIN COU adjunto: explican el origen y por que
+# no llevan COU, para que cada Excel tenga la fuente clara al inicio.
+DIRECTA_COU_NOTES = {
+    ("mexico", 2003): [
+        "MIP directa de Mexico 2003, fuente INEGI (Sistema de Cuentas Nacionales de Mexico).",
+        "Esta matriz esta a 20 sectores (marco antiguo, agregacion gran division). "
+        "No hay un COU producto x actividad compatible con esa agregacion, por lo "
+        "que no se adjunta COU; la fuente es la MIP publicada por INEGI.",
+    ],
+    ("mexico", 2018): [
+        "MIP directa de Mexico 2018, fuente INEGI (SCNM), matriz simetrica base 2018.",
+        "El release de la MIP 2018 de INEGI publica la matriz simetrica y sus "
+        "componentes (transacciones domestica/importada/total, coeficientes "
+        "tecnicos y de Leontief) pero NO incluye el COU (oferta/utilizacion) como "
+        "dataset separado; por eso esta MIP no lleva COU adjunto.",
+        "Revisado 2026-06-11 sobre tabulados_MIP.zip y datos abiertos mip_csv.zip "
+        "de INEGI: ambos contienen solo la MIP, sin cuadros de oferta y utilizacion.",
+    ],
+    ("argentina_mip97", 1997): [
+        "MIP directa de Argentina 1997 (MIPAr97), fuente INDEC.",
+        "No existe COU publico separado para 1997: los Cuadros de Oferta y "
+        "Utilizacion de Argentina en el repositorio CEPAL arrancan en 2004. Por "
+        "eso esta MIP no lleva COU adjunto; la fuente es la MIPAr97 del INDEC.",
+    ],
+}
+
+
+def directa_notes(source_key: str, year: int) -> pd.DataFrame:
+    notas = DIRECTA_COU_NOTES.get((source_key, year))
+    if notas is None:
+        notas = [
+            "MIP directa / fuente equivalente: %s." % SOURCE_LABEL.get(source_key, source_key),
+            "No se adjunta COU para esta matriz (no disponible como fuente separada).",
+        ]
+    return pd.DataFrame({"nota": notas})
+
+
 def source_notes(source_sheets: dict[str, pd.DataFrame]) -> pd.DataFrame:
     notes = source_sheets.get("notas")
     if notes is None:
@@ -244,21 +287,42 @@ def build_source_summary(
     mip_path: Path,
     cou_path: Path | None,
     source_sheets: dict[str, pd.DataFrame],
+    couref_path: Path | None = None,
+    couref_sheets: dict[str, pd.DataFrame] | None = None,
 ) -> pd.DataFrame:
+    if cou_path:
+        tipo = "reconstruida_desde_COU"
+    elif couref_path:
+        tipo = "MIP_directa_con_COU_referencia"
+    else:
+        tipo = "MIP_directa_o_fuente_equivalente"
     rows = [
         ("pais_publicado", COUNTRY_FOLDER.get(source_key, source_key)),
         ("serie_fuente", source_key),
         ("anio", year),
-        ("tipo_matriz", "reconstruida_desde_COU" if cou_path else "MIP_directa_o_fuente_equivalente"),
+        ("tipo_matriz", tipo),
         ("fuente_metodologica", SOURCE_LABEL.get(source_key, source_key)),
         ("archivo_mip_procesado", str(mip_path.relative_to(ROOT))),
         ("archivo_cou_procesado", str(cou_path.relative_to(ROOT)) if cou_path else "no_aplica"),
+    ]
+    if couref_path:
+        rows.append(("archivo_cou_referencia", str(couref_path.relative_to(ROOT))))
+        rows.append((
+            "nota_cou_referencia",
+            "El COU oficial del mismo marco y anio se adjunta como REFERENCIA "
+            "(hojas src_*). La MIP publicada sigue siendo directa; el COU no se "
+            "usa para reconstruirla ni altera la auditoria de cobertura.",
+        ))
+    rows += [
         ("criterio_sectores", "Las actividades fuente son filas de V_oferta, columnas de U_utilizacion y columnas de W_valor_agregado."),
         ("nota_diagonal_cero", "Un sector con diagonal Z[i,i] = 0 se conserva si tiene produccion, valor agregado, ventas o compras. No es obligatorio que un sector se compre a si mismo."),
         ("nota_productos", "Los productos del COU no necesariamente aparecen como sectores: se transforman a industrias mediante D_market_share."),
     ]
     for sheet_name, df in source_sheets.items():
         rows.append((f"dim_{sheet_name}", f"{df.shape[0]} filas x {df.shape[1]} columnas"))
+    if couref_sheets:
+        for sheet_name, df in couref_sheets.items():
+            rows.append((f"dim_couref_{sheet_name}", f"{df.shape[0]} filas x {df.shape[1]} columnas"))
     return pd.DataFrame(rows, columns=["campo", "valor"])
 
 
@@ -351,6 +415,146 @@ def build_sector_coverage(
             "nota": nota,
         })
     return pd.DataFrame(rows)
+
+
+def _norm_label(text: str) -> str:
+    """Normaliza para comparar: minúsculas, sin acentos, espacios colapsados."""
+    import unicodedata
+    t = unicodedata.normalize("NFKD", str(text))
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    t = " ".join(t.lower().split())
+    return t
+
+
+def canonical_final_demand_label(source_name: str) -> str:
+    """
+    Traduce el nombre de un componente de demanda final de la fuente
+    (códigos INDEC, etiquetas IBGE/BCU) a una etiqueta canónica clara en
+    español. Mantener trazable mediante el glosario que acompaña la hoja.
+    """
+    n = _norm_label(source_name)
+    # Exportaciones (revisar antes que 'servicios' genérico).
+    if "exporta" in n:
+        if "serv" in n:
+            return "Exportación de servicios"
+        if "bens" in n or "bien" in n:
+            return "Exportación de bienes"
+        return "Exportaciones"
+    if n == "ex":
+        return "Exportaciones"
+    # Consumo de hogares.
+    if "famil" in n or n == "ch":
+        return "Consumo de hogares"
+    # ISFLSF (instituciones sin fines de lucro que sirven a los hogares).
+    if "isfl" in n:
+        return "Consumo de ISFLSF"
+    # Consumo del gobierno / administración pública.
+    if "governo" in n or "gobierno" in n or "administracao publica" in n or n == "cp":
+        return "Consumo del gobierno"
+    # Formación bruta de capital fijo.
+    if "capital fixo" in n or "capital fijo" in n or "fbc fijo" in n or "fbkf" in n:
+        return "Formación bruta de capital fijo"
+    # Inventarios / variación de existencias.
+    if "produtos terminados" in n or "productos terminados" in n:
+        return "Variación de existencias: productos terminados"
+    if "trabajos en curso" in n or "trabalhos em curso" in n or "trabajos en proceso" in n:
+        return "Variación de existencias: trabajos en curso"
+    if "estoque" in n or "existencias" in n or n == "ve":
+        return "Variación de existencias"
+    # Inversión genérica (formación bruta de capital sin precisar 'fijo').
+    if n == "inv" or "formacion bruta de capital" in n or "forma bruta de capital" in n:
+        return "Formación bruta de capital (inversión)"
+    # Objetos de valor (componente SCN de Argentina).
+    if n == "ov" or "objetos de valor" in n:
+        return "Objetos de valor"
+    # Residuales y ajustes de cierre doméstico.
+    if "ajuste_residual_sin_uso" in n or "sin uso pc" in n:
+        return "Ajuste residual (productos sin uso a precio comprador)"
+    if "residual" in n:
+        return "Demanda final residual (cierre doméstico)"
+    # Sin coincidencia: se conserva el nombre fuente normalizado en espacios.
+    return " ".join(str(source_name).split())
+
+
+def build_final_demand_breakdown(data: dict, source_sheets: dict[str, pd.DataFrame]):
+    """
+    Descompone la demanda final del entregable en sus componentes nombrados
+    de cuentas nacionales (consumo de hogares, gobierno, FBKF, exportaciones,
+    variación de existencias, etc.), transformados al espacio de industrias.
+
+    Devuelve (breakdown_df, glosario_df) o (None, None) si la fuente no trae
+    desglose (p. ej. MIP directas sin COU disponible). En ese caso el
+    generador conserva la columna única de demanda final.
+
+    Para cada componente c de la fuente (en espacio de productos):
+        f_ind[c] = D @ Y[c]          con D = V * diag(q)^-1  (industria × producto)
+
+    Identidad de cierre, sector por sector:
+        demanda_final_total = Σ_c f_ind[c] + ajuste_cierre_domestico
+
+    donde demanda_final_total es la demanda final del entregable (residual que
+    reconcilia con la MIP) y ajuste_cierre_domestico recoge la diferencia por
+    separación nacional/importado y valoración básica vs comprador. Cuando la
+    demanda final fuente se conservó íntegra, el ajuste es ~0 y todo el número
+    queda explicado por componentes nombrados.
+    """
+    V = source_sheets.get("V_oferta")
+    Y = source_sheets.get("Y_demanda_final")
+    Z = data["Z"]
+    sectors = list(Z.index)
+    f_total = data["f"].reindex(sectors).fillna(0)
+
+    if V is None or Y is None or Y.shape[1] == 0:
+        return None, None
+
+    V = V.apply(pd.to_numeric, errors="coerce").fillna(0)
+    Y = Y.apply(pd.to_numeric, errors="coerce").fillna(0)
+
+    # Productos comunes entre oferta (columnas de V) y demanda final (filas de Y).
+    v_products = [str(p) for p in V.columns]
+    common = [p for p in Y.index if str(p) in v_products]
+    if not common:
+        return None, None
+
+    q = V.sum(axis=0)
+    q_safe = q.copy()
+    q_safe[q_safe == 0] = 1.0
+    D = V.div(q_safe, axis=1)  # industria × producto
+
+    Y_common = Y.loc[common]
+    D_common = D.loc[:, [c for c in V.columns if str(c) in [str(x) for x in common]]]
+    # Alinear estrictamente D_common a los productos de Y_common.
+    D_common = D.reindex(columns=Y_common.index).fillna(0)
+    f_comp = pd.DataFrame(
+        D_common.to_numpy(dtype=float) @ Y_common.to_numpy(dtype=float),
+        index=list(V.index),
+        columns=[str(c) for c in Y.columns],
+    ).reindex(sectors).fillna(0)
+
+    # Agrupar componentes que mapean a la misma etiqueta canónica.
+    glosario_rows = []
+    canon_to_sources: dict[str, list[str]] = {}
+    for src_name in f_comp.columns:
+        canon = canonical_final_demand_label(src_name)
+        canon_to_sources.setdefault(canon, []).append(src_name)
+        glosario_rows.append({"etiqueta_canonica": canon, "nombre_fuente": src_name})
+
+    breakdown = pd.DataFrame(index=sectors)
+    for canon, srcs in canon_to_sources.items():
+        breakdown[canon] = f_comp[srcs].sum(axis=1)
+
+    subtotal = breakdown.sum(axis=1)
+    ajuste = f_total - subtotal
+    breakdown["subtotal_componentes_fuente"] = subtotal
+    breakdown["ajuste_cierre_domestico"] = ajuste
+    breakdown["demanda_final_total"] = f_total
+
+    glosario = pd.DataFrame(glosario_rows).drop_duplicates().reset_index(drop=True)
+    glosario["nota"] = (
+        "Componente fuente transformado a industrias con D_market_share y "
+        "agrupado en la etiqueta canónica."
+    )
+    return breakdown, glosario
 
 
 def build_product_coverage(source_sheets: dict[str, pd.DataFrame]) -> pd.DataFrame | None:
@@ -451,7 +655,29 @@ def style_workbook(path: Path):
                     cell.fill = PatternFill("solid", fgColor=LIGHT_BLUE)
                     cell.font = Font(size=9, color=NAVY, bold=True)
 
-        if ws.title == "README":
+        if ws.title == "Indice":
+            ws.freeze_panes = "A2"
+            ws.auto_filter.ref = None
+            ws.column_dimensions["A"].width = 30
+            ws.column_dimensions["B"].width = 110
+            for row in ws.iter_rows(min_row=2, max_row=max_row, max_col=2):
+                label = str(row[0].value) if row[0].value is not None else ""
+                # Encabezado de seccion "HOJA / CONTENIDO".
+                if label == "HOJA":
+                    for cell in row:
+                        cell.fill = PatternFill("solid", fgColor=BLUE)
+                        cell.font = Font(bold=True, color="FFFFFF", size=10)
+                # Bloque de identificacion (primeras filas).
+                elif row[0].row <= 5 and label:
+                    row[0].font = Font(bold=True, color=NAVY, size=10)
+                    row[1].font = Font(bold=True, color=TEXT, size=11)
+        elif ws.title == "metodologia":
+            ws.freeze_panes = "A2"
+            ws.auto_filter.ref = None
+            ws.column_dimensions["A"].width = 14
+            ws.column_dimensions["B"].width = 52
+            ws.column_dimensions["C"].width = 92
+        elif ws.title == "README":
             ws.freeze_panes = "A2"
             ws.column_dimensions["A"].width = 34
             ws.column_dimensions["B"].width = 105
@@ -490,6 +716,52 @@ def style_workbook(path: Path):
     wb.save(path)
 
 
+def build_metodologia(country, year, tipo) -> pd.DataFrame:
+    """Hoja de notacion y ecuaciones, alineada a la metodologia CEPAL MIP-EA.
+
+    Referencia: "Metodologia para la Estimacion de la Matriz Insumo-Producto
+    Extendida Ambientalmente y Huella de Carbono" (CEPAL, 2025). Se adopta su
+    notacion (x, y, Z, A, L, B, G) para que el paquete sea consistente y
+    comparable con ese marco.
+    """
+    rows = [
+        ("simbolo", "concepto", "definicion / formula"),
+        ("Z", "Matriz de consumo intermedio (hoja Z_MIP)", "z_ij = insumo del sector i usado por el sector j"),
+        ("x", "Produccion bruta por sector (hoja x_produccion_bruta)", "x = Z * 1 + y  (balance: produccion = uso intermedio + demanda final)"),
+        ("y", "Demanda final por sector (hoja y_demanda_final)", "y = C + G + I + X - M"),
+        ("v", "Valor agregado por sector (hoja v_valor_agregado)", "v = x - suma de columnas de Z (cierre por columnas)"),
+        ("diag(x)", "Matriz diagonal de produccion", "diag(x)_ii = x_i, 0 fuera de la diagonal"),
+        ("A", "Coeficientes tecnicos (hoja A_coef_tecnicos)", "A = Z * diag(x)^-1 ;  a_ij = z_ij / x_j"),
+        ("L", "Inversa de Leontief (hoja L_leontief)", "L = (I - A)^-1 ;  x = L * y  (encadenamientos hacia atras)"),
+        ("B", "Coeficientes de distribucion de Ghosh (hoja B_ghosh_coef)", "B = diag(x)^-1 * Z ;  b_ij = z_ij / x_i"),
+        ("G", "Inversa de Ghosh (hoja G_ghosh_inversa)", "G = (I - B)^-1 ;  x' = v' * G  (encadenamientos hacia adelante)"),
+        ("MP_j", "Multiplicador de produccion del sector j", "MP_j = suma_i L_ij (columna de L)"),
+        ("BL_j", "Backward linkage (poder de arrastre)", "BL_j = MP_j / promedio(MP) ; >1 arrastre superior al promedio"),
+        ("FL_i", "Forward linkage (poder de impulso)", "FL_i = (suma_j G_ij) / promedio ; >1 impulso superior al promedio"),
+        ("—", "Modelo dominio y supuesto", "MIP industria x industria; reconstruidas desde COU con supuesto de tecnologia de industria (D = V*diag(q)^-1, Z = D*U)."),
+        ("—", "Separacion domestico/importado", "Z contiene consumo intermedio domestico; los flujos importados van en Z_importada / ajuste_intermedio."),
+        ("—", "Extension ambiental (no incluida)", "El marco CEPAL define D1 (presiones), D=D1*diag(x)^-1, Da=D*L y huella CF=m*y con m=alpha*L; requiere vectores de emisiones por sector, aun no incorporados para este pais."),
+        ("ref", "Documento metodologico de referencia", "CEPAL (2025): Metodologia MIP Extendida Ambientalmente y Huella de Carbono."),
+    ]
+    return pd.DataFrame(rows[1:], columns=rows[0])
+
+
+def build_indice(country, year, tipo, fuente, entries) -> pd.DataFrame:
+    """Hoja de portada/indice: identificacion + listado de hojas con descripcion."""
+    rows = [
+        ("Pais", country),
+        ("Anio", year),
+        ("Tipo de matriz", tipo),
+        ("Fuente metodologica", fuente),
+        ("", ""),
+        ("HOJA", "CONTENIDO"),
+        ("Indice", "Esta portada: identificacion y guia de las hojas del archivo."),
+    ]
+    for _, name, _, desc in entries:
+        rows.append((name, desc))
+    return pd.DataFrame(rows, columns=["campo", "valor"])
+
+
 def write_year_file(path: Path, out_path: Path):
     parsed = parse_country_year(path)
     if parsed is None:
@@ -500,19 +772,40 @@ def write_year_file(path: Path, out_path: Path):
     ext = compute_extended(data)
     cou_path = source_file_for(source_key, year)
     source_sheets = read_source_sheets(cou_path)
-    fuente_resumen = build_source_summary(source_key, year, path, cou_path, source_sheets)
+    # COU oficial adjuntado como referencia en MIP directas (no reconstruye).
+    couref_path = couref_file_for(source_key, year) if cou_path is None else None
+    couref_sheets = read_source_sheets(couref_path)
+    fuente_resumen = build_source_summary(
+        source_key, year, path, cou_path, source_sheets, couref_path, couref_sheets
+    )
+    # La auditoria sectorial usa el COU de reconstruccion; el COU de referencia
+    # no se inyecta para no introducir falsos "pendientes" en una MIP directa.
     cobertura_sectores = build_sector_coverage(data, source_sheets, source_key)
     cobertura_productos = build_product_coverage(source_sheets)
-    notas_fuente = source_notes(source_sheets)
+    fd_breakdown, fd_glosario = build_final_demand_breakdown(data, source_sheets)
+    if cou_path:
+        notas_fuente = source_notes(source_sheets)
+    elif couref_path:
+        notas_fuente = source_notes(couref_sheets)
+    else:
+        notas_fuente = directa_notes(source_key, year)
+
+    if cou_path:
+        tipo = "Reconstruida desde COU"
+    elif couref_path:
+        tipo = "MIP directa con COU de referencia adjunto"
+    else:
+        tipo = "MIP directa / fuente equivalente"
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     metadata = pd.DataFrame([
         ("pais", country),
+        ("anio", year),
+        ("tipo_matriz", tipo),
         ("serie_fuente", source_key),
         ("fuente_metodologica", SOURCE_LABEL.get(source_key, source_key)),
-        ("anio", year),
+        ("numero_sectores", int(data["Z"].shape[0])),
         ("archivo_origen", str(path.relative_to(ROOT))),
-        ("descripcion_Z", "Matriz insumo-producto / flujos intermedios"),
         ("descripcion_Z", "Z contiene solo consumo intermedio nacional/domestico cuando la fuente permite separarlo o estimarlo."),
         ("descripcion_ajuste_intermedio", "Ajuste intermedio fuera de Z. En MIP directas puede ser CI importado; en COU reconstruidos con puente de precios puede incluir importaciones, margenes, impuestos y diferencias de valoracion comprador-basico."),
         ("descripcion_fuente_resumen", "Resumen de la fuente usada, archivo COU cuando aplica y dimensiones de las hojas fuente."),
@@ -524,37 +817,61 @@ def write_year_file(path: Path, out_path: Path):
         ("descripcion_G_ghosh", "Inversa de Ghosh: G = (I - B)^-1"),
     ], columns=["campo", "valor"])
 
+    metodologia = build_metodologia(country, year, tipo)
+
+    # Lista ordenada de hojas: (df, nombre, escribir_indice, descripcion).
+    entries: list[tuple[pd.DataFrame, str, bool, str]] = [
+        (metadata, "README", False, "Identificacion del archivo: pais, anio, tipo de matriz y fuente."),
+        (metodologia, "metodologia", False, "Notacion y ecuaciones (x, y, Z, A, L, B, G) alineadas a la metodologia CEPAL MIP-EA."),
+        (fuente_resumen, "fuente_resumen", False, "Fuente metodologica, archivos usados y dimensiones de las hojas COU."),
+        (cobertura_sectores, "cobertura_sectores", False, "Auditoria de cobertura sectorial; marca diagonal cero sin tratarla como error."),
+    ]
+    if cobertura_productos is not None:
+        entries.append((cobertura_productos, "cobertura_productos", False, "Auditoria de productos COU transformados a sectores."))
+    entries.append((notas_fuente, "fuente_notas", False, "Notas de la fuente original."))
+    for source_sheet, output_sheet in SOURCE_EXPORT_SHEETS.items():
+        if source_sheet in source_sheets:
+            entries.append((source_sheets[source_sheet], output_sheet, True, "Hoja del COU usado para reconstruir la MIP."))
+    # COU de referencia (MIP directas): mismas claves, prefijo src_.
+    for source_sheet, output_sheet in SOURCE_EXPORT_SHEETS.items():
+        if source_sheet in couref_sheets:
+            entries.append((couref_sheets[source_sheet], output_sheet, True, "COU oficial del mismo marco, adjunto como REFERENCIA (no reconstruye la MIP)."))
+    entries += [
+        (data["Z"], "Z_MIP", True, "Matriz de flujos intermedios (insumo-producto), sector x sector."),
+        (data["A"], "A_coef_tecnicos", True, "Coeficientes tecnicos de Leontief: A = Z * diag(g)^-1."),
+        (data["L"], "L_leontief", True, "Inversa de Leontief: L = (I - A)^-1."),
+        (ext["B_ghosh"], "B_ghosh_coef", True, "Coeficientes de distribucion de Ghosh: B = diag(g)^-1 * Z."),
+        (ext["G_ghosh"], "G_ghosh_inversa", True, "Inversa de Ghosh: G = (I - B)^-1."),
+        (data["g"].to_frame("produccion_bruta"), "x_produccion_bruta", True, "Produccion bruta por sector (x). Notacion CEPAL; antes g_produccion."),
+        (data["W"].to_frame("valor_agregado"), "v_valor_agregado", True, "Valor agregado por sector (v). Notacion CEPAL; antes W_valor_agregado."),
+    ]
+    if fd_breakdown is not None:
+        entries.append((fd_breakdown, "y_demanda_final", True, "Demanda final (y) por componentes de cuentas nacionales. Antes f_demanda_final."))
+        entries.append((fd_glosario, "y_demanda_final_glosario", False, "Glosario: nombre fuente -> etiqueta canonica de demanda final."))
+    else:
+        entries.append((data["f"].to_frame("demanda_final"), "y_demanda_final", True, "Demanda final por sector (y). Antes f_demanda_final."))
+    entries.append((data["Mci"].to_frame("ajuste_intermedio_no_basico"), "ajuste_intermedio", True, "Ajuste intermedio fuera de Z (CI importado / valoracion)."))
+    if data.get("ajuste_cierre") is not None:
+        entries.append((data["ajuste_cierre"], "ajuste_cierre", True, "Conciliacion menor de cierre, con trazabilidad."))
+    if data.get("Z_pre_conciliacion") is not None:
+        entries.append((data["Z_pre_conciliacion"], "Z_pre_conciliacion", True, "Z antes de la conciliacion de cierre."))
+    if ext.get("Z_importada") is not None:
+        entries.append((ext["Z_importada"], "Z_importada", True, "Flujos intermedios importados, sector x sector."))
+    entries += [
+        (ext["multiplicadores"], "multiplicadores", True, "Multiplicadores y encadenamientos de Leontief y Ghosh."),
+        (ext["balances_sectoriales"], "balances_sectoriales", True, "Balances de oferta-demanda y banderas de diagnostico por sector."),
+        (ext["validacion_resumen"], "validacion_resumen", False, "Resumen de pruebas de validacion matematica."),
+        (ext["validacion_A_diferencia"], "val_A_menos_Zg", True, "Residual A - Z/g (debe ser ~0)."),
+        (ext["validacion_Leontief_residual"], "val_Leontief", True, "Residual (I-A)L - I (debe ser ~0)."),
+        (ext["validacion_Ghosh_residual"], "val_Ghosh", True, "Residual (I-B)G - I (debe ser ~0)."),
+    ]
+
+    indice = build_indice(country, year, tipo, SOURCE_LABEL.get(source_key, source_key), entries)
+
     with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
-        sheet_safe(metadata, writer, "README", index=False)
-        sheet_safe(fuente_resumen, writer, "fuente_resumen", index=False)
-        sheet_safe(cobertura_sectores, writer, "cobertura_sectores", index=False)
-        if cobertura_productos is not None:
-            sheet_safe(cobertura_productos, writer, "cobertura_productos", index=False)
-        sheet_safe(notas_fuente, writer, "fuente_notas", index=False)
-        for source_sheet, output_sheet in SOURCE_EXPORT_SHEETS.items():
-            if source_sheet in source_sheets:
-                sheet_safe(source_sheets[source_sheet], writer, output_sheet)
-        sheet_safe(data["Z"], writer, "Z_MIP")
-        sheet_safe(data["A"], writer, "A_coef_tecnicos")
-        sheet_safe(data["L"], writer, "L_leontief")
-        sheet_safe(ext["B_ghosh"], writer, "B_ghosh_coef")
-        sheet_safe(ext["G_ghosh"], writer, "G_ghosh_inversa")
-        sheet_safe(data["g"].to_frame("produccion_bruta"), writer, "g_produccion")
-        sheet_safe(data["W"].to_frame("valor_agregado"), writer, "W_valor_agregado")
-        sheet_safe(data["f"].to_frame("demanda_final"), writer, "f_demanda_final")
-        sheet_safe(data["Mci"].to_frame("ajuste_intermedio_no_basico"), writer, "ajuste_intermedio")
-        if data.get("ajuste_cierre") is not None:
-            sheet_safe(data["ajuste_cierre"], writer, "ajuste_cierre")
-        if data.get("Z_pre_conciliacion") is not None:
-            sheet_safe(data["Z_pre_conciliacion"], writer, "Z_pre_conciliacion")
-        if ext.get("Z_importada") is not None:
-            sheet_safe(ext["Z_importada"], writer, "Z_importada")
-        sheet_safe(ext["multiplicadores"], writer, "multiplicadores")
-        sheet_safe(ext["balances_sectoriales"], writer, "balances_sectoriales")
-        sheet_safe(ext["validacion_resumen"], writer, "validacion_resumen", index=False)
-        sheet_safe(ext["validacion_A_diferencia"], writer, "val_A_menos_Zg")
-        sheet_safe(ext["validacion_Leontief_residual"], writer, "val_Leontief")
-        sheet_safe(ext["validacion_Ghosh_residual"], writer, "val_Ghosh")
+        sheet_safe(indice, writer, "Indice", index=False)
+        for df, name, with_index, _ in entries:
+            sheet_safe(df, writer, name, index=with_index)
 
     style_workbook(out_path)
 
