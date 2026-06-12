@@ -75,7 +75,7 @@ _HOJA_G_PROD = ["x_produccion_bruta", "g_produccion"]
 _HOJA_F = ["y_demanda_final", "f_demanda_final"]
 _HOJA_W = ["v_valor_agregado", "W_valor_agregado"]
 # Columnas de la hoja de demanda final que representan el total (no un componente).
-_COLS_DEMANDA_TOTAL = ("demanda_final_total", "demanda_final", "y")
+_COLS_DEMANDA_TOTAL = ("y_demanda_final_total_mip", "demanda_final_total", "demanda_final", "y")
 
 
 def _leer_matriz_cuadrada(path: str, hoja: str) -> pd.DataFrame:

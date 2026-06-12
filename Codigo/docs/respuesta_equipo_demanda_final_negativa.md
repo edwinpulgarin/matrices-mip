@@ -39,7 +39,7 @@ Esto no invalida las matrices para Leontief/Ghosh: las identidades matriciales p
 | País | Años | Tipo | Tratamiento |
 |---|---:|---|---|
 | Argentina | 1997 | MIP directa descargada | Se leen `Z`, `A`, `L`, `g` y `W` desde MIPAr97 INDEC. |
-| Argentina | 2004, 2018, 2019, 2020, 2021 | Reconstruidas desde COU | Se parte de COU INDEC/CEPAL y se convierte a MIP industria-industria. |
+| Argentina | 2004, 2018, 2019, 2020, 2021, 2022 | Reconstruidas desde COU | Se parte de COU INDEC/CEPAL y se convierte a MIP industria-industria. |
 | Brasil | 2000-2009 | Reconstruidas desde COU | Se parte de COU CEPAL Brasil base 2000. |
 | Brasil | 2010-2021 | Reconstruidas desde COU | Se parte de COU/tablas IBGE nivel 68. |
 | México | 2003, 2008, 2013, 2018 | MIP directa descargada | Se leen MIP ya construidas por CEPAL/INEGI. |
@@ -49,8 +49,8 @@ Esto no invalida las matrices para Leontief/Ghosh: las identidades matriciales p
 Resumen:
 
 - **MIP directas:** 6 matrices.
-- **MIP reconstruidas:** 28 matrices.
-- **Total del repositorio:** 34 matrices.
+- **MIP reconstruidas:** 29 matrices.
+- **Total del repositorio:** 35 matrices.
 
 ## 3. Evidencia sobre demanda final negativa
 
@@ -176,7 +176,7 @@ Propuesta de respuesta:
 
 ## 7. Nota posterior: paquete robusto solo como ejercicio experimental
 
-Se generó una segunda versión analítica de las 34 matrices, sin sobrescribir las matrices originales:
+Se generó una segunda versión analítica de las matrices vigentes, sin sobrescribir las matrices originales:
 
 ```text
 output/matrices_insumo_producto_robustas/

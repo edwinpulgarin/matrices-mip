@@ -45,13 +45,19 @@ Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada libro anual 
 
 - `Indice`: portada, fuente, tipo de matriz y guia de hojas.
 - `COU_Tabla_Original`: COU/fuente original o notas de fuente cuando no existe COU publico separado.
+- `V_oferta`: matriz `V` de oferta/produccion por industria y producto, cuando existe COU.
+- `q_produccion_producto`: vector `q` de produccion/oferta total por producto.
+- `U_nacional`: matriz `U` nacional/domestica usada como base de consumos intermedios.
+- `D_market_share`: matriz `D = V * diag(q)^-1` de participaciones industria-producto.
 - `Z_consumos_intermedios`: matriz `Z` de consumos intermedios.
 - `x_produccion_bruta`: vector `x` y componentes disponibles.
-- `y_demanda_final`: vector `y` y componentes disponibles.
+- `y_demanda_final`: demanda final homologada con `C`, `I`, `G`, `X`, `M`, `XN = X - M` y `DA = C + I + G + XN`.
 - `X_hat`: matriz diagonal de produccion, `diag(x)`.
 - `A_coef_tecnicos`: matriz `A = Z * X_hat^-1`.
 - `L_leontief`: inversa de Leontief, `L = (I - A)^-1`.
 - `B_coef_distribucion`: matriz de coeficientes de distribucion, `B = X_hat^-1 * Z`.
+- `G_ghosh_inversa`: inversa de Ghosh, `G = (I - B)^-1`.
+- `encadenamientos`: indicadores hacia atras y hacia adelante derivados de sumas por columna/fila de `L` y `G`.
 
 Las validaciones matematicas y auditorias se dejan en archivos consolidados separados, no dentro de cada Excel anual.
 
@@ -64,6 +70,8 @@ Las validaciones matematicas y auditorias se dejan en archivos consolidados sepa
 - Se validan estructura, alineacion sectorial, Leontief, Ghosh y cierres macro.
 - Los cierres menores de demanda final solo se aplican si son pequenos y quedan trazados en `ajuste_cierre` y `Z_pre_conciliacion`.
 - Un sector con `Z[i,i] = 0` no se elimina automaticamente. Si tiene produccion, valor agregado, ventas, compras o demanda final, debe conservarse; la diagonal cero solo indica que no registra autoconsumo sectorial.
+- Cuando una MIP directa no trae COU o desglose compatible de demanda final, el total sectorial se conserva en `sin_desglose_fuente` y no se imputa artificialmente a consumo, inversion, gobierno o exportaciones.
+- `diferencia_y_mip_menos_DA` documenta la brecha entre el cierre sectorial usado por la MIP y la identidad macro homologada `DA = C + I + G + (X - M)`. Esta brecha puede reflejar valoracion, clasificacion, importaciones o componentes fuente no desagregados.
 
 Ver `METODOLOGIA.md` para el detalle completo.
 

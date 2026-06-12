@@ -104,18 +104,23 @@ output/tablas/validacion_matematica_mip.md
 
 Los Excel individuales por pais/anio incluyen:
 
-- `README`
-- `Z_MIP`
+- `Indice`
+- `COU_Tabla_Original`
+- `V_oferta`
+- `q_produccion_producto`
+- `U_nacional`
+- `D_market_share`
+- `Z_consumos_intermedios`
+- `x_produccion_bruta`
+- `y_demanda_final`
+- `X_hat`
 - `A_coef_tecnicos`
 - `L_leontief`
-- `B_ghosh_coef`
+- `B_coef_distribucion`
 - `G_ghosh_inversa`
-- `g_produccion`
-- `W_valor_agregado`
-- `f_demanda_final`
-- `CI_importado`
-- `multiplicadores`
-- `balances_sectoriales`
+- `encadenamientos`
+
+Las validaciones detalladas y balances se conservan en archivos consolidados separados.
 - hojas de validacion
 
 Los Excel consolidados por pais se guardan en:

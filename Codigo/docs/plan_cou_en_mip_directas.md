@@ -1,16 +1,16 @@
 # Plan: incluir COU en las MIP directas
 
-Fecha: 2026-06-10 (actualizado 2026-06-11)
+Fecha: 2026-06-10 (actualizado 2026-06-12)
 
 Decision del equipo: todas las matrices deben quedar con su COU en el mismo
-Excel; lo que no tenga COU se busca y se descarga. Las 28 matrices
-reconstruidas ya lo cumplen (hojas `src_*`). Falta resolver las 6 MIP
+Excel; lo que no tenga COU se busca y se descarga. Las 29 matrices
+reconstruidas ya lo cumplen. Falta resolver las 6 MIP
 directas.
 
-## Estado al 2026-06-11
+## Estado al 2026-06-12
 
 Implementado el mecanismo de COU de referencia y un pase de calidad/diseno
-sobre las 34 matrices:
+sobre las 35 matrices:
 
 - **Mecanismo `couref`**: si una serie es MIP directa y existe
   `data/processed/{serie}/couref_{serie}_{anio}.xlsx`, el generador adjunta sus
@@ -19,16 +19,15 @@ sobre las 34 matrices:
   auditoria producto->sector (la cobertura sigue en modo MIP directa). No
   introduce sectores pendientes.
 - **Hoja `Indice`** (portada) como primera hoja de cada Excel: identificacion
-  (pais, anio, tipo, fuente) + guia de todas las hojas. Orden: Indice -> README
-  -> fuente_resumen -> cobertura -> fuente_notas -> `src_*` (COU) -> matrices ->
-  diagnostico.
+  (pais, anio, tipo, fuente) + guia de todas las hojas. La fuente o COU queda
+  al inicio en `COU_Tabla_Original`.
 - **Mexico 2013: COU adjunto y verificado.** Parser
   `Codigo/scripts/parser_cou_mexico_2013.py` lee el COU matricial INEGI/CEPAL
   (oferta rama SCIAN + demanda p.basicos domestico/importado) y produce
   `couref_mexico_2013.xlsx`. El COU comparte el nivel rama SCIAN (262 ramas) de
   la MIP directa, asi que alinea 1:1. Identidad del COU verificada:
   g (27.64M) = CI dom (8.09M) + CI imp (3.90M) + VA (15.65M); 0 VA negativos.
-- **Validacion 34/34 estructural OK; auditoria 0 sectores pendientes**
+- **Validacion 35/35 estructural OK; auditoria 0 sectores pendientes**
   (fuente_no_mip = mip_no_fuente = revisar = 0). Mexico 2013 queda como
   `MIP_directa_con_COU_referencia`, 262 sectores.
 

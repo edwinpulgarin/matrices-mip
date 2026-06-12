@@ -1,6 +1,6 @@
 # Checklist de descarga: COU para las MIP directas
 
-Fecha: 2026-06-10 (actualizado 2026-06-11)
+Fecha: 2026-06-10 (actualizado 2026-06-12)
 
 Objetivo: que las 6 MIP directas lleven su COU adjunto como referencia. Estado:
 
@@ -13,7 +13,7 @@ Objetivo: que las 6 MIP directas lleven su COU adjunto como referencia. Estado:
 | Mexico 2003 | ✅ Documentado | La MIP 2003 es de 20 sectores (marco viejo); no hay COU producto x rama compatible. Se mantiene con fuente al inicio. |
 | Argentina 1997 | ✅ Documentado | No existe COU publico (CEPAL arranca 2004). Fuente al inicio. |
 
-Estado: **31/34 matrices con COU adjunto** (28 reconstruidas + Mexico 2008/2013 + Uruguay 2016). Las 3 restantes (Mexico 2003, Mexico 2018, Argentina 1997) NO tienen COU publico disponible y llevan su fuente claramente explicada al inicio (README + fuente_resumen + metodologia + fuente_notas con el detalle del caso). Esto cumple la regla del equipo: cada MIP lleva su COU o su fuente al inicio.
+Estado: **32/35 matrices con COU o COU de referencia adjunto** (29 reconstruidas + Mexico 2008/2013 + Uruguay 2016). Las 3 restantes (Mexico 2003, Mexico 2018, Argentina 1997) NO tienen COU publico disponible y llevan su fuente claramente explicada al inicio (README, Indice y COU_Tabla_Original con notas de fuente). Esto cumple la regla del equipo: cada MIP lleva su COU o su fuente al inicio.
 
 Flujo acordado: **tu descargas, yo integro**. Deja cada archivo en la ruta
 indicada (crea las subcarpetas si no existen) y avisame; yo escribo el parser,

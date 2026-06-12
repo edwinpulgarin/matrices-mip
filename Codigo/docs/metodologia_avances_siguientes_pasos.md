@@ -20,9 +20,9 @@ El alcance ejecutado se concentra en la construcción de un repositorio económi
 | Brasil | 2000-2021 | 22 | Integrado, serie histórica completa en el alcance disponible |
 | México | 2003, 2008, 2013, 2018 | 4 | Integrado |
 | Uruguay | 2016, 2017 | 2 | Integrado, con alerta técnica en 2017 |
-| **Total** | **1997-2021 según disponibilidad por país** | **34** | **Repositorio entregable** |
+| **Total** | **1997-2022 segun disponibilidad por pais** | **35** | **Repositorio entregable** |
 
-El proyecto no estima todavía matrices ambientalmente extendidas. Sin embargo, los Excel generados ya incluyen los objetos económicos necesarios para una fase posterior de extensión ambiental: `Z`, `A`, `L`, `B`, `G`, producción bruta, valor agregado, balances sectoriales y multiplicadores.
+El proyecto no estima todavía matrices ambientalmente extendidas. Sin embargo, los Excel generados ya incluyen los objetos económicos necesarios para una fase posterior de extensión ambiental: `V`, `q`, `U_nacional`, `D`, `Z`, `A`, `L`, `B`, `G`, producción bruta, demanda final homologada y encadenamientos.
 
 ## 3. Relación con la metodología base
 
@@ -117,24 +117,27 @@ La separación nacional/importado se resuelve con prioridad en la fuente:
 
 ## 7. Estructura de los archivos Excel entregados
 
-Cada Excel país-año fue generado para ser autosuficiente. Las hojas incluidas son:
+Cada Excel país-año fue generado para lectura y trazabilidad. Las hojas incluidas son:
 
 | Hoja | Contenido |
 |---|---|
-| `README` | Metadatos, país, año, fuente, serie y notas. |
-| `Z_MIP` | Flujos intermedios sector por sector. |
+| `Indice` | Metadatos, país, año, fuente, serie y guía de hojas. |
+| `COU_Tabla_Original` | COU/fuente original o notas cuando no hay COU público separado. |
+| `V_oferta` | Matriz V de oferta/producción por industria y producto. |
+| `q_produccion_producto` | Vector q de producción/oferta por producto. |
+| `U_nacional` | Utilización intermedia nacional/doméstica. |
+| `D_market_share` | Matriz D de participaciones industria-producto. |
+| `Z_consumos_intermedios` | Flujos intermedios sector por sector. |
 | `A_coef_tecnicos` | Coeficientes técnicos: `A = Z * diag(g)^-1`. |
 | `L_leontief` | Inversa de Leontief: `L = (I - A)^-1`. |
-| `B_ghosh_coef` | Coeficientes de distribución: `B = diag(g)^-1 * Z`. |
+| `B_coef_distribucion` | Coeficientes de distribución: `B = diag(g)^-1 * Z`. |
 | `G_ghosh_inversa` | Inversa de Ghosh: `G = (I - B)^-1`. |
-| `g_produccion` | Producción bruta sectorial. |
-| `W_valor_agregado` | Valor agregado sectorial. |
-| `multiplicadores` | Multiplicadores Leontief y Ghosh por sector. |
-| `balances_sectoriales` | Compras, ventas, demanda final residual y valor agregado residual. |
-| `validacion_resumen` | Estado de las validaciones principales. |
-| `val_A_menos_Zg` | Residual de `A - Z/g`. |
-| `val_Leontief` | Residual de `(I - A)L - I`. |
-| `val_Ghosh` | Residual de `(I - B)G - I`. |
+| `x_produccion_bruta` | Producción bruta sectorial y componentes disponibles. |
+| `y_demanda_final` | Demanda final homologada: `DA = C + I + G + (X - M)`. |
+| `X_hat` | Matriz diagonal de producción bruta. |
+| `encadenamientos` | Indicadores hacia atrás y hacia adelante derivados de `L` y `G`. |
+
+Las validaciones detalladas (`val_A_menos_Zg`, `val_Leontief`, `val_Ghosh`, balances y auditorías) quedan en archivos consolidados separados para no sobrecargar cada Excel anual.
 
 El paquete principal quedó organizado en:
 
@@ -174,10 +177,10 @@ La validación se diseñó para diferenciar fallas estructurales de alertas diag
 
 Resumen global:
 
-- 34 matrices revisadas.
-- 34 matrices cuadradas.
-- 34 matrices con etiquetas alineadas.
-- 33 matrices con no negatividad completa en `Z`, `A` y `g`.
+- 35 matrices revisadas.
+- 35 matrices cuadradas.
+- 35 matrices con etiquetas alineadas.
+- 34 matrices con no negatividad completa en `Z`, `A` y `g`.
 - 47 celdas negativas en `Z`, todas asociadas a Uruguay 2017.
 - Máximo residual global de `A - Z/g`: `6.91e-04`.
 - Máximo residual global de Leontief: `9.86e-04`.

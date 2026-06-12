@@ -64,6 +64,53 @@ Donde:
 - `U_nacional` es la utilizacion intermedia nacional por producto e industria.
 - `A` es la matriz de coeficientes tecnicos.
 - `L` es la inversa de Leontief.
+- `D` distribuye cada producto entre industrias segun su participacion en la oferta del producto.
+- `f` es la demanda final transformada a la clasificacion sectorial de la MIP cuando la fuente permite hacerlo.
+
+Para las MIP directas, no se reconstruye `Z` desde `V` y `U`. Si existe un COU de referencia compatible, se adjunta para trazabilidad y para completar componentes que puedan alinearse con la MIP; si no existe correspondencia sectorial suficiente, no se fuerza la transformacion.
+
+## Demanda final homologada
+
+La hoja `y_demanda_final` separa el cierre sectorial de la MIP de una lectura macro homologada:
+
+```text
+XN = X - M
+DA = C + I + G + XN
+DA = C + I + G + (X - M)
+```
+
+Donde:
+
+- `C_consumo` es consumo de hogares/privado e ISFLSH cuando la fuente lo identifica.
+- `I_inversion` agrupa formacion bruta de capital fijo, variacion de existencias y objetos de valor.
+- `G_gasto_publico` corresponde a consumo/gasto de gobierno.
+- `X_exportaciones` son exportaciones totales.
+- `M_importaciones` son importaciones finales estimadas o mapeadas cuando la fuente trae importaciones por producto.
+- `XN_exportaciones_netas = X_exportaciones - M_importaciones`.
+- `DA_C_I_G_XN = C + I + G + XN`.
+- `y_demanda_final_total_mip` es el cierre sectorial usado por la MIP.
+- `diferencia_y_mip_menos_DA` deja visible la diferencia entre el cierre de la MIP y la identidad homologada.
+
+Si la fuente no trae desglose compatible, el total no se asigna artificialmente a consumo, inversion, gobierno o exportaciones. En esos casos se conserva en `sin_desglose_fuente`. Esto ocurre, por ejemplo, en MIP directas sin COU publico separado o en fuentes cuya demanda final esta en una clasificacion no homologable con seguridad.
+
+## Ghosh y encadenamientos
+
+Ademas de Leontief, cada Excel incluye:
+
+```text
+B = diag(x)^-1 * Z
+G = (I - B)^-1
+```
+
+`B` normaliza cada fila de `Z` por la produccion del sector vendedor; por eso se interpreta como una matriz de distribucion de ventas. `G` es la inversa de Ghosh y permite una lectura de propagacion hacia adelante en ejercicios de oferta/costos.
+
+Los encadenamientos no son la inversa completa en si misma, sino indicadores derivados de sus sumas:
+
+- Encadenamiento hacia atras Leontief: suma por columnas de `L`.
+- Indice hacia atras Leontief: suma por columnas de `L` dividida por el promedio.
+- Encadenamiento hacia adelante Leontief: suma por filas de `L`.
+- Encadenamiento hacia adelante Ghosh: suma por filas de `G`.
+- Tambien se reporta suma por columnas de `G` como lectura complementaria.
 
 ## Correcciones aplicadas a matrices reconstruidas
 
@@ -146,6 +193,10 @@ Los Excel individuales por pais/anio se publican en una version simplificada par
 
 - `Indice`
 - `COU_Tabla_Original`
+- `V_oferta`
+- `q_produccion_producto`
+- `U_nacional`
+- `D_market_share`
 - `Z_consumos_intermedios`
 - `x_produccion_bruta`
 - `y_demanda_final`
@@ -153,6 +204,8 @@ Los Excel individuales por pais/anio se publican en una version simplificada par
 - `A_coef_tecnicos`
 - `L_leontief`
 - `B_coef_distribucion`
+- `G_ghosh_inversa`
+- `encadenamientos`
 
 Las validaciones, balances diagnosticos y auditorias de cobertura se conservan en archivos consolidados separados para no sobrecargar cada libro anual.
 

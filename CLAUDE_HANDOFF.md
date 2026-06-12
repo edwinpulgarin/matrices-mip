@@ -1,6 +1,33 @@
 # Handoff para Claude y siguientes colaboradores
 
-Fecha de corte: 2026-06-11
+Fecha de corte: 2026-06-12
+
+## Novedades 2026-06-12
+
+- Las 35 matrices publicadas fueron regeneradas con una estructura simplificada
+  ampliada de **15 hojas**:
+  `Indice`, `COU_Tabla_Original`, `V_oferta`, `q_produccion_producto`,
+  `U_nacional`, `D_market_share`, `Z_consumos_intermedios`,
+  `x_produccion_bruta`, `y_demanda_final`, `X_hat`, `A_coef_tecnicos`,
+  `L_leontief`, `B_coef_distribucion`, `G_ghosh_inversa` y
+  `encadenamientos`.
+- La hoja `y_demanda_final` fue homologada a la lectura
+  `DA = C + I + G + XN`, con `XN = X - M`. Tambien conserva
+  `y_demanda_final_total_mip` y `diferencia_y_mip_menos_DA` para no ocultar
+  brechas entre la identidad macro y el cierre sectorial de la MIP.
+- No se imputan componentes macro sin fuente. Si una matriz no trae COU o
+  desglose compatible, el total queda en `sin_desglose_fuente`. Casos sin COU
+  publico separado: Argentina 1997, Mexico 2003 y Mexico 2018.
+- Se agrego `G_ghosh_inversa = (I - B)^-1` y una hoja `encadenamientos`. Los
+  encadenamientos son indicadores derivados de sumas por fila/columna de `L` y
+  `G`; no son la inversa completa en si mismos.
+- Se ajusto `Codigo/src/simulador.py` para leer `y_demanda_final_total_mip`
+  como columna total de demanda final. Pruebas realizadas:
+  - demanda Mexico 2013, choque `1111=1%`, multiplicador 1.2549;
+  - oferta Brasil 2015, choque `0191=1%`, multiplicador 1.8107.
+- Verificacion posterior a la regeneracion: 35/35 archivos con las 15 hojas
+  esperadas, 0 problemas de nombres en `Z`, 0 problemas de columnas en
+  `y_demanda_final` y 0 problemas de cuadratura en `A`, `L`, `B`, `G`.
 
 ## Novedades 2026-06-11
 
@@ -12,7 +39,8 @@ Fecha de corte: 2026-06-11
   35/35 estructural OK, 0 pendientes.
 
 
-- Las 35 matrices publicadas quedan en formato simplificado de 9 hojas:
+- Las 35 matrices publicadas quedaron inicialmente en formato simplificado de 9 hojas
+  (actualizado el 2026-06-12 a 15 hojas):
   `Indice`, `COU_Tabla_Original`, `Z_consumos_intermedios`,
   `x_produccion_bruta`, `y_demanda_final`, `X_hat`, `A_coef_tecnicos`,
   `L_leontief`, `B_coef_distribucion`. Las validaciones quedan fuera del libro
