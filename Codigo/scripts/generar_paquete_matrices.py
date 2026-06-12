@@ -35,6 +35,7 @@ COUNTRY_FOLDER = {
     "mexico": "Mexico",
     "uruguay": "Uruguay",
     "uruguay_cou": "Uruguay",
+    "uruguay_cou_2012": "Uruguay",
 }
 
 SOURCE_LABEL = {
@@ -45,6 +46,7 @@ SOURCE_LABEL = {
     "mexico": "MIP directa CEPAL/INEGI",
     "uruguay": "MIP directa BCU 2016",
     "uruguay_cou": "COU CEPAL Uruguay 2017",
+    "uruguay_cou_2012": "COU detallado BCU Uruguay 2012",
 }
 
 

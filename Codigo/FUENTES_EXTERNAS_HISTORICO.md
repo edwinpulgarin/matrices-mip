@@ -99,8 +99,13 @@ a INDEC/CEPAL o acceso a series internas no publicadas.
 - `data/raw/uruguay/URY_COU_2005_2016.zip`
   - 2005-2008: COU anual agregado, 20 columnas. No tiene desagregacion sectorial
     comparable con las MIPs actuales.
-  - 2012 y 2016: archivos de produccion por industria, pero no incluyen el
-    bloque completo de utilizacion intermedia necesario para construir una MIP.
+  - 2005-2008 y la version agregada de 2012/2016 de este zip solo traen
+    produccion por industria, sin el bloque completo de utilizacion intermedia.
+- `Uruguay_2012_Detallada_COU_C.xlsx` (COU detallado BCU 2012, hoja unica `COU_C`)
+  - SI trae oferta + utilizacion intermedia + demanda final + valor agregado
+    (134 productos x 107 industrias). Ya integrado como `uruguay_cou_2012` 2012
+    (parser `Codigo/src/parsers/uruguay_cou_2012.py`). Copia en
+    `data/raw/uruguay/cou_2012/`.
 - `data/raw/uruguay/URY_COU_2017.zip` y carpeta `cou_2017/`
   - Ya integrado como `uruguay_cou` 2017.
 - `mip_producto_detallada_2016.xlsx` y `leontief_producto_2016.xlsx`
@@ -120,7 +125,8 @@ a INDEC/CEPAL o acceso a series internas no publicadas.
 
 ### Recomendacion
 
-- Mantener Uruguay en dos entregables:
+- Mantener Uruguay en tres entregables:
+  - `MIP_Uruguay_2012.xlsx` (COU detallado BCU reconstruido)
   - `MIP_Uruguay_2016.xlsx` (MIP directa BCU)
   - `MIP_Uruguay_2017.xlsx` (COU CEPAL convertido)
 - Uruguay 2018+ debe tratarse como brecha institucional hasta conseguir archivos
