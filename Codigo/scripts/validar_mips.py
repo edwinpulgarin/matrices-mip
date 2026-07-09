@@ -101,14 +101,20 @@ def validate_file(path: Path) -> dict:
         index=sectors,
         name="valor_agregado_residual",
     )
+    residual_va_neg_count = int((residual_va < -1e-8).sum())
+    residual_va_min = float(residual_va.min()) if n else 0.0
     if W is not None:
         W = W.reindex(sectors).fillna(0)
         w_diff = W.to_numpy(dtype=float) - residual_va.to_numpy(dtype=float)
         w_rel_max = max_abs_rel(w_diff, np.maximum(g_aligned.to_numpy(dtype=float), 1.0))
         w_abs_max = float(np.nanmax(np.abs(w_diff))) if w_diff.size else 0.0
+        va_neg_count = int((W < -1e-8).sum())
+        va_min = float(W.min()) if n else 0.0
     else:
         w_rel_max = np.nan
         w_abs_max = np.nan
+        va_neg_count = np.nan
+        va_min = np.nan
 
     # Preferir la demanda final sectorial guardada; si no existe, usar residual.
     if f_saved is not None:
@@ -126,6 +132,10 @@ def validate_file(path: Path) -> dict:
     identity_abs_max = float(np.nanmax(np.abs(identity_diff))) if identity_diff.size else 0.0
 
     negative_final_demand_share = float((f_ind < -1e-8).sum() / n) if n else 0.0
+    negative_final_demand_count = int((f_ind < -1e-8).sum()) if n else 0
+    final_demand_min = float(f_ind.min()) if n else 0.0
+    adjustment_negative_count = int((Mci < -1e-8).sum()) if n else 0
+    adjustment_min = float(Mci.min()) if n else 0.0
     oferta_demanda_diff = g_aligned - (Z.sum(axis=1) + f_ind)
     oferta_demanda_abs_max = float(np.nanmax(np.abs(oferta_demanda_diff))) if n else 0.0
     oferta_demanda_rel_max = max_abs_rel(
@@ -148,6 +158,8 @@ def validate_file(path: Path) -> dict:
         and oferta_demanda_rel_max <= 1e-6
         and identity_rel_max <= 1e-6
         and negative_final_demand_share == 0
+        and (np.isnan(va_neg_count) or va_neg_count == 0)
+        and residual_va_neg_count == 0
     )
 
     return {
@@ -165,11 +177,19 @@ def validate_file(path: Path) -> dict:
         "W_vs_gmenosZ_abs_max": w_abs_max,
         "W_vs_gmenosZ_rel_max": w_rel_max,
         "CI_importado_total": float(Mci.sum()),
+        "ajuste_intermedio_neg_count": adjustment_negative_count,
+        "ajuste_intermedio_min": adjustment_min,
         "oferta_vs_demanda_abs_max": oferta_demanda_abs_max,
         "oferta_vs_demanda_rel_max": oferta_demanda_rel_max,
         "Lf_vs_g_abs_max": identity_abs_max,
         "Lf_vs_g_rel_max": identity_rel_max,
+        "demanda_final_neg_count": negative_final_demand_count,
         "demanda_final_neg_share": negative_final_demand_share,
+        "demanda_final_min": final_demand_min,
+        "VA_neg_count": va_neg_count,
+        "VA_min": va_min,
+        "VA_residual_neg_count": residual_va_neg_count,
+        "VA_residual_min": residual_va_min,
         "validacion_estructural": "OK" if strict_ok else "REVISAR",
         "validacion_diagnostica": "OK" if diagnostic_ok else "AVISO",
     }
@@ -196,7 +216,7 @@ def main():
         f"Validacion diagnostica: {diag}",
         "",
         "Criterios estructurales OK: matrices cuadradas, etiquetas alineadas, Z/A/g no negativas, A = Z/g y (I-A)L = I.",
-        "Criterios diagnosticos: ademas revisa oferta = demanda (g = sum_row(Z nacional) + f), W = g - sum_col(Z nacional) - CI importado, Lf = g, y demanda final no negativa.",
+        "Criterios diagnosticos: ademas revisa oferta = demanda (g = sum_row(Z nacional) + f), W = g - sum_col(Z nacional) - CI importado, Lf = g, demanda final no negativa y valor agregado no negativo.",
         "",
     ]
     if not df.empty:

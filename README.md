@@ -2,6 +2,10 @@
 
 Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y Uruguay, con archivos Excel por pais/anio, documentacion metodologica, validaciones y codigo del pipeline usado para construir la base.
 
+## Version auditable V3
+
+Los Excel publicados en `MIP/` corresponden a la version auditable V3: libros con diseno institucional inspirado en el anexo MIP de Colombia y paleta CEPAL. La capa V3 conserva las cifras procesadas, pero reorganiza cada matriz para que los cierres de oferta, demanda, ajuste intermedio, valor agregado y produccion sean visibles en cuadros contables auditables.
+
 ```text
 .
   MIP/
@@ -17,7 +21,9 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
   METODOLOGIA.md
   CLAUDE_HANDOFF.md
   indice_matrices.xlsx
+  indice_matrices.csv
   validacion_matematica_mip.xlsx
+  validacion_inversa_mip.xlsx
   auditoria_cobertura_sectores_mip.xlsx
 ```
 
@@ -26,38 +32,29 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
 - Argentina: 7 matrices (1997-2022).
 - Brasil: 22 matrices (2000-2021).
 - Mexico: 4 matrices (2003-2018).
-- Uruguay: 2 matrices (2016-2017).
+- Uruguay: 3 matrices (2012, 2016-2017).
 
-Total de matrices: 35
+Total de matrices: 36
 
 ## Matrices directas vs reconstruidas
 
 El repositorio separa dos tipos de matrices:
 
 - **Directas:** la entidad fuente publica una MIP o matriz equivalente que se parsea, normaliza, valida y empaqueta. Incluye Argentina 1997, Mexico 2003/2008/2013/2018 y Uruguay 2016.
-- **Reconstruidas desde COU:** la fuente publica cuadros de oferta y utilizacion, y el pipeline reconstruye una MIP industria x industria bajo el supuesto de tecnologia de industria. Incluye Argentina 2004/2018-2022, Brasil 2000-2021 y Uruguay 2017.
+- **Reconstruidas desde COU:** la fuente publica cuadros de oferta y utilizacion, y el pipeline reconstruye una MIP industria x industria bajo el supuesto de tecnologia de industria. Incluye Argentina 2004/2018-2022, Brasil 2000-2021 y Uruguay 2012/2017.
 
 La presentacion `Presentacion_Reconstruccion_MIP_Simulador.html` explica esta separacion, el paso a paso de reconstruccion, los cierres menores documentados y la ruta del simulador de choques.
 
 ## Como navegar
 
-Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada libro anual queda en una estructura breve para explicar:
+Abrir `MIP/{Pais}/` y seleccionar el Excel del anio requerido. Cada libro anual tiene seis hojas:
 
-- `Indice`: portada, fuente, tipo de matriz y guia de hojas.
-- `COU_Tabla_Original`: COU/fuente original o notas de fuente cuando no existe COU publico separado.
-- `V_oferta`: matriz `V` de oferta/produccion por industria y producto, cuando existe COU.
-- `q_produccion_producto`: vector `q` de produccion/oferta total por producto.
-- `U_nacional`: matriz `U` nacional/domestica usada como base de consumos intermedios.
-- `D_market_share`: matriz `D = V * diag(q)^-1` de participaciones industria-producto.
-- `Z_consumos_intermedios`: matriz `Z` de consumos intermedios.
-- `x_produccion_bruta`: vector `x` y componentes disponibles.
-- `y_demanda_final`: demanda final homologada con `C`, `I`, `G`, `X`, `M`, `XN = X - M` y `DA = C + I + G + XN`.
-- `X_hat`: matriz diagonal de produccion, `diag(x)`.
-- `A_coef_tecnicos`: matriz `A = Z * X_hat^-1`.
-- `L_leontief`: inversa de Leontief, `L = (I - A)^-1`.
-- `B_coef_distribucion`: matriz de coeficientes de distribucion, `B = X_hat^-1 * Z`.
-- `G_ghosh_inversa`: inversa de Ghosh, `G = (I - B)^-1`.
-- `encadenamientos`: indicadores hacia atras y hacia adelante derivados de sumas por columna/fila de `L` y `G`.
+- `Indice`: portada, fuente, tipo de matriz, resumen contable y guia de hojas.
+- `Cuadro 1`: matriz actividad x actividad nacional/domestica.
+- `Cuadro 2`: matriz importada o ajuste intermedio fuera de `Z`.
+- `Cuadro 3`: matriz total auditable, con demanda final, ajuste, valor agregado, produccion total y check contra produccion fuente.
+- `Cuadro 4`: multiplicadores de Leontief/Ghosh y validacion contable.
+- `Notas`: convenciones, fuente y advertencias metodologicas.
 
 Las validaciones matematicas y auditorias se dejan en archivos consolidados separados, no dentro de cada Excel anual.
 
@@ -110,6 +107,8 @@ La version tecnica es:
 
 La carpeta `Codigo/` contiene el pipeline, parsers, scripts de validacion y scripts de generacion de paquetes. No incluye archivos fuente pesados de `data/raw`.
 
+La generacion V3 esta documentada en `Codigo/docs/metodologia_mip_v3_auditable.md`. La validacion inversa contra COU/MIP directa esta documentada en `Codigo/docs/validacion_inversa_mip.md`.
+
 ## Validacion
 
 El resumen de validacion esta en:
@@ -117,11 +116,13 @@ El resumen de validacion esta en:
 ```text
 validacion_matematica_mip.xlsx
 validacion_matematica_mip.md
+validacion_inversa_mip.xlsx
+validacion_inversa_mip.md
 auditoria_cobertura_sectores_mip.xlsx
 auditoria_cobertura_sectores_mip.md
 ```
 
-Resultado de la ultima corrida: 35/35 matrices con validacion estructural OK, nombres sectoriales OK y 0 sectores de fuente pendientes por incorporar en la MIP final.
+Resultado de la ultima corrida: 36/36 matrices con validacion estructural OK. Las alertas diagnosticas de valor agregado o demanda final negativa quedan expuestas en los cuadros auditables y en los reportes consolidados.
 
 ## Nota de fuentes
 

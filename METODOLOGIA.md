@@ -1,4 +1,4 @@
-# Metodologia MIP V2
+# Metodologia MIP V2/V3
 
 ## Objetivo
 
@@ -16,12 +16,18 @@ Construir un repositorio comparable de matrices insumo-producto para Argentina, 
 8. Los multiplicadores de empleo solo se calculan cuando la fuente trae un vector de trabajo u ocupaciones.
 9. Toda matriz publicada debe tener nombres de sectores economicos en filas y columnas. Los codigos se conservan como prefijo cuando existen, pero no reemplazan el nombre.
 
+## Capa auditable V3
+
+La V3 es la capa de publicacion contable y visual. No reemplaza el procesamiento base ni oculta alertas: reorganiza cada matriz en cuadros auditables para que el usuario vea en el mismo libro la matriz nacional/domestica, el ajuste intermedio importado o de valoracion, la demanda final, el valor agregado, la produccion total y los checks contra la fuente.
+
+Cada libro V3 usa una estructura inspirada en el anexo MIP de Colombia, con paleta CEPAL y seis hojas: `Indice`, `Cuadro 1`, `Cuadro 2`, `Cuadro 3`, `Cuadro 4` y `Notas`. Los sectores con demanda final negativa, valor agregado negativo o ajuste intermedio negativo quedan marcados como alertas diagnosticas, no corregidos automaticamente.
+
 ## Matrices directas y reconstruidas
 
 La base distingue dos rutas:
 
 - **Matrices directas:** la fuente publica una MIP o matriz equivalente. Se parsea, normaliza, valida y empaqueta sin reconstruccion COU. En esta categoria estan Argentina 1997, Mexico 2003/2008/2013/2018 y Uruguay 2016.
-- **Matrices reconstruidas:** la fuente publica cuadros de oferta y utilizacion. El pipeline reconstruye una MIP industria x industria usando el supuesto de tecnologia de industria. En esta categoria estan Argentina 2004/2018-2022, Brasil 2000-2021 y Uruguay 2017.
+- **Matrices reconstruidas:** la fuente publica cuadros de oferta y utilizacion. El pipeline reconstruye una MIP industria x industria usando el supuesto de tecnologia de industria. En esta categoria estan Argentina 2004/2018-2022, Brasil 2000-2021 y Uruguay 2012/2017.
 
 Esta separacion permite responder que matrices vienen directamente de la fuente y cuales dependen de supuestos de transformacion.
 
@@ -185,27 +191,20 @@ Los resultados se guardan en:
 ```text
 output/tablas/validacion_matematica_mip.xlsx
 output/tablas/validacion_matematica_mip.md
+output/tablas/validacion_inversa_mip.xlsx
+output/tablas/validacion_inversa_mip.md
 ```
 
 ## Estructura de entregables
 
-Los Excel individuales por pais/anio se publican en una version simplificada para lectura:
+Los Excel individuales por pais/anio se publican en una version auditable V3:
 
-- `Indice`
-- `COU_Tabla_Original`
-- `V_oferta`
-- `q_produccion_producto`
-- `U_nacional`
-- `D_market_share`
-- `Z_consumos_intermedios`
-- `x_produccion_bruta`
-- `y_demanda_final`
-- `X_hat`
-- `A_coef_tecnicos`
-- `L_leontief`
-- `B_coef_distribucion`
-- `G_ghosh_inversa`
-- `encadenamientos`
+- `Indice`: portada, fuente, tipo de matriz y resumen de validaciones.
+- `Cuadro 1`: matriz actividad x actividad nacional/domestica.
+- `Cuadro 2`: matriz importada o ajuste intermedio fuera de `Z`.
+- `Cuadro 3`: matriz total auditable con demanda final, ajuste, valor agregado, produccion total y check contra produccion fuente.
+- `Cuadro 4`: multiplicadores de Leontief/Ghosh y validacion contable.
+- `Notas`: convenciones, fuente y advertencias metodologicas.
 
 Las validaciones, balances diagnosticos y auditorias de cobertura se conservan en archivos consolidados separados para no sobrecargar cada libro anual.
 
@@ -219,6 +218,7 @@ El repositorio local de matrices se arma en:
 
 ```text
 output/repositorio_matrices_mip/
+output/matrices_insumo_producto_auditables/
 ```
 
 ## Limitaciones actuales
@@ -227,4 +227,4 @@ output/repositorio_matrices_mip/
 - Algunas MIP directas no traen apertura importada historica; se conserva el dato publicado y se marca `ci_importado = 0` si no hay apertura.
 - Las diferencias entre precios comprador y precios basicos se documentan cuando la fuente no permite una conversion exacta por componente de uso.
 - Las actividades con demanda final residual negativa requieren revision economica o sectorial antes de uso analitico sensible.
-- Uruguay 2017 queda como caso pendiente: no se identifico una MIP directa equivalente para ese anio y el COU disponible no resuelve por completo la demanda final sectorial.
+- Uruguay 2012 y Uruguay 2017 quedan como casos con alertas diagnosticas: no se identifico una MIP directa equivalente para esos anios y el COU disponible no resuelve por completo la demanda final sectorial.

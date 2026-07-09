@@ -19,7 +19,9 @@ python main.py --pais brasil
 python main.py --pais mexico
 python main.py --pais uruguay
 python scripts/validar_mips.py
+python scripts/validar_mip_inversa.py
 python scripts/generar_paquete_matrices.py
+python scripts/generar_matrices_auditables.py
 python scripts/simplificar_excel_mip.py
 python scripts/crear_paquete_drive.py
 ```
