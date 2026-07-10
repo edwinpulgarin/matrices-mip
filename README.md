@@ -6,6 +6,12 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
 
 Los Excel publicados en `MIP/` corresponden a la version auditable V3: libros con diseno institucional inspirado en el anexo MIP de Colombia y paleta CEPAL. La capa V3 conserva las cifras procesadas, pero reorganiza cada matriz para que los cierres de oferta, demanda, ajuste intermedio, valor agregado y produccion sean visibles en cuadros contables auditables.
 
+## Paquete COU estricto
+
+Para auditorias contables donde toda la informacion debe salir de cuadros de oferta y utilizacion, usar `MIP_COU_ESTRICTO/`. Ese paquete contiene 33 matrices reconstruidas desde COU local o COU de referencia, con la estructura completa del anexo de Colombia (`Índice` y `Cuadro 1` a `Cuadro 8`) y valores homologados a miles de millones de moneda local.
+
+Quedan fuera de esa capa estricta por falta de COU local comparable: Argentina 1997, Mexico 2003 y Mexico 2018.
+
 ```text
 .
   MIP/
@@ -13,6 +19,7 @@ Los Excel publicados en `MIP/` corresponden a la version auditable V3: libros co
     Brasil/
     Mexico/
     Uruguay/
+  MIP_COU_ESTRICTO/
   Codigo/
   Presentacion_MIP_CEPAL.html
   Presentacion_Reconstruccion_MIP_Simulador.html
@@ -123,6 +130,14 @@ auditoria_cobertura_sectores_mip.md
 ```
 
 Resultado de la ultima corrida: 36/36 matrices con validacion estructural OK. Las alertas diagnosticas de valor agregado o demanda final negativa quedan expuestas en los cuadros auditables y en los reportes consolidados.
+
+La validacion del paquete COU estricto esta en:
+
+```text
+MIP_COU_ESTRICTO/auditoria_matrices_colombia.xlsx
+MIP_COU_ESTRICTO/validacion_estructural_colombia.xlsx
+MIP_COU_ESTRICTO/indice_matrices_colombia_auditables.xlsx
+```
 
 ## Nota de fuentes
 
