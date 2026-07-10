@@ -22,6 +22,7 @@ Los negativos de demanda final se mantienen como alerta trazable, no como bloque
 - El diseno se ajusto a la estructura Colombia con paleta CEPAL, encabezado centrado, indice limpio y 9 pestanas.
 - Argentina fue reprocesada para que los productos tengan codigo y nombre descriptivo; ya no quedan productos tipo `011` sin descripcion.
 - Se agrego render por rango para verificar visualmente matrices grandes sin intentar pintar libros completos gigantes.
+- Los multiplicadores de `Cuadro 4` y `Cuadro 8` fueron recalculados desde los cuadros totales visibles. Los sectores sin enlaces intermedios quedaron ocultos en esas hojas, no eliminados.
 
 ## Publicables base
 

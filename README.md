@@ -42,6 +42,11 @@ Una matriz queda incluida solo si cumple las reglas minimas para auditoria:
 - matrices intermedias visibles sin valores negativos;
 - valor agregado visible sin valores negativos;
 - sin errores de formulas en el libro Excel.
+- multiplicadores recalculados desde los cuadros totales visibles, sin valores
+  negativos en `Cuadro 4` ni `Cuadro 8`.
+
+En las hojas de multiplicadores se ocultaron filas y columnas de sectores sin
+enlaces intermedios, conservando los datos en el archivo.
 
 Las alertas de demanda final negativa quedan reportadas, no ocultas, porque el
 anexo Colombia usado como referencia tambien contiene negativos en componentes
