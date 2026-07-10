@@ -10,7 +10,7 @@ Fecha de corte: 2026-07-10
 - Celdas vacias en demanda final: 0.
 - Celdas negativas en matrices intermedias visibles: 0.
 - Errores de formula detectados: 0.
-- Hojas esperadas: `Indice` y `Cuadro 1` a `Cuadro 8`, siguiendo el anexo Colombia.
+- Hojas esperadas: `Índice` y `Cuadro 1` a `Cuadro 8`, siguiendo el anexo Colombia.
 - Unidad visible homologada: miles de millones de moneda local.
 
 Los negativos de demanda final se mantienen como alerta trazable, no como bloqueo automatico, porque el anexo Colombia usado como referencia tambien contiene negativos en componentes de demanda final. Los bloqueos se reservan para fallas contables/visuales fuertes: valor agregado negativo, nombres solo codigo, celdas vacias, formulas rotas o matrices intermedias negativas.
@@ -38,10 +38,10 @@ Los negativos de demanda final se mantienen como alerta trazable, no como bloque
 
 ## Archivos clave
 
-- Libros publicables: `MIP_Colombia_CEPAL_Publicables_20260710/{Pais}/`
-- Manifiesto: `MIP_Colombia_CEPAL_Publicables_20260710/manifest_publicables.csv`
-- Auditoria completa: `MIP_Colombia_CEPAL_Publicables_20260710/auditoria_semantica_full.md`
-- Resumen del paquete: `MIP_Colombia_CEPAL_Publicables_20260710/README.md`
+- Libros publicables: `matrices/{Pais}/`
+- Manifiesto: `manifest_publicables.csv`
+- Auditoria completa: `auditoria_semantica_full.md`
+- Resumen del paquete: `README.md`
 
 ## Recomendacion para publicacion
 
