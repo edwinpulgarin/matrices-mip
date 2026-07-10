@@ -6,9 +6,22 @@ Repositorio publico de matrices insumo-producto para Argentina, Brasil, Mexico y
 
 Los Excel publicados en `MIP/` corresponden a la version auditable V3: libros con diseno institucional inspirado en el anexo MIP de Colombia y paleta CEPAL. La capa V3 conserva las cifras procesadas, pero reorganiza cada matriz para que los cierres de oferta, demanda, ajuste intermedio, valor agregado y produccion sean visibles en cuadros contables auditables.
 
+## Paquete Colombia-style CEPAL 2026-07-10
+
+La carpeta `MIP_Colombia_CEPAL_Publicables_20260710/` contiene una reconstruccion nueva con la estructura de Colombia (`Indice` y `Cuadro 1` a `Cuadro 8`) y colores CEPAL. Esta version se publica como paquete separado para no mezclar matrices con bloqueos contables.
+
+- Matrices generadas y auditadas: 33.
+- Matrices incluidas como `PUBLICABLE_BASE`: 27.
+- Matrices excluidas: Brasil 2011-2014, Uruguay 2016 y Uruguay 2017.
+- Bloqueos excluidos: valor agregado negativo o sectores solo codigo.
+- Las alertas de demanda final negativa quedan documentadas, no ocultas.
+
+Ver `MIP_Colombia_CEPAL_Publicables_20260710/diagnostico_reconstruccion.md` y `MIP_Colombia_CEPAL_Publicables_20260710/auditoria_semantica_full.md`.
+
 ```text
 .
   MIP/
+  MIP_Colombia_CEPAL_Publicables_20260710/
     Argentina/
     Brasil/
     Mexico/
