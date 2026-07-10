@@ -23,6 +23,7 @@ Los negativos de demanda final se mantienen como alerta trazable, no como bloque
 - Argentina fue reprocesada para que los productos tengan codigo y nombre descriptivo; ya no quedan productos tipo `011` sin descripcion.
 - Se agrego render por rango para verificar visualmente matrices grandes sin intentar pintar libros completos gigantes.
 - Los multiplicadores de `Cuadro 4` y `Cuadro 8` fueron recalculados desde los cuadros totales visibles. Los sectores sin enlaces intermedios quedaron ocultos en esas hojas, no eliminados.
+- Correccion posterior: producto por producto ahora usa la matriz de mezcla de produccion por actividad `C = V / g`. Antes se habia usado indebidamente la matriz de participacion de mercado `D = V / q`, que inflaba los agregados producto por producto.
 
 ## Publicables base
 

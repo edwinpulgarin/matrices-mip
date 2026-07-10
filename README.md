@@ -44,6 +44,9 @@ Una matriz queda incluida solo si cumple las reglas minimas para auditoria:
 - sin errores de formulas en el libro Excel.
 - multiplicadores recalculados desde los cuadros totales visibles, sin valores
   negativos en `Cuadro 4` ni `Cuadro 8`.
+- producto por producto construido con mezcla de produccion por actividad
+  `C = V / g`; actividad por actividad construido con participacion de mercado
+  por producto `D = V / q`.
 
 En las hojas de multiplicadores se ocultaron filas y columnas de sectores sin
 enlaces intermedios, conservando los datos en el archivo.
