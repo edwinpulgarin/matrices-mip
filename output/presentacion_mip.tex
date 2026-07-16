@@ -1,0 +1,324 @@
+% Presentación: Reconstrucción de MIP desde COU (UN Handbook F74 Rev.1, 2018)
+% Compilar con pdflatex (Overleaf funciona directo).
+\documentclass[aspectratio=169,10pt]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\definecolor{cepal}{RGB}{31,78,121}
+\definecolor{cepal2}{RGB}{46,117,182}
+\definecolor{verdeok}{RGB}{112,173,71}
+\definecolor{gris}{RGB}{89,89,89}
+
+\usetheme{Madrid}
+\setbeamercolor{structure}{fg=cepal}
+\setbeamercolor{frametitle}{bg=cepal,fg=white}
+\setbeamercolor{title}{fg=cepal}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize items}[circle]
+\setbeamerfont{frametitle}{size=\large}
+
+\newcommand{\hb}[1]{\textit{\color{gris}\small ``#1''}}
+\newcommand{\dg}[1]{\widehat{#1}}
+
+\title[MIP desde COU]{Reconstrucción de Matrices Insumo--Producto desde los COU}
+\subtitle{Metodología paso a paso — UN Handbook on SUT and IOT (2018)}
+\author{Equipo MIP}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+  \begin{center}\small\color{gris}
+  Argentina 2021 como ejemplo — Naciones Unidas, \emph{Handbook on Supply, Use and Input--Output Tables}, Series F No.\,74 Rev.\,1
+  \end{center}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Qué hicimos, en una frase}
+  \begin{block}{Objetivo}
+  Convertir los \textbf{Cuadros de Oferta y Utilización (COU)} oficiales de INDEC en una
+  \textbf{Matriz Insumo--Producto (MIP) simétrica}, siguiendo \emph{exactamente} el método del Handbook de la ONU.
+  \end{block}
+  \begin{itemize}
+    \item Fuente única: los COU oficiales (precios corrientes).
+    \item Cada identidad contable se verifica por construcción (error $\sim 10^{-15}$).
+    \item Resultado auditable: los totales reconcilian celda a celda contra el COU.
+  \end{itemize}
+  \begin{alertblock}{Notación del Handbook que usaremos}
+  $V$: oferta (industria$\times$producto) \quad $U$: utilización intermedia (producto$\times$industria) \quad
+  $Y$: demanda final \quad $Z$: matriz simétrica de consumos intermedios
+  \footnotesize\color{gris}\ (el Handbook la denota $S$ en producto$\times$producto y $B$ en industria$\times$industria).
+  \end{alertblock}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Punto de partida: el COU}
+  El COU tiene \textbf{dos clasificaciones distintas}:
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{block}{Oferta $V$ (industria $\times$ producto)}
+      ¿Qué produce cada industria? \\ (la tabla ``quién fabrica qué'')
+      \end{block}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{block}{Utilización $U$ (producto $\times$ industria)}
+      ¿Qué compra cada industria? \\ (a precios de comprador)
+      \end{block}
+    \end{column}
+  \end{columns}
+  \vspace{0.5em}
+  \begin{center}
+  \textbf{Argentina 2021:}\quad $U$ es de dimensión \textbf{222 productos $\times$ 107 industrias} (rectangular).
+  \end{center}
+  \begin{itemize}
+    \item Filas = 222 \textbf{productos} (cereales, semillas, animales vivos\ldots).
+    \item Columnas = 107 \textbf{industrias} (Cultivos agrícolas, Cría de animales\ldots).
+  \end{itemize}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{La meta: una MIP simétrica (cuadrada)}
+  \begin{center}
+  \begin{tikzpicture}[every node/.style={font=\small}]
+    \draw[fill=cepal!10,draw=cepal] (0,0) rectangle (3.2,2.2);
+    \node at (1.6,2.5) {\textbf{COU} $U$};
+    \node at (1.6,1.1) {222 $\times$ 107};
+    \node[below] at (1.6,0) {\color{gris}productos $\times$ industrias};
+
+    \draw[-{Latex[length=3mm]},very thick,cepal] (3.6,1.1) -- (5.4,1.1)
+      node[midway,above,align=center]{\footnotesize transformación\\\footnotesize (Cap.\,12)};
+
+    \draw[fill=verdeok!15,draw=verdeok] (5.8,0) rectangle (8.0,2.2);
+    \node at (6.9,2.5) {\textbf{MIP} $Z$};
+    \node at (6.9,1.1) {107 $\times$ 107};
+    \node[below] at (6.9,0) {\color{gris}industria $\times$ industria};
+  \end{tikzpicture}
+  \end{center}
+  \begin{itemize}
+    \item Una MIP es \textbf{cuadrada}: misma clasificación en filas y columnas.
+    \item \textbf{¿Por qué cuadrada?} Para calcular la inversa de Leontief $L=(I-A)^{-1}$ y los multiplicadores hace falta una matriz cuadrada e invertible.
+    \item No se puede invertir un rectángulo de $222\times107$.
+  \end{itemize}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{¿Por qué la MIP no coincide celda a celda con el COU?}
+  Porque responden a \textbf{preguntas distintas}:
+  \begin{itemize}
+    \item \textbf{Columna del COU:} ``¿cuánto compró la \emph{industria} Cría de animales?'' (todo junto).
+    \item \textbf{Columna de la MIP:} ``¿cuánto le compró a la \emph{industria} Cultivos agrícolas?'' (por proveedor).
+  \end{itemize}
+  \begin{alertblock}{Clave}
+  Son la \textbf{misma economía}, reorganizada de rectángulo ($222\times107$) a cuadrado ($107\times107$).
+  \textbf{Nada se pierde}: los totales reconcilian exacto (lo veremos al final).
+  \end{alertblock}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{El método del Handbook: 4 pasos (Modelo D)}
+  \begin{enumerate}
+    \item[\textbf{1}] \textbf{Participaciones de mercado} \hfill
+      $\displaystyle D = V\,\dg{q}^{-1}$ \\
+      {\footnotesize $D_{ip}$ = fracción del producto $p$ que produce la industria $i$ \; (sale de la Oferta).}
+    \item[\textbf{2}] \textbf{Flujos intermedios} \hfill
+      $\displaystyle Z = D\,U$ \quad {\footnotesize (industria $\times$ industria)}
+    \item[\textbf{3}] \textbf{Coeficientes e inversa de Leontief} \hfill
+      $\displaystyle A = Z\,\dg{g}^{-1}, \qquad L = (I-A)^{-1}$
+    \item[\textbf{4}] \textbf{Demanda final doméstica} \hfill
+      $\displaystyle f = D\,y^{\text{dom}}$
+  \end{enumerate}
+  \vspace{0.6em}
+  \begin{block}{Lo que dice el Handbook sobre el Modelo D}
+  \hb{Each product has its own specific sales structure, irrespective of the industry where it is produced. \textbf{No negative elements.}}
+  \end{block}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Paso a paso — Ejemplo 1: Cereales (caso concentrado)}
+  \textbf{¿Quién produce cereales?} \; La matriz $D$ (de la Oferta) responde:
+  \begin{center}
+  \textbf{Cereales: 100\,\% lo produce ``Cultivos agrícolas''.}
+  \end{center}
+  \begin{itemize}
+    \item Cuando \emph{cualquier} industria compra cereales, esa compra se atribuye \textbf{completa} a Cultivos agrícolas.
+    \item Es una atribución \textbf{1-a-1}, exacta, sin ningún supuesto.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{block}{Regla de agrupación 222 $\to$ 107}
+  Cada compra de un \emph{producto} se atribuye a la \emph{industria que lo produce}.
+  De los 222 productos, \textbf{107 se producen $\sim$100\,\% por una sola industria} y \textbf{151 tienen más del 90\,\%}: casi siempre hay un productor claro.
+  \end{block}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Paso a paso — Ejemplo 2: Maquila (producción secundaria)}
+  Algunos productos los fabrican \textbf{varias industrias}. Ej.: \emph{``Servicios de manufactura'' (maquila)}, uso intermedio total $= 274.4$:
+  \begin{center}
+  \begin{tabular}{lrr}
+    \toprule
+    Industria que la produce & \% ($D$) & Se le atribuye \\
+    \midrule
+    Fabricación de otros productos & 14.6\,\% & 40.1 \\
+    Hilatura, tejeduría y acabado  & 13.4\,\% & 36.7 \\
+    Elaboración de aceites y grasas& 11.8\,\% & 32.5 \\
+    Fabricación de prendas de vestir& 6.8\,\% & 18.6 \\
+    \ldots & \ldots & \ldots \\
+    \midrule
+    \textbf{Suma} & \textbf{100\,\%} & \textbf{274.4} \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  La compra se \textbf{reparte} entre las industrias productoras según $D$. \textbf{Nada se pierde} (los pedazos suman el total).
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{El supuesto y por qué evita negativos}
+  \begin{block}{Supuesto (para los productos repartidos)}
+  Se asume que quien compró maquila la compró \textbf{proporcionalmente} a todas las industrias que la ofrecen (participaciones de mercado $D$). Es el método estándar del Handbook.
+  \end{block}
+  \begin{itemize}
+    \item Para productos \textbf{concentrados} (cereales) no hay supuesto: es exacto.
+    \item El supuesto solo aplica a los \textbf{repartidos}, porque el COU no registra a cuál productor le compró cada quien.
+  \end{itemize}
+  \begin{alertblock}{La gran ventaja: cero negativos}
+  El reparto por participaciones de mercado (Modelo D) \textbf{nunca genera celdas negativas}.
+  El método alternativo (tecnología de \emph{producto}, Modelos A/C) sí puede producir negativos
+  \footnotesize\color{gris}(Cap.\,12, Anexo B) — es la causa de los ``valor agregado negativo'' que antes obligaban a excluir años.
+  \end{alertblock}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Valoración: de precios de comprador a básicos (Cap.\,7)}
+  El $U$ del COU está a \textbf{precios de comprador} (con impuestos y márgenes) y mezcla doméstico + importado.
+  La MIP debe estar a \textbf{precios básicos} y separar importaciones.
+  \begin{enumerate}
+    \item \textbf{Impuestos} sobre los productos $\to$ fila primaria aparte.
+    \item \textbf{Márgenes} de comercio/transporte $\to$ se reasignan a los servicios que los proveen.
+    \item \textbf{Importaciones} $\to$ fila primaria aparte (versión doméstica).
+  \end{enumerate}
+  \begin{block}{Lo que dice el Handbook}
+  \hb{These differences must be eliminated either by proportional adjustments\ldots} (\S7.77) \\[2pt]
+  Versión doméstica: \hb{national or domestic version\ldots IOT with endogenous imports\ldots the [imports] is inserted as a single row into the primary input part.} (Cap.\,12)
+  \end{block}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Reconciliación con el COU (la auditoría)}
+  Aunque las celdas se reorganizan, \textbf{el total de cada industria cuadra exacto} contra el COU:
+  \begin{center}
+  \large
+  \textbf{Cría de animales (2021), miles de millones \$:}
+  \end{center}
+  \begin{center}
+  \begin{tabular}{lr}
+    \toprule
+    COU: consumo intermedio (comprador) & \textbf{885.8} \\
+    \midrule
+    $\Sigma\,Z$ (consumo intermedio doméstico, básico) & 809.8 \\
+    $+$ importaciones intermedias & 16.3 \\
+    $+$ impuestos y márgenes & 59.8 \\
+    \midrule
+    \textbf{= Suma} & \textbf{885.8} \quad\color{verdeok}\textbf{(diferencia 0.00)} \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{0.4em}
+  \begin{center}\small\color{gris}
+  El libro incluye una hoja ``Auditoría COU'' con esta cuenta para las 107 industrias.
+  \end{center}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Las identidades que se verifican}
+  \begin{block}{Balance por fila (oferta = demanda)}
+  \[ g_i = \sum_j z_{ij} + f_i \qquad \forall\, i \]
+  \end{block}
+  \begin{block}{Balance por columna (valor agregado)}
+  \[ g_j = \sum_i z_{ij} + zm_j + W_j \qquad \forall\, j \]
+  \footnotesize $zm_j$: consumo intermedio importado; \; $W_j$: valor agregado.
+  \end{block}
+  \begin{block}{Análisis}
+  \[ A = Z\,\dg{g}^{-1}, \quad L = (I-A)^{-1}, \quad L\,f = g \]
+  Validación: $a_{ij}\ge 0$, \; $a_{ij}\le 1$, \; $\sum_i a_{ij} < 1$ (hay valor agregado).
+  \end{block}
+  \begin{center}\small\color{verdeok}\textbf{Todas cierran con error $\sim 10^{-15}$ (precisión de máquina).}\end{center}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Validación externa: Uruguay oficial}
+  Uruguay \textbf{sí} publica su MIP oficial. La usamos como prueba de fuego:
+  \begin{itemize}
+    \item Su MIP oficial es \textbf{industria$\times$industria, precios básicos, importaciones en matriz aparte} $\Rightarrow$ \textbf{idéntica metodología a la nuestra}.
+    \item Producción total: nuestro COU $=2{,}778{,}446$ vs.\ MIP oficial $=2{,}778{,}447$ \; \textbf{(100.0\,\% match)}.
+    \item Su ``Efectos Directos e Inducidos'' es un modelo Tipo II (hogares endogenizados), no la inversa abierta.
+  \end{itemize}
+  \begin{block}{Por qué industria$\times$industria (Handbook, Cap.\,12)}
+  \hb{Industry-by-industry IOTs are closer to statistical sources, business survey results and actual observations, and also to the SUTs.}
+  \end{block}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{¿Qué es, exactamente, ``la MIP''?}
+  \begin{center}
+  \begin{tikzpicture}[every node/.style={font=\small,align=center}]
+    \node[draw=cepal,fill=cepal!10,minimum width=3cm,minimum height=1.4cm] (z) {\textbf{Z}\\consumos\\intermedios};
+    \node[right=0.3cm of z,draw=cepal,fill=cepal!10,minimum height=1.4cm] (f) {\textbf{f}\\dem.\\final};
+    \node[below=0.2cm of z,draw=cepal,fill=cepal!10,minimum width=3cm] (w) {\textbf{W, zm} valor agregado, importado};
+    \node[right=1.2cm of f,draw=verdeok,fill=verdeok!12,minimum width=3.2cm,minimum height=1.6cm] (d) {\textbf{A, L, B}\\multiplicadores};
+    \draw[-{Latex}] (f.east) -- (d.west) node[midway,above]{\footnotesize se derivan};
+  \end{tikzpicture}
+  \end{center}
+  \begin{itemize}
+    \item \textbf{La MIP} propiamente dicha $=$ la matriz $Z$ con sus bordes ($f$, $W$, $zm$) que suman a $g$: la tabla contable.
+    \item $A$, $L$, $B$, los multiplicadores $=$ objetos \textbf{derivados} para el análisis, no la MIP en sí.
+  \end{itemize}
+  \begin{center}\small\color{gris}
+  La MIP es la \emph{fotografía} de la economía; $A$, $L$, $B$ son los \emph{lentes} para analizarla.
+  \end{center}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Resultados — Argentina (6 años)}
+  \begin{center}
+  \begin{tabular}{lccc}
+    \toprule
+    Año & Dimensión & fila $=$ columna & Multiplicador medio \\
+    \midrule
+    2004 & $162\times162$ & $7\times10^{-16}$ & 1.75 \\
+    2018 & $107\times107$ & $1\times10^{-15}$ & 1.75 \\
+    2019 & $108\times108$ & $7\times10^{-16}$ & 1.74 \\
+    2020 & $107\times107$ & $8\times10^{-16}$ & 1.75 \\
+    2021 & $107\times107$ & $1\times10^{-15}$ & 1.76 \\
+    2022 & $107\times107$ & $1\times10^{-15}$ & 1.76 \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \begin{itemize}
+    \item Cada año: un libro Excel con 12 pestañas (Z, vectores, coeficientes, Leontief, balances y \textbf{Auditoría COU}).
+    \item Mayores multiplicadores: agroindustria de cadena larga (carne, cuero, aceites, lácteos) — coherente con Argentina.
+  \end{itemize}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Resumen para llevarse}
+  \begin{enumerate}
+    \item El COU \textbf{basta} — es la fuente correcta y completa.
+    \item La MIP es el COU \textbf{reorganizado} de rectángulo a cuadrado; \textbf{nada se pierde}.
+    \item Agrupamos por \textbf{quién produce cada insumo} (matriz $D$, de la Oferta).
+    \item Modelo D del Handbook: \textbf{sin negativos}, cercano a las fuentes, comparable con Chile/Colombia.
+    \item Todo \textbf{reconcilia contra el COU} y cierra a precisión de máquina.
+  \end{enumerate}
+  \vfill
+  \begin{center}
+  \large\color{cepal}\textbf{Gracias — ¿preguntas?}
+  \end{center}
+\end{frame}
+
+\end{document}

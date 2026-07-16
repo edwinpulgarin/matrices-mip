@@ -1,0 +1,24 @@
+# Repo clonado solo para diagnóstico (no forma parte del refactor)
+matrices-mip/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Handbook (grande y con derechos de autor — no se versiona)
+SUT_IOT_HB_Final_Cover.pdf
+
+# Temporales de LaTeX
+*.aux
+*.log
+*.nav
+*.snm
+*.toc
+*.out
+
+# Config local del harness
+.claude/
+
+# Scratch
+scratchpad/
