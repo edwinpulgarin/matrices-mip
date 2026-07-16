@@ -33,7 +33,11 @@ Detalle en `uruguay_validacion.md`.
   coeficientes A, validación, Leontief, B, y **Auditoría COU** que reconcilia
   columna a columna contra la fuente).
 - `output/presentacion_mip.pdf` — presentación metodológica (Beamer).
-- `reports/<país>_todos.md` — tabla de gates por año.
+- `reports/validacion_consistencia.md` — **auditoría final** de los 21 libros
+  entregados: re-abre cada Excel y re-verifica dimensiones, balances de fila y
+  columna, `A = Z·diag(g)⁻¹`, Leontief `L·f = g` y presencia de nombres.
+  Estado: **21/21 libros consistentes**.
+- `reports/{brasil,uruguay}_todos.md` — tabla de gates por año.
 
 ## Cómo reproducir
 
@@ -41,5 +45,6 @@ Detalle en `uruguay_validacion.md`.
 py -3 scripts/argentina_libros.py      # 107×107 industria×industria
 py -3 scripts/brasil_libros.py
 py -3 scripts/uruguay_libros.py
+py -3 scripts/validar_consistencia.py  # auditoría final de los libros
 py -3 tests/test_sintetico.py          # identidades sobre COU sintético
 ```

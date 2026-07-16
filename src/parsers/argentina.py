@@ -129,7 +129,10 @@ def _industry_cols(df: pd.DataFrame, hr: int) -> list[int]:
     out = []
     for c in range(2, df.shape[1]):
         h = _head2(df, hr, c)
-        if not _norm(df.iat[hr, c]):
+        # el código de la industria vive en la fila hr; una celda NaN normaliza a
+        # "NAN" (no vacía), por eso hay que descartarla explícitamente: si no, una
+        # columna final toda-NaN se colaría como una industria fantasma "NAN NAN".
+        if str(df.iat[hr, c]).strip().lower() in ("", "nan"):
             continue
         if any(k in h for k in _STOP_COL):
             continue
