@@ -36,7 +36,7 @@
 \begin{frame}[plain]
   \titlepage
   \begin{center}\small\color{gris}
-  Argentina 2021 como ejemplo — Naciones Unidas, \emph{Handbook on Supply, Use and Input--Output Tables}, Series F No.\,74 Rev.\,1
+  Argentina 2022 como ejemplo — Naciones Unidas, \emph{Handbook on Supply, Use and Input--Output Tables}, Series F No.\,74 Rev.\,1
   \end{center}
 \end{frame}
 
@@ -59,27 +59,29 @@
 \end{frame}
 
 % ------------------------------------------------------------------
-\begin{frame}{Punto de partida: el COU}
-  El COU tiene \textbf{dos clasificaciones distintas}:
+\begin{frame}{Punto de partida: el COU \small(dónde mirar en el archivo)}
+  El COU de INDEC trae \textbf{dos hojas distintas} (así se llaman en el \texttt{.xls}):
   \begin{columns}
     \begin{column}{0.5\textwidth}
-      \begin{block}{Oferta $V$ (industria $\times$ producto)}
-      ¿Qué produce cada industria? \\ (la tabla ``quién fabrica qué'')
+      \begin{block}{Oferta $V$ — hoja \texttt{Mat\_Of\_pc\_2022}}
+      ¿Qué \textbf{produce} cada industria? A precios básicos. \\
+      \footnotesize\color{gris} Filas = productos; columnas = industrias \emph{y además} columnas de valoración (importaciones, impuestos, márgenes, oferta total).
       \end{block}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \begin{block}{Utilización $U$ (producto $\times$ industria)}
-      ¿Qué compra cada industria? \\ (a precios de comprador)
+      \begin{block}{Utilización $U$ — hoja \texttt{Mat\_Ut\_pc\_2022}}
+      ¿Qué \textbf{compra} cada industria? A precios de comprador. \\
+      \footnotesize\color{gris} Filas = productos; columnas = industrias + demanda final.
       \end{block}
     \end{column}
   \end{columns}
-  \vspace{0.5em}
+  \vspace{0.4em}
   \begin{center}
-  \textbf{Argentina 2021:}\quad $U$ es de dimensión \textbf{222 productos $\times$ 107 industrias} (rectangular).
+  \textbf{Argentina 2022:}\quad $U$ es \textbf{222 productos $\times$ 107 industrias} (rectangular).
   \end{center}
   \begin{itemize}
-    \item Filas = 222 \textbf{productos} (cereales, semillas, animales vivos\ldots).
-    \item Columnas = 107 \textbf{industrias} (Cultivos agrícolas, Cría de animales\ldots).
+    \item Filas = 222 \textbf{productos} (011 Cereales, 012 Semillas, animales vivos\ldots).
+    \item Columnas = 107 \textbf{industrias} (011/014 Cultivos agrícolas, Cría de animales\ldots).
   \end{itemize}
 \end{frame}
 
@@ -141,37 +143,94 @@
 \end{frame}
 
 % ------------------------------------------------------------------
-\begin{frame}{Paso a paso — Ejemplo 1: Cereales (caso concentrado)}
-  \textbf{¿Quién produce cereales?} \; La matriz $D$ (de la Oferta) responde:
+\begin{frame}{Ejemplo 1 — ¿Quién \emph{produce} cereales? (matriz $D$)}
+  La matriz $D$ sale \textbf{solo de las columnas de industria} de la hoja de Oferta
+  (\texttt{Mat\_Of\_pc\_2022}, fila \texttt{011 - Cereales}), a precios básicos:
   \begin{center}
-  \textbf{Cereales: 100\,\% lo produce ``Cultivos agrícolas''.}
+  \begin{tabular}{lrr}
+    \toprule
+    Industria productora (columna del COU) & Producción & \% ($D$) \\
+    \midrule
+    011/014 \; Cultivos agrícolas & 2\,541.2 & \textbf{99.94\,\%} \\
+    1531/2 \; Elaboración de prod.\ de molinería & 1.5 & 0.06\,\% \\
+    1549 \; Tostado, molienda (café, etc.) & 0.03 & 0.00\,\% \\
+    \midrule
+    \textbf{Producción nacional de cereales} & \textbf{2\,542.7} & \textbf{100\,\%} \\
+    \bottomrule
+  \end{tabular}
   \end{center}
-  \begin{itemize}
-    \item Cuando \emph{cualquier} industria compra cereales, esa compra se atribuye \textbf{completa} a Cultivos agrícolas.
-    \item Es una atribución \textbf{1-a-1}, exacta, sin ningún supuesto.
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{block}{Regla de agrupación 222 $\to$ 107}
-  Cada compra de un \emph{producto} se atribuye a la \emph{industria que lo produce}.
-  De los 222 productos, \textbf{107 se producen $\sim$100\,\% por una sola industria} y \textbf{151 tienen más del 90\,\%}: casi siempre hay un productor claro.
-  \end{block}
+  \footnotesize\color{gris}\hfill (cifras en miles de millones de \$ corrientes)
+  \begin{alertblock}{Corrección de precisión}
+  \normalsize\color{black} Antes decíamos ``100\,\%''; el dato exacto del COU es \textbf{99.94\,\%}
+  (más un 0.06\,\% de producción secundaria de la molinería, que \textbf{sí conservamos}). No es un supuesto: es lo que reporta el INDEC.
+  \end{alertblock}
 \end{frame}
 
 % ------------------------------------------------------------------
-\begin{frame}{Paso a paso — Ejemplo 2: Maquila (producción secundaria)}
-  Algunos productos los fabrican \textbf{varias industrias}. Ej.: \emph{``Servicios de manufactura'' (maquila)}, uso intermedio total $= 274.4$:
+\begin{frame}{Ejemplo 1 (cont.) — Producción $\neq$ Oferta total}
+  \textbf{¿Por qué en el cuadro de oferta parece que ``otros sectores'' ofertan cereales?}
+  Porque a la derecha de las industrias hay columnas que \textbf{no son productores} — son el puente de valoración:
+  \begin{center}
+  \begin{tabular}{lrr}
+    \toprule
+    Componente (columna de \texttt{Mat\_Of\_pc\_2022}) & Miles de mill.\ \$ & \% oferta \\
+    \midrule
+    Producción nacional a precios básicos (OPB) & 2\,542.7 & 92.4\,\% \\
+    $+$ Impuestos a los productos netos (IP) & 185.0 & \phantom{0}6.7\,\% \\
+    $+$ Márgenes de distribución (Mg) & 13.6 & \phantom{0}0.5\,\% \\
+    $+$ Importaciones (CIF) & 7.2 & \phantom{0}0.3\,\% \\
+    $+$ IVA no deducible \; $+$ derechos \; $+$ comisiones & 2.1 & \phantom{0}0.1\,\% \\
+    \midrule
+    \textbf{$=$ Oferta total a precios de comprador (OPC)} & \textbf{2\,750.6} & \textbf{100\,\%} \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \begin{itemize}\footnotesize
+    \item Impuestos, IVA y derechos $\to$ gobierno; márgenes $\to$ comercio/transporte; importaciones $\to$ exterior. \textbf{Ninguno produce cereales}.
+    \item La matriz $D$ usa \textbf{solo la fila OPB} (columnas de industria). El resto se trata aparte en la valoración (Cap.\,7).
+  \end{itemize}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Regla de agrupación 222 $\to$ 107 (Argentina 2022)}
+  Cada compra de un \emph{producto} se atribuye a la(s) \emph{industria(s) que lo produce(n)}, según $D$.
+  De los \textbf{221 productos con producción nacional}:
+  \begin{center}
+  \begin{tabular}{lr}
+    \toprule
+    Concentración del productor dominante & N.º de productos \\
+    \midrule
+    Un único productor (100\,\%) & 71 \\
+    Productor dominante $\ge$ 99\,\% & 106 \\
+    Productor dominante $\ge$ 95\,\% & 135 \\
+    Productor dominante $\ge$ 90\,\% & 151 \\
+    \midrule
+    Con producción secundaria (2\,+ industrias) & 150 \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \begin{center}\small
+  Participación dominante \textbf{media 89.6\,\%}, \textbf{mediana 98.4\,\%}: casi siempre hay un productor claro.
+  \end{center}
+\end{frame}
+
+% ------------------------------------------------------------------
+\begin{frame}{Ejemplo 2 — Maquila (producción secundaria repartida)}
+  Otros productos los fabrican \textbf{muchas industrias}. Ej.: \emph{``Servicios de manufactura en insumos físicos''} (maquila),
+  producido por \textbf{51 industrias}; uso intermedio total $= 496.6$ miles de mill.\ \$:
   \begin{center}
   \begin{tabular}{lrr}
     \toprule
     Industria que la produce & \% ($D$) & Se le atribuye \\
     \midrule
-    Fabricación de otros productos & 14.6\,\% & 40.1 \\
-    Hilatura, tejeduría y acabado  & 13.4\,\% & 36.7 \\
-    Elaboración de aceites y grasas& 11.8\,\% & 32.5 \\
-    Fabricación de prendas de vestir& 6.8\,\% & 18.6 \\
-    \ldots & \ldots & \ldots \\
+    Fabricación de otros productos & 14.3\,\% & 71.0 \\
+    Hilatura, tejeduría y acabado  & 14.1\,\% & 70.0 \\
+    Elaboración de aceites y grasas& 11.0\,\% & 54.6 \\
+    Fabricación de prendas de vestir& \phantom{0}7.6\,\% & 37.7 \\
+    Fabricación de vehículos automotores & \phantom{0}6.6\,\% & 32.8 \\
+    \ldots (46 industrias más) & \ldots & \ldots \\
     \midrule
-    \textbf{Suma} & \textbf{100\,\%} & \textbf{274.4} \\
+    \textbf{Suma} & \textbf{100\,\%} & \textbf{496.6} \\
     \bottomrule
   \end{tabular}
   \end{center}
@@ -184,8 +243,8 @@
   Se asume que quien compró maquila la compró \textbf{proporcionalmente} a todas las industrias que la ofrecen (participaciones de mercado $D$). Es el método estándar del Handbook.
   \end{block}
   \begin{itemize}
-    \item Para productos \textbf{concentrados} (cereales) no hay supuesto: es exacto.
-    \item El supuesto solo aplica a los \textbf{repartidos}, porque el COU no registra a cuál productor le compró cada quien.
+    \item Para productos \textbf{concentrados} (cereales, 99.94\,\% de un productor) el supuesto es \textbf{irrelevante}: la atribución es prácticamente 1-a-1.
+    \item Pesa solo en los \textbf{repartidos} (maquila y similares), porque el COU no registra a cuál productor le compró cada quien.
   \end{itemize}
   \begin{alertblock}{La gran ventaja: cero negativos}
   El reparto por participaciones de mercado (Modelo D) \textbf{nunca genera celdas negativas}.
@@ -211,27 +270,25 @@
 
 % ------------------------------------------------------------------
 \begin{frame}{Reconciliación con el COU (la auditoría)}
-  Aunque las celdas se reorganizan, \textbf{el total de cada industria cuadra exacto} contra el COU:
-  \begin{center}
-  \large
-  \textbf{Cría de animales (2021), miles de millones \$:}
-  \end{center}
+  Aunque las celdas se reorganizan, \textbf{el total de compras de cada industria cuadra exacto} contra el COU.
+  Ejemplo \textbf{Cultivos agrícolas (011/014), 2022}, miles de millones \$:
   \begin{center}
   \begin{tabular}{lr}
     \toprule
-    COU: consumo intermedio (comprador) & \textbf{885.8} \\
+    COU: consumo intermedio de la industria (comprador) & \textbf{3\,340.2} \\
     \midrule
-    $\Sigma\,Z$ (consumo intermedio doméstico, básico) & 809.8 \\
-    $+$ importaciones intermedias & 16.3 \\
-    $+$ impuestos y márgenes & 59.8 \\
+    $\Sigma\,Z$ (consumo intermedio doméstico, precios básicos) & 2\,753.8 \\
+    $+$ importaciones intermedias & 411.0 \\
+    $+$ impuestos y márgenes & 175.5 \\
     \midrule
-    \textbf{= Suma} & \textbf{885.8} \quad\color{verdeok}\textbf{(diferencia 0.00)} \\
+    \textbf{= Suma} & \textbf{3\,340.2} \quad\color{verdeok}\textbf{(diferencia 0.00)} \\
     \bottomrule
   \end{tabular}
   \end{center}
-  \vspace{0.4em}
+  \vspace{0.3em}
   \begin{center}\small\color{gris}
-  El libro incluye una hoja ``Auditoría COU'' con esta cuenta para las 107 industrias.
+  Es la hoja \textbf{``12. Auditoría COU''} del libro, con esta cuenta para las 107 industrias
+  (columna a columna, diferencia $=0$).
   \end{center}
 \end{frame}
 
@@ -293,7 +350,7 @@
     \midrule
     2004 & $162\times162$ & $7\times10^{-16}$ & 1.75 \\
     2018 & $107\times107$ & $1\times10^{-15}$ & 1.75 \\
-    2019 & $108\times108$ & $7\times10^{-16}$ & 1.74 \\
+    2019 & $107\times107$ & $7\times10^{-16}$ & 1.74 \\
     2020 & $107\times107$ & $8\times10^{-16}$ & 1.75 \\
     2021 & $107\times107$ & $1\times10^{-15}$ & 1.76 \\
     2022 & $107\times107$ & $1\times10^{-15}$ & 1.76 \\
@@ -301,7 +358,7 @@
   \end{tabular}
   \end{center}
   \begin{itemize}
-    \item Cada año: un libro Excel con 12 pestañas (Z, vectores, coeficientes, Leontief, balances y \textbf{Auditoría COU}).
+    \item Cada año: un libro Excel con 13 pestañas (MIP, Z, vectores, diag($g$), balances, coeficientes $A$, validación, Leontief, $B$ y \textbf{Auditoría COU}).
     \item Mayores multiplicadores: agroindustria de cadena larga (carne, cuero, aceites, lácteos) — coherente con Argentina.
   \end{itemize}
 \end{frame}
