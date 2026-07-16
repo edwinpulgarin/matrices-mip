@@ -8,7 +8,6 @@ Auditoría independiente: se re-abre cada Excel y se re-verifican las identidade
 | Argentina_2018 | 107 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Argentina_2019 | 107 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Argentina_2020 | 107 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Argentina_2021 | 221 | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
 | Argentina_2021 | 107 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Argentina_2022 | 107 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Brasil_2010 | 68 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -27,10 +26,6 @@ Auditoría independiente: se re-abre cada Excel y se re-verifican las identidade
 | Uruguay_2016 | 95 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Uruguay_2017 | 95 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-**Resumen:** 21 libros consistentes, 1 a revisar, de 22 auditados.
+**Resumen:** 21 libros consistentes, 0 a revisar, de 21 auditados.
 
-## Detalle de hallazgos
-
-- **Argentina_2021 · Cols**: máx rel = 3.6e-01
-- **Argentina_2021 · A**: |A−Z/g|=7.8e+02 min=0.0000 max=0.6964 máxΣcol=0.8157
-- **Argentina_2021 · Leontief**: |L−(I−A)⁻¹|=1.1e+00  |L·f−g| rel=7.5e-01
+Todos los libros pasan las seis verificaciones. ✅

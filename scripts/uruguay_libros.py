@@ -43,7 +43,7 @@ def main():
             an = calcular(iot)
             rel = float((iot.balance_fila_columna().abs() / iot.x.replace(0, 1)).max())
             lfx = an.check_Lf_x / max(sut.g.sum(), 1)
-            build_libro(iot, an, ROOT / "output" / f"MIP_Uruguay_{anio}_LIBRO.xlsx",
+            build_libro(iot, an, ROOT / "matrices" / "Uruguay" / f"MIP_Uruguay_{anio}_LIBRO.xlsx",
                         pais="Uruguay", anio=anio, codes=d["ind_code"], names=d["ind_name"],
                         fuente=f"BCU — COU {anio}", cou_intermedio=d["U_pc"].sum(axis=0),
                         escala=1.0, unidad="millones de pesos uruguayos corrientes")

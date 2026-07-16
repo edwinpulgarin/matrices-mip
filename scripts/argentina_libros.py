@@ -3,7 +3,7 @@ Genera el LIBRO completo (12 pestañas, industria×industria, Modelo D) para tod
 los años de Argentina, con hoja de Auditoría COU columna-a-columna.
 
 Uso:  py -3 scripts/argentina_libros.py
-Genera: output/MIP_Argentina_AAAA_LIBRO_107x107.xlsx
+Genera: matrices/Argentina/MIP_Argentina_AAAA_LIBRO.xlsx
 """
 
 import sys
@@ -37,7 +37,7 @@ def main():
         iot = transformar(sutb, "D")
         an = calcular(iot)
         ruta = build_libro(
-            iot, an, ROOT / "output" / f"MIP_Argentina_{anio}_LIBRO_107x107.xlsx",
+            iot, an, ROOT / "matrices" / "Argentina" / f"MIP_Argentina_{anio}_LIBRO.xlsx",
             pais="Argentina", anio=anio,
             codes=d["ind_code"], names=d["ind_name"],
             fuente=f"INDEC — COU {anio}",

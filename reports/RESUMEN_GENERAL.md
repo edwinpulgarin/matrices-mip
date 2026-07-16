@@ -28,7 +28,7 @@ Detalle en `uruguay_validacion.md`.
 
 ## Entregables
 
-- `output/MIP_<País>_<Año>_LIBRO*.xlsx` — libro de 13 pestañas por matriz
+- `matrices/<País>/MIP_<País>_<Año>_LIBRO.xlsx` — libro de 13 pestañas por matriz
   (Índice con hipervínculos, MIP completa, Z, vectores, diag(g), balances,
   coeficientes A, validación, Leontief, B, y **Auditoría COU** que reconcilia
   columna a columna contra la fuente).

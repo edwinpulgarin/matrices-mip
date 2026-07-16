@@ -29,7 +29,7 @@ for _s in (sys.stdout, sys.stderr):
     except (AttributeError, ValueError):
         pass
 
-OUT = ROOT / "output"
+OUT = ROOT / "matrices"
 # Los libros guardan las celdas redondeadas a 6 decimales, así que las
 # identidades contables (exactas a ~1e-14 en la tubería) sólo pueden re-verse
 # aquí hasta ~1e-6. 1e-5 pasa el redondeo de Excel y aún detecta errores reales.
@@ -129,7 +129,7 @@ def validar(f: Path) -> dict:
 
 
 def main():
-    libros = sorted(OUT.glob("*_LIBRO*.xlsx"))
+    libros = sorted(OUT.glob("*/*_LIBRO*.xlsx"))
     res = {}
     for f in libros:
         try:

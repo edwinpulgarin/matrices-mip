@@ -26,13 +26,17 @@ verifica **por construcción** (`fila = columna` a ~1e-15, `L·f = g`, sin negat
 - **Uruguay** (BCU): 2012, 2016, 2017 — validado contra la MIP oficial
 - México (INEGI): pendiente (ver `reports/mexico_pendiente.md`)
 
-Ver `reports/RESUMEN_GENERAL.md` para el detalle y `output/` para los libros.
+Los **21 libros publicados** viven en `matrices/<País>/MIP_<País>_<Año>_LIBRO.xlsx`.
+Ver `reports/RESUMEN_GENERAL.md` para el detalle metodológico,
+`manifest_publicables.csv` para el inventario y `reports/validacion_consistencia.md`
+para la auditoría final (los 21 pasan las 6 verificaciones de consistencia).
 
 ## Reproducir
 
 ```
-py -3 scripts/argentina_libros.py
-py -3 scripts/brasil_libros.py
-py -3 scripts/uruguay_libros.py
+py -3 scripts/argentina_libros.py      # → matrices/Argentina/
+py -3 scripts/brasil_libros.py         # → matrices/Brasil/
+py -3 scripts/uruguay_libros.py        # → matrices/Uruguay/
+py -3 scripts/validar_consistencia.py  # auditoría de los 21 libros
 py -3 tests/test_sintetico.py
 ```

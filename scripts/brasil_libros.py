@@ -49,7 +49,7 @@ def main():
             an = calcular(iot)
             rel = float((iot.balance_fila_columna().abs() / iot.x.replace(0, 1)).max())
             lfx = an.check_Lf_x / max(sut.g.sum(), 1)
-            build_libro(iot, an, ROOT / "output" / f"MIP_Brasil_{anio}_LIBRO.xlsx",
+            build_libro(iot, an, ROOT / "matrices" / "Brasil" / f"MIP_Brasil_{anio}_LIBRO.xlsx",
                         pais="Brasil", anio=anio, codes=d["ind_code"], names=d["ind_name"],
                         fuente=f"IBGE — COU nível 68, {anio}", cou_intermedio=d["U_pc"].sum(axis=0),
                         escala=1.0, unidad="millones de reales corrientes")
