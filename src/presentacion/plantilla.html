@@ -1,0 +1,1240 @@
+<title>MIP · Cinco economías reconstruidas desde sus COU</title>
+
+<style>
+/* ───────────────────────────────────────────────────────────────────────────
+   Tokens. El tema se decide por prefers-color-scheme y lo pisa data-theme en
+   ambos sentidos. Los componentes SIEMPRE leen tokens, nunca colores directos.
+   Los tres colores de cuadrante están validados (OKLab ΔE, protan/deutan,
+   piso de croma y banda de luminosidad) en claro y en oscuro por separado.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  --papel:      #EDF0F4;
+  --superficie: #FFFFFF;
+  --superficie2:#F6F8FA;
+  --tinta:      #0E1B29;
+  --tinta2:     #2B3D50;
+  --tenue:      #55677A;
+  --regla:      #C9D3DE;
+  --regla-fina: #DFE6ED;
+
+  --clave:        #D09A21;
+  --demandante:   #2B66B0;
+  --distribuidor: #2B7A52;
+  --independiente:#78889A;
+
+  --clave-t:        #D09A211F;
+  --demandante-t:   #2B66B016;
+  --distribuidor-t: #2B7A5216;
+  --independiente-t:#78889A12;
+
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+           "URW Palladio L", Georgia, serif;
+  --sans:  ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono:  ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas,
+           "Liberation Mono", monospace;
+
+  --barra: #0E1B29; --barra-tinta: #EDF0F4;
+  --sombra: 0 1px 2px #0E1B290A, 0 8px 24px -12px #0E1B291F;
+  --max: 1240px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --papel:      #0B141E;
+    --superficie: #101B27;
+    --superficie2:#152230;
+    --tinta:      #E6EDF4;
+    --tinta2:     #C2D0DE;
+    --tenue:      #8CA0B4;
+    --regla:      #27384B;
+    --regla-fina: #1C2A39;
+
+    --clave:        #BE8A28;
+    --demandante:   #6193DC;
+    --distribuidor: #37A882;
+    --independiente:#7B8C9E;
+
+    --clave-t:        #BE8A2826;
+    --demandante-t:   #6193DC20;
+    --distribuidor-t: #37A88220;
+    --independiente-t:#7B8C9E16;
+    --barra: #1B2C3D; --barra-tinta: #E6EDF4;
+    --sombra: 0 1px 2px #0006, 0 10px 28px -14px #0009;
+  }
+}
+:root[data-theme="dark"] {
+  --papel:#0B141E; --superficie:#101B27; --superficie2:#152230;
+  --tinta:#E6EDF4; --tinta2:#C2D0DE; --tenue:#8CA0B4;
+  --regla:#27384B; --regla-fina:#1C2A39;
+  --clave:#BE8A28; --demandante:#6193DC; --distribuidor:#37A882; --independiente:#7B8C9E;
+  --clave-t:#BE8A2826; --demandante-t:#6193DC20; --distribuidor-t:#37A88220; --independiente-t:#7B8C9E16;
+  --barra:#1B2C3D; --barra-tinta:#E6EDF4;
+  --sombra: 0 1px 2px #0006, 0 10px 28px -14px #0009;
+}
+:root[data-theme="light"] {
+  --papel:#EDF0F4; --superficie:#FFFFFF; --superficie2:#F6F8FA;
+  --tinta:#0E1B29; --tinta2:#2B3D50; --tenue:#55677A;
+  --regla:#C9D3DE; --regla-fina:#DFE6ED;
+  --clave:#D09A21; --demandante:#2B66B0; --distribuidor:#2B7A52; --independiente:#78889A;
+  --clave-t:#D09A211F; --demandante-t:#2B66B016; --distribuidor-t:#2B7A5216; --independiente-t:#78889A12;
+  --barra:#0E1B29; --barra-tinta:#EDF0F4;
+  --sombra: 0 1px 2px #0E1B290A, 0 8px 24px -12px #0E1B291F;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--papel); color: var(--tinta);
+  font-family: var(--sans); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.4rem, 6vw, 4.6rem); line-height: 1.02; letter-spacing: -.02em; }
+h2 { font-size: clamp(1.7rem, 3.4vw, 2.7rem); line-height: 1.1; letter-spacing: -.012em; }
+h3 { font-size: 1.12rem; line-height: 1.3; }
+p  { margin: 0; max-width: 68ch; }
+a  { color: inherit; }
+:focus-visible { outline: 2px solid var(--demandante); outline-offset: 3px; border-radius: 2px; }
+
+.eyebrow {
+  font-family: var(--sans); font-size: .688rem; font-weight: 650;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--tenue);
+}
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.lede { font-size: 1.06rem; color: var(--tinta2); }
+.sutil { font-size: .82rem; color: var(--tenue); }
+
+/* ── estructura ─────────────────────────────────────────────────────────── */
+main { scroll-snap-type: y proximity; }
+section {
+  scroll-snap-align: start; padding: 72px 28px 80px;
+  border-top: 1px solid var(--regla-fina);
+}
+section:first-child { border-top: 0; }
+.envoltura { max-width: var(--max); margin: 0 auto; }
+.cabecera-sec { display: flex; flex-direction: column; gap: 10px; margin-bottom: 34px; }
+
+/* riel de progreso */
+#riel {
+  position: fixed; left: 18px; top: 50%; transform: translateY(-50%); z-index: 40;
+  display: flex; flex-direction: column; gap: 3px; padding: 10px 8px;
+  background: color-mix(in srgb, var(--superficie) 84%, transparent);
+  border: 1px solid var(--regla-fina); border-radius: 2px;
+  backdrop-filter: blur(8px);
+}
+#riel button {
+  display: flex; align-items: center; gap: 9px; background: none; border: 0;
+  padding: 4px 6px; cursor: pointer; color: var(--tenue); font: inherit;
+  font-size: .68rem; letter-spacing: .04em; text-align: left; border-radius: 2px;
+}
+#riel button i {
+  display: block; width: 16px; height: 2px; background: var(--regla);
+  flex: none; transition: background .2s, width .2s;
+}
+#riel button span { max-width: 0; overflow: hidden; opacity: 0; white-space: nowrap;
+                    transition: max-width .2s, opacity .18s; }
+#riel:hover button span, #riel:focus-within button span { max-width: 130px; opacity: 1; }
+#riel button[aria-current="true"] { color: var(--tinta); }
+#riel button[aria-current="true"] i { background: var(--tinta); width: 24px; }
+@media (max-width: 1180px) { #riel { display: none; } }
+/* el riel es fijo: se reserva su ancho para que no pise el contenido */
+@media (min-width: 1181px) { section { padding-left: 92px; } }
+
+#tema {
+  position: fixed; right: 18px; top: 18px; z-index: 40;
+  background: color-mix(in srgb, var(--superficie) 84%, transparent);
+  border: 1px solid var(--regla-fina); color: var(--tenue);
+  border-radius: 2px; padding: 7px 11px; cursor: pointer;
+  font: 650 .66rem/1 var(--sans); letter-spacing: .14em; text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+/* ── portada ────────────────────────────────────────────────────────────── */
+#portada { min-height: 100svh; display: flex; align-items: center; position: relative; overflow: hidden; }
+#malla { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .5; }
+#portada .envoltura { position: relative; z-index: 1; }
+.titulo-marca { display: flex; flex-direction: column; gap: 22px; }
+.regla-doble { height: 0; border-top: 3px solid var(--tinta); border-bottom: 1px solid var(--tinta); padding-bottom: 3px; }
+.cifras-portada {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 1px; background: var(--regla-fina); border: 1px solid var(--regla-fina);
+  margin-top: 40px;
+}
+@media (min-width: 900px) { .cifras-portada { grid-template-columns: repeat(5, 1fr); } }
+.cifra { background: var(--superficie); padding: 20px 22px; display: flex; flex-direction: column; gap: 4px; }
+.cifra b { font-family: var(--mono); font-variant-numeric: tabular-nums;
+           font-size: 2.1rem; font-weight: 500; line-height: 1; letter-spacing: -.02em; }
+.cifra small { color: var(--tenue); font-size: .78rem; line-height: 1.35; }
+
+/* ── piezas ─────────────────────────────────────────────────────────────── */
+.tarjeta { background: var(--superficie); border: 1px solid var(--regla-fina); box-shadow: var(--sombra); }
+.rejilla-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px; }
+@media (max-width: 940px) { .rejilla-2 { grid-template-columns: minmax(0, 1fr); } }
+
+/* matriz 2x2 de cuadrantes */
+.cuadrante { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.cuadrante caption { text-align: left; padding-bottom: 10px; }
+.cuadrante th.eje {
+  background: var(--barra); color: var(--barra-tinta); font-family: var(--serif);
+  font-weight: 600; font-size: 1rem; padding: 11px 8px; text-align: center;
+  border: 1px solid var(--barra);
+}
+.cuadrante th.lado {
+  font-family: var(--mono); font-size: .82rem; font-weight: 500; color: var(--tinta2);
+  padding: 8px 14px 8px 4px; text-align: right; white-space: nowrap;
+  border-right: 1px solid var(--barra);
+}
+.cuadrante td { border: 1px solid var(--regla-fina); padding: 14px 16px; vertical-align: top; }
+.cuadrante .nom { font-family: var(--serif); font-size: 1.14rem; font-weight: 600; }
+.cuadrante .def { font-size: .74rem; color: var(--tenue); margin-top: 1px; }
+.cuadrante .met { display: flex; gap: 16px; margin-top: 9px; align-items: baseline; }
+.cuadrante .met b { font-family: var(--mono); font-variant-numeric: tabular-nums;
+                    font-size: 1.42rem; font-weight: 500; line-height: 1; }
+.cuadrante .met span { font-size: .7rem; color: var(--tenue); margin-left: 5px; }
+.cuadrante ul { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.cuadrante li { font-size: .76rem; color: var(--tinta2); display: flex; gap: 7px; line-height: 1.35; }
+.cuadrante li em { font-family: var(--mono); font-style: normal; color: var(--tenue); flex: none; }
+td.q-clave        { background: var(--clave-t); }
+td.q-demandante   { background: var(--demandante-t); }
+td.q-distribuidor { background: var(--distribuidor-t); }
+td.q-independiente{ background: var(--independiente-t); }
+td.q-clave        .nom { color: var(--clave); }
+td.q-demandante   .nom { color: var(--demandante); }
+td.q-distribuidor .nom { color: var(--distribuidor); }
+td.q-independiente .nom { color: var(--independiente); }
+
+/* fichas de indicador */
+.fichas { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+          gap: 1px; background: var(--regla-fina); border: 1px solid var(--regla-fina); }
+.ficha { background: var(--superficie); padding: 13px 15px; display: flex; flex-direction: column; gap: 3px; }
+.ficha b { font-family: var(--mono); font-variant-numeric: tabular-nums;
+           font-size: 1.32rem; font-weight: 500; line-height: 1.05; }
+.ficha small { color: var(--tenue); font-size: .69rem; line-height: 1.3; }
+
+/* tablas de datos */
+.tabla-envoltura { overflow-x: auto; }
+table.datos { width: 100%; border-collapse: collapse; font-size: .84rem; }
+table.datos th { text-align: left; font: 650 .66rem/1.6 var(--sans);
+                 letter-spacing: .1em; text-transform: uppercase; color: var(--tenue);
+                 padding: 8px 12px; border-bottom: 1px solid var(--regla); white-space: nowrap; }
+table.datos td { padding: 9px 12px; border-bottom: 1px solid var(--regla-fina); }
+table.datos td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+table.datos tbody tr:hover { background: var(--superficie2); }
+
+/* leyenda */
+.leyenda { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.leyenda span { display: inline-flex; align-items: center; gap: 7px; font-size: .78rem; color: var(--tinta2); }
+.leyenda i { width: 11px; height: 11px; border-radius: 2px; display: block; flex: none; }
+
+/* dispersión */
+.lienzo-disp { position: relative; }
+.lienzo-disp svg { display: block; width: 100%; height: auto; }
+.punto { cursor: pointer; }
+.punto:hover { stroke: var(--superficie); stroke-width: 2; }
+#globo {
+  position: fixed; z-index: 60; pointer-events: none; opacity: 0;
+  background: var(--tinta); color: var(--papel); padding: 9px 12px;
+  border-radius: 3px; font-size: .76rem; max-width: 280px; line-height: 1.4;
+  transition: opacity .12s; box-shadow: 0 8px 24px -8px #0009;
+}
+#globo b { display: block; font-family: var(--serif); font-size: .92rem; margin-bottom: 4px; }
+#globo dl { margin: 0; display: grid; grid-template-columns: auto auto; gap: 1px 12px; }
+#globo dt { color: color-mix(in srgb, var(--papel) 62%, transparent); }
+#globo dd { margin: 0; font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+
+/* barras comparativas */
+.barra-fila { display: grid; grid-template-columns: 132px 1fr 66px; gap: 12px;
+              align-items: center; padding: 5px 0; }
+.barra-pista { height: 12px; background: var(--superficie2); border: 1px solid var(--regla-fina); position: relative; }
+.barra-valor { height: 100%; background: var(--demandante); border-radius: 0 3px 3px 0; }
+.barra-fila .et { font-size: .82rem; color: var(--tinta2); }
+.barra-fila .vl { font-family: var(--mono); font-variant-numeric: tabular-nums;
+                  font-size: .82rem; text-align: right; }
+
+/* composición apilada */
+.apilada { display: flex; height: 30px; border: 1px solid var(--regla-fina); overflow: hidden; }
+.apilada > i { display: block; height: 100%; box-shadow: inset -2px 0 0 var(--superficie); }
+
+/* derivación de BL y FL: pasos numerados con su fórmula */
+.derivacion { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px;
+              background: var(--regla-fina); border: 1px solid var(--regla-fina); }
+.derivacion > li { background: var(--superficie); padding: 22px 24px;
+                   display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 18px; }
+.paso-n { font-family: var(--mono); font-size: 1.5rem; color: var(--tenue);
+          line-height: 1; font-variant-numeric: tabular-nums; }
+.derivacion h3 { margin-bottom: 6px; }
+.formula { margin-top: 12px; padding: 11px 14px; background: var(--superficie2);
+           border-left: 2px solid var(--demandante); font-family: var(--mono);
+           font-size: .86rem; overflow-x: auto; white-space: nowrap;
+           font-variant-numeric: tabular-nums; }
+.formula b { font-weight: 700; }
+.formula sub, .formula sup { font-size: .74em; }
+
+/* tabla compacta con barra embebida */
+table.datos.compacta { font-size: .78rem; }
+table.datos.compacta td { padding: 6px 10px; }
+.mini-barra { position: relative; display: flex; align-items: center;
+              justify-content: flex-end; gap: 8px; min-width: 92px; }
+.mini-barra i { position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+                height: 15px; background: var(--demandante); opacity: .2; display: block; }
+.mini-barra b { position: relative; font-family: var(--mono);
+                font-variant-numeric: tabular-nums; font-weight: 500; }
+table.datos tr.inicio-grupo td { border-top: 1px solid var(--regla); }
+
+/* regla de dispersión del multiplicador */
+.regla-mult { position: relative; height: 46px; margin-top: 26px;
+              border-bottom: 1px solid var(--regla); }
+.regla-mult .tramo { position: absolute; bottom: 0; height: 13px;
+                     background: var(--demandante); opacity: .28; display: block; }
+.regla-mult .marca { position: absolute; bottom: 0; width: 1px; height: 22px;
+                     background: var(--tinta2); text-decoration: none; }
+.regla-mult .marca.mediana { background: var(--demandante); height: 30px; width: 2px; }
+.regla-mult .marca s { position: absolute; bottom: 24px; left: 50%;
+                       transform: translateX(-50%); text-decoration: none;
+                       font-family: var(--mono); font-size: .72rem; white-space: nowrap;
+                       font-variant-numeric: tabular-nums; }
+.regla-mult .marca.mediana s { bottom: 32px; color: var(--demandante); }
+.regla-pie { display: flex; justify-content: space-between; gap: 10px;
+             font-size: .7rem; margin-top: 7px; }
+
+/* sectores clave más dispersos */
+.lista-clave { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px;
+               background: var(--regla-fina); border: 1px solid var(--regla-fina); }
+.lista-clave li { background: var(--superficie); padding: 9px 13px; display: flex;
+                  gap: 14px; align-items: baseline; justify-content: space-between; }
+.lista-clave .nm { font-size: .8rem; }
+.lista-clave .mt { display: flex; gap: 10px; flex: none; align-items: baseline; }
+.lista-clave .mt b { font-family: var(--mono); font-size: .78rem; font-weight: 500;
+                     font-variant-numeric: tabular-nums; }
+.lista-clave .mt i { font-style: normal; font-size: .62rem; color: var(--tenue);
+                     letter-spacing: .06em; margin-left: -7px; }
+
+/* series temporales */
+.rejilla-series { display: grid; gap: 18px;
+                  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.rejilla-series svg { display: block; width: 100%; height: auto; margin-top: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  main { scroll-snap-type: none; }
+}
+@media (max-width: 700px) {
+  main { scroll-snap-type: none; }
+  section { padding: 52px 18px 56px; }
+  .cuadrante th.lado { padding: 6px 8px 6px 2px; font-size: .72rem; }
+  .cuadrante td { padding: 11px 11px; }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Impresión / exportación a PDF. Se fuerza el tema claro (el oscuro gasta
+   tóner y los tintes de cuadrante pierden contraste sobre papel), se retira
+   todo lo interactivo y se corta por sección para que ninguna quede partida.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media print {
+  :root, :root[data-theme="dark"] {
+    --papel:#FFFFFF; --superficie:#FFFFFF; --superficie2:#F6F8FA;
+    --tinta:#0E1B29; --tinta2:#2B3D50; --tenue:#55677A;
+    --regla:#C9D3DE; --regla-fina:#DFE6ED; --sombra: none;
+  }
+  @page { margin: 14mm 12mm; }
+  html, body { background: #fff; }
+  main { scroll-snap-type: none; }
+  #riel, #tema, #globo, #malla { display: none !important; }
+  section { break-inside: avoid-page; break-after: page; padding: 0 0 12mm;
+            min-height: 0; scroll-snap-align: none; }
+  section:last-child { break-after: auto; }
+  .envoltura { max-width: none; }
+  /* nada debe quedar cortado a la mitad entre dos hojas */
+  .tarjeta, .cuadrante, .derivacion > li, .lista-clave, .regla-mult,
+  .rejilla-series > *, table.datos tr { break-inside: avoid; }
+  table.datos thead { display: table-header-group; }
+  .tabla-envoltura { overflow: visible; }
+  h1 { font-size: 2.4rem; }
+  h2 { font-size: 1.5rem; }
+  /* los tintes de cuadrante y las barras son información, no decoración */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .7em; color: var(--tenue); }
+}
+</style>
+
+<button id="tema" type="button" aria-label="Cambiar tema">Tema</button>
+<nav id="riel" aria-label="Secciones"></nav>
+<div id="globo" role="status" aria-live="polite"></div>
+
+<main>
+  <!-- ── portada ─────────────────────────────────────────────────────────── -->
+  <section id="portada" data-titulo="Portada">
+    <canvas id="malla" aria-hidden="true"></canvas>
+    <div class="envoltura">
+      <div class="titulo-marca">
+        <div class="eyebrow">Matrices Insumo-Producto · UN Handbook F74 Rev.1</div>
+        <div class="regla-doble"></div>
+        <h1>Cinco economías,<br>reconstruidas desde<br>sus cuadros oficiales.</h1>
+        <p class="lede">Argentina, Brasil, Colombia, México y Uruguay. Treinta matrices
+          derivadas de los Cuadros de Oferta y Utilización de cada instituto de
+          estadística, con cada identidad contable verificada por construcción.</p>
+      </div>
+      <div class="cifras-portada" id="cifras-portada"></div>
+    </div>
+  </section>
+
+  <!-- ── método ──────────────────────────────────────────────────────────── -->
+  <section id="metodo" data-titulo="Método">
+    <div class="envoltura">
+      <div class="cabecera-sec">
+        <div class="eyebrow">Cómo se construye</div>
+        <h2>Del cuadro de oferta y utilización a la matriz simétrica</h2>
+        <p class="lede">El COU es rectangular: qué producto usa cada industria. La MIP es
+          cuadrada: cuánto se arrastran las industrias entre sí. Entre uno y otra hay
+          cuatro pasos, y al final una sola matriz concentra toda la estructura productiva
+          del país.</p>
+      </div>
+      <ol id="pasos" class="rejilla-2" style="list-style:none;padding:0;margin:0;gap:1px;background:var(--regla-fina);border:1px solid var(--regla-fina);grid-template-columns:repeat(auto-fit,minmax(210px,1fr))"></ol>
+    </div>
+  </section>
+
+  <!-- ── de dónde salen BL y FL ──────────────────────────────────────────── -->
+  <section id="encadenamientos" data-titulo="BL y FL">
+    <div class="envoltura">
+      <div class="cabecera-sec">
+        <div class="eyebrow">El instrumento</div>
+        <h2>De la matriz a los encadenamientos, paso a paso</h2>
+        <p class="lede">BL y FL no son indicadores importados de ningún lado: se leen
+          directamente de la inversa de Leontief, sumándola por columnas o por filas. Vale
+          la pena hacer el recorrido completo, porque todo lo que sigue depende de él.</p>
+      </div>
+
+      <ol class="derivacion">
+        <li>
+          <div class="paso-n">1</div>
+          <div>
+            <h3>Coeficientes técnicos: la receta de cada sector</h3>
+            <p class="sutil">Se divide cada columna de flujos intermedios por la producción
+              de ese sector. <span class="num">A[i,j]</span> es cuánto compra el sector
+              <em>j</em> al sector <em>i</em> por cada peso que produce. La columna entera es
+              la receta técnica de <em>j</em>.</p>
+            <div class="formula"><b>A</b> = <b>Z</b> · x̂<sup>−1</sup></div>
+          </div>
+        </li>
+        <li>
+          <div class="paso-n">2</div>
+          <div>
+            <h3>La inversa de Leontief: todas las vueltas, sumadas</h3>
+            <p class="sutil">Producir un auto exige acero; producir ese acero exige energía;
+              producir esa energía exige transporte. La serie no termina, pero converge, y su
+              suma tiene forma cerrada. <span class="num">L[i,j]</span> es la producción total
+              que el sector <em>i</em> debe generar para que <em>j</em> entregue un peso a la
+              demanda final, contando todas las vueltas.</p>
+            <div class="formula"><b>L</b> = (<b>I</b> − <b>A</b>)<sup>−1</sup> = <b>I</b> + <b>A</b> + <b>A</b><sup>2</sup> + <b>A</b><sup>3</sup> + …</div>
+          </div>
+        </li>
+        <li>
+          <div class="paso-n">3</div>
+          <div>
+            <h3>Sumar por columna es mirar hacia atrás</h3>
+            <p class="sutil">La columna <em>j</em> de <b>L</b> contiene todo lo que hay que
+              producir en el país para que <em>j</em> entregue un peso. Sumarla da el
+              <strong>multiplicador de producción</strong>. Dividirlo por el promedio de la
+              economía lo vuelve comparable: eso es <strong>BL</strong>, y por construcción
+              vale <span class="num">1</span> en el sector medio.</p>
+            <div class="formula">BL<sub>j</sub> = (Σ<sub>i</sub> L[i,j] / n) ÷ (ΣΣ L / n²)</div>
+          </div>
+        </li>
+        <li>
+          <div class="paso-n">4</div>
+          <div>
+            <h3>Sumar por fila es mirar hacia adelante</h3>
+            <p class="sutil">La fila <em>i</em> recorre la misma matriz en el otro sentido:
+              cuánto tiene que producir <em>i</em> si cada uno de los demás sectores entrega
+              un peso a la demanda final. Mide exposición como proveedor. Normalizada por el
+              mismo promedio, es <strong>FL</strong>.</p>
+            <div class="formula">FL<sub>i</sub> = (Σ<sub>j</sub> L[i,j] / n) ÷ (ΣΣ L / n²)</div>
+          </div>
+        </li>
+      </ol>
+
+      <div class="rejilla-2" style="margin-top:30px;align-items:start">
+        <div class="tarjeta" style="padding:22px">
+          <h3>Por qué se normaliza por el promedio</h3>
+          <p class="sutil" style="margin-top:8px">Sin normalizar, el nivel de los
+            multiplicadores depende de cuántos sectores tenga la clasificación y de qué tan
+            desagregada esté: México, con 262 ramas, no sería comparable con Colombia, con 61.
+            Al dividir por el promedio de la propia economía, la pregunta pasa a ser
+            <em>«¿este sector arrastra más o menos que el sector típico de su país?»</em>, y
+            esa sí se puede hacer en cinco países a la vez.</p>
+        </div>
+        <div class="tarjeta" style="padding:22px">
+          <h3>Qué no dice</h3>
+          <p class="sutil" style="margin-top:8px">BL y FL son <strong>intensidades</strong>,
+            no tamaños. Un sector diminuto puede tener el BL más alto del país y ser
+            irrelevante para la política macro. Por eso todo lo que sigue cruza siempre el
+            encadenamiento con el peso del sector en la producción —en la dispersión es el
+            área del círculo— y los rankings excluyen a los sectores por debajo del
+            <span class="num">0,2 %</span> del VBP.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── cómo leer el cuadrante ──────────────────────────────────────────── -->
+  <section id="cuadrantes" data-titulo="Cuadrantes">
+    <div class="envoltura">
+      <div class="cabecera-sec">
+        <div class="eyebrow">Cómo leer los resultados</div>
+        <h2>Cuatro tipos de sector, según a quién arrastran</h2>
+        <p class="lede">Cruzar <strong>BL</strong> y <strong>FL</strong> contra el umbral
+          <span class="num">1</span> parte la economía en cuatro grupos con lecturas de
+          política distintas.</p>
+      </div>
+      <div class="rejilla-2" style="align-items:start">
+        <div id="cuadrante-guia"></div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="tarjeta" style="padding:20px">
+            <h3>Por qué importa</h3>
+            <p class="sutil" style="margin-top:8px">Un sector <strong>clave</strong> transmite
+              impulso en las dos direcciones: estimularlo mueve a sus proveedores y abarata
+              a sus clientes. Un <strong>distribuidor</strong> es insumo de muchos —energía,
+              transporte, química— y su costo se propaga a toda la estructura: ahí un shock
+              de precios es un problema general, no sectorial. Un <strong>demandante</strong>
+              arrastra hacia atrás pero casi no vende a otras industrias: típicamente produce
+              para consumo final, y es el mejor candidato a estímulo de demanda porque el
+              impulso no se le escapa a otro eslabón.</p>
+          </div>
+          <div class="tarjeta" style="padding:20px">
+            <h3>Arrastrar mucho no es arrastrar a todos</h3>
+            <p class="sutil" style="margin-top:8px">Un BL alto puede venir de arrastrar
+              fuertemente a un único proveedor. El coeficiente de variación de la columna,
+              <span class="num">V<sub>j</sub></span>, distingue los casos: cuanto más bajo,
+              más repartido está el arrastre. Un sector clave con
+              <span class="num">V<sub>j</sub></span> bajo es el candidato genuino de política
+              —mueve muchos sectores, no uno—, y esos son los que se listan en cada país.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── paneles por país (generados) ────────────────────────────────────── -->
+  <div id="paneles"></div>
+
+  <!-- ── comparación ─────────────────────────────────────────────────────── -->
+  <section id="comparacion" data-titulo="Comparación">
+    <div class="envoltura">
+      <div class="cabecera-sec">
+        <div class="eyebrow">Las cinco economías, lado a lado</div>
+        <h2>Qué diferencia a una estructura productiva de otra</h2>
+      </div>
+      <div class="rejilla-2" style="gap:34px">
+        <div>
+          <h3 style="margin-bottom:4px">Multiplicador de producción medio</h3>
+          <p class="sutil" style="margin-bottom:14px">Cuánta producción total activa una
+            unidad de demanda final. Más alto = cadenas domésticas más largas.</p>
+          <div id="barras-mult"></div>
+        </div>
+        <div>
+          <h3 style="margin-bottom:4px">Multiplicador ponderado por demanda final</h3>
+          <p class="sutil" style="margin-bottom:14px">El promedio simple trata igual a un
+            sector marginal y a uno enorme. Ponderado responde a qué pasa si la demanda crece
+            como está repartida hoy.</p>
+          <div id="barras-pond"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:38px">
+        <h3 style="margin-bottom:4px">De qué está hecho el multiplicador</h3>
+        <p class="sutil" style="margin-bottom:16px">Todo multiplicador arranca en
+          <span class="num">1</span> —el peso que se produce para atender la demanda—, le suma
+          el <strong>efecto directo</strong>, que es lo que ese sector compra a sus
+          proveedores inmediatos, y luego el <strong>efecto indirecto</strong>, que son las
+          compras de sus proveedores, y las de los proveedores de éstos, hasta agotar la
+          cadena. La proporción entre los dos últimos describe la profundidad del tejido
+          productivo: dos países pueden llegar al mismo total con cadenas muy distintas.</p>
+        <div id="descomposicion"></div>
+      </div>
+
+      <div style="margin-top:38px">
+        <h3 style="margin-bottom:4px">Composición de la demanda final</h3>
+        <p class="sutil" style="margin-bottom:16px">Participación de cada componente en la
+          demanda final doméstica a precios básicos.</p>
+        <div id="composicion"></div>
+      </div>
+
+      <div style="margin-top:38px">
+        <h3 style="margin-bottom:4px">Reparto de sectores por cuadrante</h3>
+        <p class="sutil" style="margin-bottom:16px">Número de sectores y, debajo, su peso en
+          la producción. Los umbrales son internos a cada economía, así que estas
+          proporciones sí son comparables entre países.</p>
+        <div class="tabla-envoltura">
+          <table class="datos" id="tabla-cuadrantes"></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── evolución ───────────────────────────────────────────────────────── -->
+  <section id="evolucion" data-titulo="Evolución">
+    <div class="envoltura">
+      <div class="cabecera-sec">
+        <div class="eyebrow">La serie completa</div>
+        <h2>Cómo se movió el encadenamiento en el tiempo</h2>
+        <p class="lede">El multiplicador es un número sin unidades, así que a diferencia de
+          la producción o el valor agregado —que están en moneda corriente y arrastran toda la
+          inflación del período— se puede leer directamente a lo largo de los años. Cuando
+          sube, la economía está resolviendo internamente una porción mayor de su propia
+          cadena de insumos.</p>
+      </div>
+      <div id="series"></div>
+    </div>
+  </section>
+
+  <!-- ── cobertura ───────────────────────────────────────────────────────── -->
+  <section id="cobertura" data-titulo="Cobertura">
+    <div class="envoltura">
+      <div class="cabecera-sec">
+        <div class="eyebrow">Las 30 matrices</div>
+        <h2>Resultados de la serie completa</h2>
+        <p class="lede">Todas las columnas son adimensionales, por construcción: son ratios o
+          conteos, nunca niveles en moneda.</p>
+      </div>
+      <div class="tabla-envoltura">
+        <table class="datos" id="tabla-cobertura"></table>
+      </div>
+      <p class="sutil" style="margin-top:24px;max-width:74ch">Cada matriz se entrega como un
+        libro de 16 pestañas: la MIP completa, la matriz de consumos intermedios, los
+        vectores, los dos balances, los coeficientes técnicos, la inversa de Leontief, la
+        auditoría contra el COU, la demanda final por componente y el propio COU de origen.
+        Las treinta pasan una auditoría independiente que reabre cada archivo y reverifica
+        las identidades sobre los números tal como quedaron escritos.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const DATOS = /*__DATOS__*/;
+
+/* ── utilidades ─────────────────────────────────────────────────────────── */
+const $ = (s, r = document) => r.querySelector(s);
+const crear = (t, p = {}) => Object.assign(document.createElement(t), p);
+const nf = (d = 0) => new Intl.NumberFormat("es", { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = (v, d = 1) => nf(d).format(v * 100) + " %";
+const ORDEN_Q = ["Clave", "Demandante", "Distribuidor", "Independiente"];
+/* corta en el último espacio antes del límite: evita "petró…" y "carne d…" */
+const recortar = (t, n = 48) => {
+  if (t.length <= n) return t;
+  const c = t.slice(0, n);
+  const e = c.lastIndexOf(" ");
+  return (e > n * 0.6 ? c.slice(0, e) : c).replace(/[ ,;.]+$/, "") + "…";
+};
+const CLASE_Q = { Clave: "clave", Demandante: "demandante", Distribuidor: "distribuidor", Independiente: "independiente" };
+const DEF_Q = {
+  Clave: "alta influencia bidireccional",
+  Demandante: "arrastre alto, impulso bajo",
+  Distribuidor: "impulso alto, arrastre bajo",
+  Independiente: "baja influencia",
+};
+
+/* ── tema ───────────────────────────────────────────────────────────────── */
+const raiz = document.documentElement;
+$("#tema").addEventListener("click", () => {
+  const oscuroAhora = raiz.dataset.theme
+    ? raiz.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  raiz.dataset.theme = oscuroAhora ? "light" : "dark";
+  redibujar();
+});
+
+/* ── portada: cifras y malla ────────────────────────────────────────────── */
+(function portada() {
+  const paises = Object.values(DATOS.paises);
+  const total = paises.reduce((a, p) => a + p.serie.length, 0);
+  const sectores = paises.reduce((a, p) => a + p.sectores.length, 0);
+  const anios = new Set(paises.flatMap(p => p.serie.map(s => s.anio)));
+  const cifras = [
+    [total, "matrices país-año reconstruidas"],
+    [Object.keys(DATOS.paises).length, "países, cinco fuentes oficiales"],
+    [sectores, "sectores clasificados por encadenamiento"],
+    [Math.min(...anios) + "–" + Math.max(...anios), "años cubiertos"],
+    ["1e-15", "error máximo en las identidades"],
+  ];
+  const cont = $("#cifras-portada");
+  cifras.forEach(([v, t]) => {
+    const d = crear("div", { className: "cifra" });
+    d.append(crear("b", { textContent: v }), crear("small", { textContent: t }));
+    cont.append(d);
+  });
+})();
+
+function malla() {
+  const c = $("#malla"), ctx = c.getContext("2d");
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = c.clientWidth, h = c.clientHeight;
+  c.width = w * dpr; c.height = h * dpr; ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  const paso = 46, r = getComputedStyle(raiz);
+  const linea = r.getPropertyValue("--regla-fina").trim();
+  const acentos = [r.getPropertyValue("--clave").trim(),
+                   r.getPropertyValue("--demandante").trim(),
+                   r.getPropertyValue("--distribuidor").trim()];
+  ctx.strokeStyle = linea; ctx.lineWidth = 1;
+  for (let x = 0; x <= w; x += paso) { ctx.beginPath(); ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, h); ctx.stroke(); }
+  for (let y = 0; y <= h; y += paso) { ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(w, y + .5); ctx.stroke(); }
+  // celdas "llenas" hacia la diagonal: evoca la densidad de una matriz insumo-producto
+  const cols = Math.ceil(w / paso), fils = Math.ceil(h / paso);
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < fils; j++) {
+      const d = Math.abs(i / cols - j / fils);
+      const p = Math.max(0, .5 - d * 1.5);
+      if (Math.random() < p) {
+        ctx.fillStyle = acentos[(i + j) % 3] + "1A";
+        ctx.fillRect(i * paso + 1, j * paso + 1, paso - 2, paso - 2);
+      }
+    }
+  }
+}
+
+/* ── matriz 2×2 ─────────────────────────────────────────────────────────── */
+function tablaCuadrante(pais, guia) {
+  const t = crear("table", { className: "cuadrante" });
+  const celda = (tipo) => {
+    const td = crear("td", { className: "q-" + CLASE_Q[tipo] });
+    td.append(crear("div", { className: "nom", textContent: tipo === "Clave" ? "Clave" : tipo + "s" }),
+              crear("div", { className: "def", textContent: DEF_Q[tipo] }));
+    if (guia) return td;
+    const met = crear("div", { className: "met" });
+    const n = crear("div");
+    n.append(crear("b", { textContent: pais.conteo[tipo] }), crear("span", { textContent: "sectores" }));
+    const w = crear("div");
+    w.append(crear("b", { textContent: pct(pais.peso_vbp[tipo], 0) }), crear("span", { textContent: "del VBP" }));
+    met.append(n, w); td.append(met);
+    const top = pais.sectores.filter(s => s.tipo === tipo).sort((a, b) => b.share - a.share).slice(0, 3);
+    if (top.length) {
+      const ul = crear("ul");
+      top.forEach(s => {
+        const li = crear("li");
+        li.append(crear("em", { textContent: "·" }),
+                  crear("span", { textContent: recortar(s.nombre) }));
+        ul.append(li);
+      });
+      td.append(ul);
+    }
+    return td;
+  };
+  const thead = crear("thead");
+  const tr0 = crear("tr");
+  tr0.append(crear("td", { style: "border:0" }),
+             crear("th", { className: "eje", textContent: "FL < 1" }),
+             crear("th", { className: "eje", textContent: "FL > 1" }));
+  thead.append(tr0);
+  const tbody = crear("tbody");
+  const f1 = crear("tr");
+  f1.append(crear("th", { className: "lado", textContent: "BL > 1" }), celda("Demandante"), celda("Clave"));
+  const f2 = crear("tr");
+  f2.append(crear("th", { className: "lado", textContent: "BL < 1" }), celda("Independiente"), celda("Distribuidor"));
+  tbody.append(f1, f2);
+  t.append(thead, tbody);
+  return t;
+}
+
+/* ── dispersión BL / FL ─────────────────────────────────────────────────── */
+function dispersion(pais) {
+  const W = 560, H = 440, M = { t: 16, r: 16, b: 44, l: 50 };
+  const xs = pais.sectores.map(s => s.bl), ys = pais.sectores.map(s => s.fl);
+  const xmax = Math.max(1.6, Math.ceil(Math.max(...xs) * 10) / 10);
+  const xmin = Math.min(0.6, Math.floor(Math.min(...xs) * 10) / 10);
+  // FL tiene cola larga (en México llega a 8) y en escala lineal todo se aplasta
+  // contra el eje. En log el umbral 1 queda al centro y las desviaciones por
+  // encima y por debajo del promedio se leen simétricas, que es lo que un índice
+  // normalizado pide. BL es angosto (0,6–1,6) y se queda lineal.
+  const lg = v => Math.log10(Math.max(v, 0.2));
+  const ymaxV = Math.max(2, Math.min(Math.max(...ys), 10));
+  const yminV = Math.min(0.6, Math.min(...ys));
+  const px = v => M.l + (v - xmin) / (xmax - xmin) * (W - M.l - M.r);
+  const py = v => H - M.b - (lg(Math.min(v, ymaxV)) - lg(yminV)) /
+                            (lg(ymaxV) - lg(yminV)) * (H - M.t - M.b);
+  const marcasY = [0.6, 1, 2, 4, 8].filter(v => v >= yminV * 0.99 && v <= ymaxV * 1.01);
+  const smax = Math.max(...pais.sectores.map(s => s.share)) || 1;
+  const rad = s => 3.2 + Math.sqrt(s.share / smax) * 12;
+
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label",
+    `Dispersión de encadenamientos de ${pais.nombre}: ${pais.sectores.length} sectores según BL y FL`);
+  const el = (t, a) => { const e = document.createElementNS(ns, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+
+  // Tintes de cuadrante. El eje Y crece hacia arriba, así que arriba = FL alto:
+  // arriba-izquierda distribuidores, arriba-derecha clave, abajo-izquierda
+  // independientes, abajo-derecha demandantes. Es el mismo reparto que la tabla 2×2.
+  const x1 = px(1), y1 = py(1);
+  const cuad = [
+    { x: M.l, y: M.t, w: x1 - M.l, h: y1 - M.t, c: "distribuidor" },
+    { x: x1, y: M.t, w: W - M.r - x1, h: y1 - M.t, c: "clave" },
+    { x: M.l, y: y1, w: x1 - M.l, h: H - M.b - y1, c: "independiente" },
+    { x: x1, y: y1, w: W - M.r - x1, h: H - M.b - y1, c: "demandante" },
+  ];
+  cuad.forEach(q => svg.append(el("rect", {
+    x: q.x, y: q.y, width: Math.max(0, q.w), height: Math.max(0, q.h),
+    fill: `var(--${q.c})`, opacity: .07,
+  })));
+
+  // rejilla y ejes
+  svg.append(el("line", { x1: M.l, y1: y1, x2: W - M.r, y2: y1, stroke: "var(--regla)", "stroke-dasharray": "3 3" }));
+  svg.append(el("line", { x1: x1, y1: M.t, x2: x1, y2: H - M.b, stroke: "var(--regla)", "stroke-dasharray": "3 3" }));
+  svg.append(el("line", { x1: M.l, y1: H - M.b, x2: W - M.r, y2: H - M.b, stroke: "var(--regla)" }));
+  svg.append(el("line", { x1: M.l, y1: M.t, x2: M.l, y2: H - M.b, stroke: "var(--regla)" }));
+
+  const txt = (x, y, s, extra = {}) => {
+    const e = el("text", Object.assign({ x, y, fill: "var(--tenue)", "font-size": 11,
+      "font-family": "var(--mono)" }, extra));
+    e.textContent = s; return e;
+  };
+  // la marca del extremo se omite si cae encima de la del umbral 1
+  const marcas = (vals, pos, sep) => vals.filter((v, i) =>
+    i === 1 || Math.abs(pos(v) - pos(1)) > sep);
+  marcas([xmin, 1, xmax], px, 26).forEach(v =>
+    svg.append(txt(px(v), H - M.b + 16, nf(1).format(v), { "text-anchor": "middle" })));
+  marcas(marcasY, py, 15).forEach(v =>
+    svg.append(txt(M.l - 8, py(v) + 4, nf(v < 1 ? 1 : 0).format(v), { "text-anchor": "end" })));
+  svg.append(txt(M.l + (W - M.l - M.r) / 2, H - 6, "BL — arrastre hacia atrás",
+    { "text-anchor": "middle", "font-family": "var(--sans)", "font-size": 11 }));
+  const yl = txt(0, 0, "FL — impulso hacia adelante (escala log)",
+    { "text-anchor": "middle", "font-family": "var(--sans)", "font-size": 11 });
+  yl.setAttribute("transform", `translate(13, ${M.t + (H - M.t - M.b) / 2}) rotate(-90)`);
+  svg.append(yl);
+
+  // puntos: los independientes primero, para que los relevantes queden encima
+  const orden = ["Independiente", "Demandante", "Distribuidor", "Clave"];
+  [...pais.sectores].sort((a, b) => orden.indexOf(a.tipo) - orden.indexOf(b.tipo)).forEach(s => {
+    const c = el("circle", {
+      class: "punto", cx: px(s.bl), cy: py(s.fl), r: rad(s),
+      fill: `var(--${CLASE_Q[s.tipo]})`,
+      "fill-opacity": s.tipo === "Independiente" ? .38 : .68,
+      stroke: `var(--${CLASE_Q[s.tipo]})`, "stroke-width": 1, "stroke-opacity": .85,
+    });
+    c._d = s;
+    svg.append(c);
+  });
+  return svg;
+}
+
+/* ── globo ──────────────────────────────────────────────────────────────── */
+const globo = $("#globo");
+document.addEventListener("pointerover", e => {
+  const c = e.target.closest(".punto");
+  if (!c || !c._d) return;
+  const s = c._d;
+  globo.innerHTML = "";
+  globo.append(crear("b", { textContent: s.nombre }));
+  const dl = crear("dl");
+  const fila = (k, v) => { dl.append(crear("dt", { textContent: k }), crear("dd", { textContent: v })); };
+  fila("Tipo", s.tipo);
+  fila("BL", nf(2).format(s.bl));
+  fila("FL", nf(2).format(s.fl));
+  fila("Dispersión Vj", nf(2).format(s.vj));
+  fila("Multiplicador", nf(3).format(s.mult));
+  fila("· directo", nf(3).format(s.mult_dir));
+  fila("· indirecto", nf(3).format(s.mult_ind));
+  fila("% del VBP", pct(s.share, 2));
+  globo.append(dl);
+  globo.style.opacity = "1";
+});
+document.addEventListener("pointermove", e => {
+  if (globo.style.opacity !== "1") return;
+  const b = globo.getBoundingClientRect();
+  let x = e.clientX + 16, y = e.clientY + 16;
+  if (x + b.width > innerWidth - 8) x = e.clientX - b.width - 16;
+  if (y + b.height > innerHeight - 8) y = e.clientY - b.height - 16;
+  globo.style.left = x + "px"; globo.style.top = y + "px";
+});
+document.addEventListener("pointerout", e => {
+  if (e.target.closest(".punto")) globo.style.opacity = "0";
+});
+
+/* ── paneles por país ───────────────────────────────────────────────────── */
+function panelPais(nombre, p) {
+  // Se normalizan los acentos antes de armar el id: sin esto "México" pierde la
+  // "é" y queda "pais-mxico". `dataset` es de sólo lectura, va aparte.
+  const id = "pais-" + nombre.normalize("NFD").replace(/[̀-ͯ]/g, "")
+                             .toLowerCase().replace(/[^a-z0-9]/g, "");
+  const sec = crear("section", { id });
+  sec.dataset.titulo = nombre;
+  const env = crear("div", { className: "envoltura" });
+  const foco = p.serie.find(s => s.anio === p.foco) || p.serie[p.serie.length - 1];
+
+  const cab = crear("div", { className: "cabecera-sec" });
+  cab.append(crear("div", { className: "eyebrow", textContent: `Resultados · ${p.fuente}` }));
+  const h = crear("h2");
+  h.append(document.createTextNode(nombre + " "));
+  h.append(crear("span", { className: "num", textContent: p.foco,
+                           style: "color:var(--tenue);font-weight:400" }));
+  cab.append(h);
+  env.append(cab);
+
+  const fichas = crear("div", { className: "fichas" });
+  [[foco.n, "sectores"],
+   [nf(3).format(p.mult.medio), "multiplicador medio"],
+   [nf(3).format(p.mult.pond), "ponderado por demanda final"],
+   [pct(p.mult.indirecto / (p.mult.directo + p.mult.indirecto), 0), "del arrastre es indirecto"],
+   [p.conteo.Clave, "sectores clave"],
+   [p.serie.length, p.serie.length === 1 ? "año reconstruido" : "años reconstruidos"],
+  ].forEach(([v, t]) => {
+    const d = crear("div", { className: "ficha" });
+    d.append(crear("b", { textContent: v }), crear("small", { textContent: t }));
+    fichas.append(d);
+  });
+  env.append(fichas);
+
+  const rej = crear("div", { className: "rejilla-2", style: "margin-top:26px;align-items:start" });
+  const izq = crear("div");
+  p.nombre = nombre;
+  izq.append(tablaCuadrante(p, false));
+  const der = crear("div", { className: "lienzo-disp" });
+  der.append(dispersion(p));
+  const ley = crear("div", { className: "leyenda", style: "margin-top:10px" });
+  ORDEN_Q.forEach(t => {
+    const s = crear("span");
+    s.append(crear("i", { style: `background:var(--${CLASE_Q[t]})` }), document.createTextNode(t));
+    ley.append(s);
+  });
+  ley.append(crear("span", { className: "sutil", textContent: "· el área del círculo es la participación en el VBP" }));
+  der.append(ley);
+  rej.append(izq, der);
+  env.append(rej);
+
+  // ── multiplicadores del país ──────────────────────────────────────────
+  const rej2 = crear("div", { className: "rejilla-2", style: "margin-top:34px;align-items:start" });
+  rej2.append(rankingMult(p), reglaMult(p));
+  env.append(rej2);
+
+  sec.append(env);
+  return sec;
+}
+
+/* Ranking: qué sectores arrastran más, y de qué está hecho ese arrastre. */
+function rankingMult(p) {
+  const caja = crear("div");
+  caja.append(crear("h3", { textContent: "Los diez mayores multiplicadores" }),
+              crear("p", { className: "sutil", style: "margin:4px 0 14px",
+                textContent: "Producción total activada por cada peso de demanda final. "
+                  + "Excluye sectores por debajo del 0,2 % del VBP." }));
+  const t = crear("table", { className: "datos compacta" });
+  const th = crear("thead"), tr = crear("tr");
+  ["Sector", "Directo", "Indirecto", "Total"].forEach((h, i) =>
+    tr.append(crear("th", { textContent: h, style: i ? "text-align:right" : "" })));
+  th.append(tr);
+  const tb = crear("tbody");
+  const max = Math.max(...p.top_mult.map(s => s.mult));
+  p.top_mult.forEach(s => {
+    const f = crear("tr");
+    f.append(crear("td", { textContent: recortar(s.nombre, 40) }),
+             crear("td", { className: "n sutil", textContent: nf(3).format(s.mult_dir) }),
+             crear("td", { className: "n sutil", textContent: nf(3).format(s.mult_ind) }));
+    const td = crear("td", { className: "n" });
+    const env2 = crear("div", { className: "mini-barra" });
+    env2.append(crear("i", { style: `width:${(s.mult / max) * 100}%` }),
+                crear("b", { textContent: nf(3).format(s.mult) }));
+    td.append(env2); f.append(td);
+    tb.append(f);
+  });
+  t.append(th, tb);
+  const marco = crear("div", { className: "tabla-envoltura" });
+  marco.append(t);
+  caja.append(marco);
+  return caja;
+}
+
+/* Distribución del multiplicador + los sectores clave más dispersos. */
+function reglaMult(p) {
+  const caja = crear("div");
+  caja.append(crear("h3", { textContent: "Cuánto se dispersan" }),
+              crear("p", { className: "sutil", style: "margin:4px 0 14px",
+                textContent: "El rango entre el sector que menos arrastra y el que más "
+                  + "mide qué tan heterogénea es la estructura productiva." }));
+
+  const m = p.mult;
+  const lo = Math.min(m.min, 1), hi = m.max;
+  const pos = v => ((v - lo) / (hi - lo || 1)) * 100;
+  const regla = crear("div", { className: "regla-mult" });
+  regla.append(crear("i", { className: "tramo",
+    style: `left:${pos(m.p10)}%;width:${pos(m.p90) - pos(m.p10)}%` }));
+  [["min", m.min], ["mediana", m.mediana], ["max", m.max]].forEach(([k, v]) => {
+    const mk = crear("u", { className: "marca " + k, style: `left:${pos(v)}%` });
+    mk.append(crear("s", { textContent: nf(2).format(v) }));
+    regla.append(mk);
+  });
+  caja.append(regla);
+  const pie = crear("div", { className: "regla-pie sutil" });
+  pie.append(crear("span", { textContent: "mínimo" }),
+             crear("span", { textContent: "la barra cubre del percentil 10 al 90" }),
+             crear("span", { textContent: "máximo" }));
+  caja.append(pie);
+
+  if (p.claves_dispersas && p.claves_dispersas.length) {
+    caja.append(crear("h3", { textContent: "Sectores clave de arrastre más repartido",
+                              style: "margin-top:28px" }),
+                crear("p", { className: "sutil", style: "margin:4px 0 12px",
+                  textContent: "Alta influencia en las dos direcciones y Vj bajo: el impulso "
+                    + "se difunde por toda la economía en vez de concentrarse en un proveedor." }));
+    const ul = crear("ul", { className: "lista-clave" });
+    p.claves_dispersas.forEach(s => {
+      const li = crear("li");
+      li.append(crear("span", { className: "nm", textContent: recortar(s.nombre, 44) }));
+      const met = crear("span", { className: "mt" });
+      met.append(crear("b", { textContent: nf(2).format(s.bl) }), crear("i", { textContent: "BL" }),
+                 crear("b", { textContent: nf(2).format(s.fl) }), crear("i", { textContent: "FL" }),
+                 crear("b", { textContent: nf(2).format(s.vj) }), crear("i", { textContent: "Vj" }));
+      li.append(met);
+      ul.append(li);
+    });
+    caja.append(ul);
+  }
+  return caja;
+}
+
+/* ── secciones estáticas que dependen de datos ──────────────────────────── */
+function pasos() {
+  const items = [
+    ["Cuadro de oferta y utilización", "El dato oficial: qué produce cada industria y qué producto usa cada una, a precios de comprador."],
+    ["Valoración", "Se retiran impuestos y márgenes de comercio y transporte, y se separa el insumo importado: queda sólo el flujo doméstico a precios básicos."],
+    ["Balanceo", "Un ajuste biproporcional cierra simultáneamente el balance por producto y por industria, sin mover los totales."],
+    ["Transformación", "La estructura de ventas convierte el cuadro rectangular en una matriz cuadrada industria por industria."],
+  ];
+  const ol = $("#pasos");
+  items.forEach(([t, d], i) => {
+    const li = crear("li", { style: "background:var(--superficie);padding:20px" });
+    li.append(crear("div", { className: "eyebrow", textContent: "Paso " + (i + 1) }),
+              crear("h3", { textContent: t, style: "margin:6px 0 6px" }),
+              crear("p", { className: "sutil", textContent: d }));
+    ol.append(li);
+  });
+}
+
+/* Serie temporal del multiplicador, un trazo por país. Todos los paneles
+   comparten escala vertical: si no, una variación de 0,01 en Colombia se vería
+   igual de dramática que una de 0,08 en Brasil. */
+function series() {
+  const cont = $("#series"); cont.innerHTML = "";
+  const paises = Object.entries(DATOS.paises).filter(([, p]) => p.serie.length > 1);
+  const todos = paises.flatMap(([, p]) => p.serie.map(s => s.mult_medio));
+  const vmin = Math.floor(Math.min(...todos) * 20) / 20;
+  const vmax = Math.ceil(Math.max(...todos) * 20) / 20;
+  const rej = crear("div", { className: "rejilla-series" });
+
+  paises.forEach(([n, p]) => {
+    const W = 300, H = 150, M = { t: 14, r: 12, b: 26, l: 38 };
+    const anios = p.serie.map(s => s.anio);
+    const a0 = Math.min(...anios), a1 = Math.max(...anios);
+    const px = a => M.l + (a1 === a0 ? .5 : (a - a0) / (a1 - a0)) * (W - M.l - M.r);
+    const py = v => H - M.b - (v - vmin) / (vmax - vmin) * (H - M.t - M.b);
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", `Multiplicador medio de ${n} entre ${a0} y ${a1}`);
+    const el = (t, a) => { const e = document.createElementNS(ns, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+
+    [vmin, (vmin + vmax) / 2, vmax].forEach(v => {
+      svg.append(el("line", { x1: M.l, y1: py(v), x2: W - M.r, y2: py(v),
+        stroke: "var(--regla-fina)" }));
+      const tx = el("text", { x: M.l - 6, y: py(v) + 3.5, "text-anchor": "end",
+        fill: "var(--tenue)", "font-size": 9, "font-family": "var(--mono)" });
+      tx.textContent = nf(2).format(v); svg.append(tx);
+    });
+    const pts = p.serie.map(s => [px(s.anio), py(s.mult_medio)]);
+    svg.append(el("path", { d: "M" + pts.map(q => q.join(" ")).join(" L "),
+      fill: "none", stroke: "var(--demandante)", "stroke-width": 2,
+      "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    p.serie.forEach((s, i) => {
+      const c = el("circle", { cx: pts[i][0], cy: pts[i][1], r: 3,
+        fill: "var(--demandante)" });
+      const tt = el("title", {});
+      tt.textContent = `${n} ${s.anio} · multiplicador ${nf(3).format(s.mult_medio)} `
+        + `(directo ${nf(3).format(s.mult_directo)}, indirecto ${nf(3).format(s.mult_indirecto)}) `
+        + `· ${s.n} sectores`;
+      c.append(tt);
+      svg.append(c);
+    });
+    [a0, a1].forEach(a => {
+      const tx = el("text", { x: px(a), y: H - 8, "text-anchor": a === a0 ? "start" : "end",
+        fill: "var(--tenue)", "font-size": 9, "font-family": "var(--mono)" });
+      tx.textContent = a; svg.append(tx);
+    });
+
+    const caja = crear("div", { className: "tarjeta", style: "padding:16px" });
+    const cab = crear("div", { style: "display:flex;justify-content:space-between;align-items:baseline" });
+    cab.append(crear("h3", { textContent: n, style: "font-size:1rem" }));
+    const d = p.serie.at(-1).mult_medio - p.serie[0].mult_medio;
+    cab.append(crear("span", { className: "num sutil",
+      textContent: (d >= 0 ? "+" : "−") + nf(3).format(Math.abs(d)) }));
+    caja.append(cab, svg);
+    rej.append(caja);
+  });
+  cont.append(rej);
+
+  const solo = Object.entries(DATOS.paises).filter(([, p]) => p.serie.length === 1);
+  if (solo.length) {
+    cont.append(crear("p", { className: "sutil", style: "margin-top:16px",
+      textContent: solo.map(([n, p]) => `${n} tiene un solo año disponible (${p.foco}), `
+        + "así que no admite lectura temporal.").join(" ") }));
+  }
+}
+
+function comparacion() {
+  const paises = Object.entries(DATOS.paises);
+  const barras = (destino, datos, fmt, color) => {
+    const c = $(destino); c.innerHTML = "";
+    const max = Math.max(...datos.map(d => d.v || 0)) || 1;
+    datos.forEach(d => {
+      const f = crear("div", { className: "barra-fila" });
+      f.append(crear("div", { className: "et", textContent: d.k }));
+      const p = crear("div", { className: "barra-pista" });
+      if (d.v != null) p.append(crear("div", { className: "barra-valor",
+        style: `width:${(d.v / max) * 100}%;background:${color}` }));
+      f.append(p, crear("div", { className: "vl", textContent: d.v == null ? "—" : fmt(d.v) }));
+      c.append(f);
+    });
+  };
+  barras("#barras-mult",
+    paises.map(([n, p]) => ({ k: n, v: p.mult.medio })).sort((a, b) => b.v - a.v),
+    v => nf(3).format(v), "var(--demandante)");
+  barras("#barras-pond",
+    paises.map(([n, p]) => ({ k: n, v: p.mult.pond })).sort((a, b) => b.v - a.v),
+    v => nf(3).format(v), "var(--distribuidor)");
+
+  // descomposición 1 + directo + indirecto, en barras apiladas comparables
+  const dc = $("#descomposicion"); dc.innerHTML = "";
+  const maxTot = Math.max(...paises.map(([, p]) => p.mult.medio));
+  const tramos = [["inicial", 1, "var(--independiente)"],
+                  ["directo", null, "var(--demandante)"],
+                  ["indirecto", null, "var(--clave)"]];
+  const ley = crear("div", { className: "leyenda", style: "margin-bottom:12px" });
+  ["Efecto inicial", "Efecto directo", "Efecto indirecto"].forEach((t, i) => {
+    const s = crear("span");
+    s.append(crear("i", { style: `background:${tramos[i][2]}` }), document.createTextNode(t));
+    ley.append(s);
+  });
+  dc.append(ley);
+  paises.slice().sort((a, b) => b[1].mult.medio - a[1].mult.medio).forEach(([n, p]) => {
+    const f = crear("div", { className: "barra-fila" });
+    f.append(crear("div", { className: "et", textContent: n }));
+    const pista = crear("div", { className: "barra-pista" });
+    const partes = [[1, tramos[0][2], "efecto inicial"],
+                    [p.mult.directo, tramos[1][2], "efecto directo"],
+                    [p.mult.indirecto, tramos[2][2], "efecto indirecto"]];
+    partes.forEach(([v, c, t]) => pista.append(crear("div", {
+      className: "barra-valor", title: `${t}: ${nf(3).format(v)}`,
+      style: `width:${(v / maxTot) * 100}%;background:${c}`,
+    })));
+    pista.style.display = "flex";
+    const vl = crear("div", { className: "vl" });
+    vl.append(crear("b", { textContent: nf(3).format(p.mult.medio) }));
+    f.append(pista, vl);
+    dc.append(f);
+  });
+
+  // composición de la demanda final
+  const comp = $("#composicion"); comp.innerHTML = "";
+  const tonos = ["var(--demandante)", "var(--clave)", "var(--distribuidor)"];
+  paises.forEach(([n, p]) => {
+    const fila = crear("div", { style: "margin-bottom:14px" });
+    const cab = crear("div", { style: "display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px" });
+    cab.append(crear("div", { textContent: n, style: "font-size:.86rem" }));
+    const et = crear("div", { className: "sutil num" });
+    et.textContent = Object.entries(p.demanda_final)
+      .map(([k, v]) => `${k.split(" ")[0]} ${pct(v, 0)}`).join("  ·  ");
+    cab.append(et);
+    const ap = crear("div", { className: "apilada" });
+    Object.entries(p.demanda_final).forEach(([k, v], i) => {
+      ap.append(crear("i", { style: `width:${v * 100}%;background:${tonos[i % 3]}`, title: `${k}: ${pct(v, 1)}` }));
+    });
+    fila.append(cab, ap);
+    comp.append(fila);
+  });
+
+  // tabla de cuadrantes
+  const t = $("#tabla-cuadrantes"); t.innerHTML = "";
+  const thead = crear("thead"), tr = crear("tr");
+  tr.append(crear("th", { textContent: "País" }), crear("th", { textContent: "Año" }),
+            crear("th", { textContent: "Sectores" }));
+  ORDEN_Q.forEach(q => tr.append(crear("th", { textContent: q, style: "text-align:right" })));
+  thead.append(tr);
+  const tb = crear("tbody");
+  paises.forEach(([n, p]) => {
+    const f = crear("tr");
+    f.append(crear("td", { textContent: n }),
+             crear("td", { className: "n", textContent: p.foco }),
+             crear("td", { className: "n", textContent: p.sectores.length }));
+    ORDEN_Q.forEach(q => {
+      const td = crear("td", { className: "n" });
+      td.append(crear("span", { textContent: p.conteo[q] }),
+                crear("span", { className: "sutil", textContent: "  " + pct(p.peso_vbp[q], 0) }));
+      f.append(td);
+    });
+    tb.append(f);
+  });
+  t.append(thead, tb);
+
+  // cobertura: sólo magnitudes adimensionales, comparables entre años y países
+  const tc = $("#tabla-cobertura"); tc.innerHTML = "";
+  const cols = [
+    ["País", "el país"],
+    ["Año", "año de referencia del cuadro"],
+    ["Dimensión", "sectores × sectores de la matriz simétrica"],
+    ["Multiplicador", "producción total activada por peso de demanda final"],
+    ["Ponderado", "el mismo, pesado por la demanda final de cada sector"],
+    ["Directo", "compras a proveedores inmediatos, por peso producido"],
+    ["Indirecto", "las vueltas siguientes de la cadena"],
+  ];
+  const th2 = crear("thead"), tr2 = crear("tr");
+  cols.forEach(([h, ayuda], i) => tr2.append(crear("th", {
+    textContent: h, title: ayuda, style: i > 1 ? "text-align:right" : "" })));
+  th2.append(tr2);
+  const tb2 = crear("tbody");
+  paises.forEach(([n, p]) => p.serie.forEach((s, i) => {
+    const f = crear("tr");
+    if (i === 0) f.className = "inicio-grupo";
+    f.append(crear("td", { textContent: i === 0 ? n : "", className: i ? "sutil" : "" }),
+             crear("td", { className: "n", textContent: s.anio }),
+             crear("td", { className: "n sutil", textContent: `${s.n}×${s.n}` }),
+             crear("td", { className: "n", textContent: nf(3).format(s.mult_medio) }),
+             crear("td", { className: "n", textContent: nf(3).format(s.mult_pond) }),
+             crear("td", { className: "n sutil", textContent: nf(3).format(s.mult_directo) }),
+             crear("td", { className: "n sutil", textContent: nf(3).format(s.mult_indirecto) }));
+    tb2.append(f);
+  }));
+  tc.append(th2, tb2);
+}
+
+/* ── montaje ────────────────────────────────────────────────────────────── */
+pasos();
+$("#cuadrante-guia").append(tablaCuadrante(null, true));
+const paneles = $("#paneles");
+Object.entries(DATOS.paises).forEach(([n, p]) => paneles.append(panelPais(n, p)));
+comparacion();
+series();
+
+/* riel de navegación */
+const secciones = [...document.querySelectorAll("section[data-titulo]")];
+const riel = $("#riel");
+secciones.forEach(s => {
+  const b = crear("button", { type: "button" });
+  b.append(crear("i"), crear("span", { textContent: s.dataset.titulo }));
+  b.addEventListener("click", () => s.scrollIntoView({ behavior: "smooth", block: "start" }));
+  b.dataset.para = s.id;
+  riel.append(b);
+});
+const obs = new IntersectionObserver(es => {
+  es.forEach(e => {
+    if (!e.isIntersecting) return;
+    riel.querySelectorAll("button").forEach(b =>
+      b.setAttribute("aria-current", String(b.dataset.para === e.target.id)));
+  });
+}, { rootMargin: "-45% 0px -45% 0px" });
+secciones.forEach(s => obs.observe(s));
+
+function redibujar() {
+  malla();
+}
+addEventListener("resize", () => { clearTimeout(window._t); window._t = setTimeout(malla, 180); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redibujar);
+malla();
+</script>
