@@ -185,6 +185,46 @@ def main():
     rep.write_text("\n".join(filas), encoding="utf-8")
     print(f"\n[OK] Reporte en {rep.relative_to(ROOT)}  ({n_ok} OK / {n_fail} revisar)")
 
+    _manifest(libros, res, orden)
+
+
+def _manifest(libros, res, orden):
+    """Regenera manifest_publicables.csv desde los libros efectivamente auditados.
+
+    Se escribe acá, y no a mano, para que el inventario no pueda quedar desfasado
+    del resultado de la auditoría: mantenido a mano quedó viejo al sumar países.
+    El método (dato medido vs. prorrateo) se lee de la propia portada del libro.
+    """
+    import csv
+
+    filas = []
+    for f in libros:
+        r = res.get(f.name, {})
+        if r.get("error"):
+            continue
+        corto = f.name.replace("MIP_", "").replace("_LIBRO", "").replace(".xlsx", "")
+        pais, anio = corto.rsplit("_", 1)
+        ok = all(r["checks"][k][0] for k in orden)
+        try:
+            idx = pd.read_excel(f, "Índice", header=None)
+            texto = " ".join(str(v) for v in idx.to_numpy().ravel() if isinstance(v, str))
+        except Exception:
+            texto = ""
+        metodo = ("sin prorrateo" if "SIN PRORRATEO" in texto
+                  else "prorrateo" if "CON PRORRATEO" in texto else "")
+        filas.append({"pais": pais, "anio": anio,
+                      "estado": "CONSISTENTE" if ok else "REVISAR",
+                      "archivo": f"matrices/{f.parent.name}/{f.name}",
+                      "dimension": r["n"], "metodo": metodo})
+    filas.sort(key=lambda x: (x["pais"], x["anio"]))
+    ruta = ROOT / "manifest_publicables.csv"
+    with open(ruta, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=["pais", "anio", "estado", "archivo",
+                                           "dimension", "metodo"])
+        w.writeheader()
+        w.writerows(filas)
+    print(f"[OK] Inventario en {ruta.name}  ({len(filas)} libros)")
+
 
 if __name__ == "__main__":
     main()

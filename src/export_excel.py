@@ -25,6 +25,7 @@ from openpyxl.utils import get_column_letter as gcl
 
 from .transformacion import IOT
 from .analisis import Analisis
+from . import demanda_final as df_mod
 
 # paleta CEPAL sobria
 _AZUL = "1F4E79"; _AZULCLARO = "DDEBF7"; _GRIS = "F2F2F2"; _VERDE = "E2EFDA"
@@ -141,7 +142,8 @@ def exportar(iot: IOT, an: Analisis, ruta: str | Path, *,
     ws.column_dimensions["A"].width = 10; ws.column_dimensions["B"].width = 42
     sect = iot.Z.index.tolist()
     n = len(sect)
-    fd_cols = iot.Y.columns.tolist()
+    Yh = df_mod.armonizar(iot.Y).reindex(index=sect).fillna(0.0)
+    fd_cols = list(Yh.columns)
     va_rows = iot.VA.index.tolist()
 
     ws.cell(1, 1, f"Matriz Insumo-Producto — {pais} {anio}").font = Font(bold=True, size=12, color=_AZUL)
@@ -155,13 +157,13 @@ def exportar(iot: IOT, an: Analisis, ruta: str | Path, *,
     col_di = 3 + n
     ws.cell(hr, col_di, "Demanda intermedia").font = _H; ws.cell(hr, col_di).fill = _HEAD
     for j, fd in enumerate(fd_cols):
-        c = ws.cell(hr, col_di + 1 + j, fd); c.font = _H; c.fill = _HEAD
+        c = ws.cell(hr, col_di + 1 + j, df_mod.etiqueta(fd)); c.font = _H; c.fill = _HEAD
     col_df = col_di + 1 + len(fd_cols)
     ws.cell(hr, col_df, "Demanda final").font = _H; ws.cell(hr, col_df).fill = _HEAD
     col_x = col_df + 1
     ws.cell(hr, col_x, "Producción total").font = _H; ws.cell(hr, col_x).fill = _HEAD
 
-    Z = iot.Z; Y = iot.Y
+    Z = iot.Z; Y = Yh
     di = Z.sum(axis=1); f = iot.f; x = iot.x
     # filas de sectores (VALORES)
     for i, cod in enumerate(sect):

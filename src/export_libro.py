@@ -6,7 +6,8 @@ códigos de columna consistentes, índice con hipervínculos, notas de fuente en
 cada hoja y trazabilidad al COU.
 
 Pestañas: Índice, Z, Vectores, diag(g), diag(g)^-1, Balance filas, Balance
-columnas, A, Validación A, Leontief, B, (Auditoría COU si es Modelo D).
+columnas, A, Validación A, Leontief, B, (Auditoría COU si es Modelo D),
+Demanda final abierta, y el COU que alimenta la MIP (oferta y utilización).
 """
 
 from __future__ import annotations
@@ -21,6 +22,8 @@ from openpyxl.utils import get_column_letter as gcl
 
 from .transformacion import IOT
 from .analisis import Analisis
+from .sut import SUT
+from . import demanda_final as df_mod
 
 # ── paleta y tipografía ───────────────────────────────────────────────────
 FUENTE = "Calibri"
@@ -110,8 +113,39 @@ def _matriz(ws, M: pd.DataFrame, codes: dict, names: dict, titulo, subt, fuente,
     _fuente(ws, hr + 1 + len(M.index) + 1, fuente)
 
 
-def _hoja_mip(wb, Z, g, f, zm, imptax, vab, codes, names, subt, fuente, escala):
-    """Tabla insumo-producto completa: Z + demanda final + bloque primario + totales."""
+def _hoja_cou(ws, M: pd.DataFrame, row_codes: dict, row_names: dict, col_codes: dict,
+              titulo, subt, fuente, escala):
+    """Bloque del COU con etiquetas de fila y de columna distintas (V es ind×prod, U es prod×ind)."""
+    _link_indice(ws)
+    ws.column_dimensions["A"].width = 11
+    ws.column_dimensions["B"].width = 46
+    ws.cell(2, 2, titulo).font = TIT
+    ws.cell(3, 2, subt).font = NOTA
+    hr = 5
+    _hcell(ws, hr, 1, "Código", center=False)
+    _hcell(ws, hr, 2, "Denominación", center=False)
+    cols = list(M.columns)
+    for j, k in enumerate(cols):
+        _hcell(ws, hr, 3 + j, col_codes.get(k, k))
+        ws.column_dimensions[gcl(3 + j)].width = 13
+    Mv = M.to_numpy()
+    for i, k in enumerate(M.index):
+        rr = hr + 1 + i
+        ws.cell(rr, 1, row_codes.get(k, k)).font = CELDAB
+        ws.cell(rr, 2, row_names.get(k, k)).font = CELDA
+        for j in range(len(cols)):
+            _valor(ws, rr, 3 + j, Mv[i, j], escala)
+    # fila de totales por columna
+    rt = hr + 1 + len(M.index)
+    ws.cell(rt, 2, "Total").font = CELDAB
+    for j in range(len(cols)):
+        _valor(ws, rt, 3 + j, float(Mv[:, j].sum()), escala, fill=FTOT)
+    ws.freeze_panes = ws.cell(hr + 1, 3)
+    _fuente(ws, rt + 2, fuente)
+
+
+def _hoja_mip(wb, Z, g, f, Yh, zm, imptax, vab, codes, names, subt, fuente, escala):
+    """Tabla insumo-producto completa: Z + demanda final abierta + bloque primario + totales."""
     ws = wb.create_sheet("MIP")
     _link_indice(ws)
     ws.column_dimensions["A"].width = 11
@@ -119,13 +153,21 @@ def _hoja_mip(wb, Z, g, f, zm, imptax, vab, codes, names, subt, fuente, escala):
     ws.cell(2, 2, "MIP — Matriz Insumo-Producto (tabla completa)").font = TIT
     ws.cell(3, 2, subt).font = NOTA
     keys = list(Z.columns); n = len(keys)
+    fdk = list(Yh.columns); nf = len(fdk)
     hr = 5
     _hcell(ws, hr, 1, "Código", center=False); _hcell(ws, hr, 2, "Denominación", center=False)
     for j, k in enumerate(keys):
         _hcell(ws, hr, 3 + j, codes.get(k, k)); ws.column_dimensions[gcl(3 + j)].width = 11
-    col_di, col_f, col_g = 3 + n, 4 + n, 5 + n
+    col_di = 3 + n
+    col_fd0 = col_di + 1                 # primera columna de demanda final abierta
+    col_f = col_fd0 + nf                 # total de demanda final
+    col_g = col_f + 1
     _hcell(ws, hr, col_di, "Demanda intermedia", wrap=True)
-    _hcell(ws, hr, col_f, "Demanda final", wrap=True)
+    for j, c in enumerate(fdk):
+        _hcell(ws, hr, col_fd0 + j, df_mod.etiqueta(c), wrap=True)
+        ws.cell(hr - 1, col_fd0 + j, df_mod.codigo_scn(c)).font = NOTA
+        ws.column_dimensions[gcl(col_fd0 + j)].width = 17
+    _hcell(ws, hr, col_f, "Demanda final (total)", wrap=True)
     _hcell(ws, hr, col_g, "Producción total", wrap=True)
     for cc in (col_di, col_f, col_g):
         ws.column_dimensions[gcl(cc)].width = 15
@@ -137,6 +179,8 @@ def _hoja_mip(wb, Z, g, f, zm, imptax, vab, codes, names, subt, fuente, escala):
         for j in range(n):
             _valor(ws, rr, 3 + j, Zv[i, j], escala)
         _valor(ws, rr, col_di, zrow[k], escala, fill=FTOT)
+        for j, c in enumerate(fdk):
+            _valor(ws, rr, col_fd0 + j, Yh.at[k, c], escala)
         _valor(ws, rr, col_f, f[k], escala, fill=FTOT)
         _valor(ws, rr, col_g, g[k], escala, fill=FTOT)
     base = hr + 1 + n
@@ -157,6 +201,9 @@ def _hoja_mip(wb, Z, g, f, zm, imptax, vab, codes, names, subt, fuente, escala):
 def build_libro(iot: IOT, an: Analisis, ruta: str | Path, *,
                 pais: str, anio: int, codes: dict, names: dict, fuente: str,
                 cou_intermedio: pd.Series | None = None,
+                nota_metodo: str | None = None,
+                sut: SUT | None = None,
+                prod_codes: dict | None = None, prod_names: dict | None = None,
                 escala: float = 1000.0,
                 unidad: str = "millones de pesos corrientes") -> Path:
     es_D = iot.modelo == "D"
@@ -167,6 +214,12 @@ def build_libro(iot: IOT, an: Analisis, ruta: str | Path, *,
     keys = list(Z.columns)
     g = iot.x.reindex(keys)
     f = iot.f.reindex(keys)
+    # Demanda final abierta. Se armoniza DESPUÉS del balanceo: el RAS opera sobre
+    # [U | Y] y agregar columnas antes cambiaría el reparto. Agrupar después es
+    # una reagrupación lineal pura -> Z, f, A y L quedan bit-idénticos.
+    Yh = df_mod.armonizar(iot.Y).reindex(index=keys).fillna(0.0)
+    prod_codes = prod_codes if prod_codes is not None else {}
+    prod_names = prod_names if prod_names is not None else {}
     zm = iot.VA.loc["consumo_intermedio_importado"].reindex(keys) if "consumo_intermedio_importado" in iot.VA.index else pd.Series(0.0, index=keys)
     imptax = iot.VA.loc["impuestos_netos_productos"].reindex(keys) if "impuestos_netos_productos" in iot.VA.index else pd.Series(0.0, index=keys)
     vab = iot.VA.loc["valor_agregado_bruto"].reindex(keys) if "valor_agregado_bruto" in iot.VA.index else pd.Series(0.0, index=keys)
@@ -227,19 +280,33 @@ def build_libro(iot: IOT, an: Analisis, ruta: str | Path, *,
            ("11. B", "Coeficientes de distribución  B = diag(g)⁻¹ · Z")]
     if es_D and cou_intermedio is not None:
         toc.append(("12. Auditoría COU", "Reconciliación por industria contra el COU"))
+    toc.append(("13. Demanda final", "Y abierta por componente (P.3 · P.51 · P.52+P.53 · P.6) y su mapeo al COU"))
+    if sut is not None:
+        toc += [("14. COU Oferta (V)", "Cuadro de oferta: producción por industria × producto"),
+                ("15. COU Utilización (U)", "Cuadro de utilización intermedia: producto × industria"),
+                ("16. COU Demanda final", "Demanda final del COU: producto × componente")]
     for tab, desc in toc:
         cell = ws.cell(r, 2, tab); cell.font = LINKF
         cell.hyperlink = f"#'{tab}'!A1"
         ws.cell(r, 3, desc).font = CELDA
         r += 1
     r += 2
+    if nota_metodo:
+        ws.cell(r, 2, "Método").font = Font(name=FUENTE, bold=True, size=9, color=AZUL)
+        ws.cell(r, 2).fill = FPRIM
+        c = ws.cell(r, 3, nota_metodo)
+        c.font = Font(name=FUENTE, size=9, color=TINTA); c.fill = FPRIM
+        c.alignment = Alignment(wrap_text=True, vertical="top")
+        ws.row_dimensions[r].height = 58
+        r += 2
+
     ws.cell(r, 2, "Unidad").font = Font(name=FUENTE, bold=True, size=9, color="808080")
     ws.cell(r, 3, f"Cifras en {unidad} (salvo coeficientes A, L, B, que son adimensionales).").font = NOTA
     ws.cell(r + 1, 2, "Fuente").font = Font(name=FUENTE, bold=True, size=9, color="808080")
     ws.cell(r + 1, 3, f"{fuente}. Todo se deriva del COU; sin datos externos.").font = NOTA
 
     # ── MIP completa (tabla insumo-producto) ──────────────────────────────
-    _hoja_mip(wb, Z, g, f, zm, imptax, vab, codes, names, subt_base, fuente, escala)
+    _hoja_mip(wb, Z, g, f, Yh, zm, imptax, vab, codes, names, subt_base, fuente, escala)
 
     # ── 2. Z ──────────────────────────────────────────────────────────────
     _matriz(wb.create_sheet("2. Z"), Z, codes, names,
@@ -417,6 +484,76 @@ def build_libro(iot: IOT, an: Analisis, ruta: str | Path, *,
                    fill=FOK if abs((cou - suma) / escala) < 1e-3 else FBAD)
         ws.freeze_panes = ws.cell(6, 3)
         _fuente(ws, 6 + n + 1, fuente)
+
+    # ── 13. Demanda final abierta ─────────────────────────────────────────
+    ws = wb.create_sheet("13. Demanda final")
+    _link_indice(ws)
+    ws.cell(2, 1, "Demanda final por componente").font = TIT
+    ws.cell(3, 1, "Y — esquema armonizado SCN 2008 · precios básicos, doméstico · " + unidad).font = NOTA
+    ws.column_dimensions["A"].width = 11; ws.column_dimensions["B"].width = 46
+    fdk = list(Yh.columns)
+    heads = ["Código", "Denominación"] + [df_mod.etiqueta(c) for c in fdk] + ["Total (f)", "Diferencia"]
+    for j, h in enumerate(heads):
+        _hcell(ws, 5, 1 + j, h, center=(j >= 2), wrap=True)
+        if j >= 2:
+            ws.column_dimensions[gcl(1 + j)].width = 17
+    for j, c in enumerate(fdk):
+        ws.cell(4, 3 + j, df_mod.codigo_scn(c)).font = NOTA
+    for i, k in enumerate(keys):
+        rr = 6 + i
+        ws.cell(rr, 1, codes.get(k, k)).font = CELDAB
+        ws.cell(rr, 2, names.get(k, k)).font = CELDA
+        for j, c in enumerate(fdk):
+            _valor(ws, rr, 3 + j, Yh.at[k, c], escala)
+        suma = float(Yh.loc[k].sum()); dif = float(f[k]) - suma
+        _valor(ws, rr, 3 + len(fdk), suma, escala, fill=FTOT)
+        _valor(ws, rr, 4 + len(fdk), dif, escala, fmt="0.000",
+               fill=FOK if abs(dif / escala) < 1e-6 else FBAD)
+    rt = 6 + n
+    ws.cell(rt, 2, "Total").font = CELDAB
+    for j, c in enumerate(fdk):
+        _valor(ws, rt, 3 + j, float(Yh[c].sum()), escala, fill=FTOT)
+    _valor(ws, rt, 3 + len(fdk), float(Yh.to_numpy().sum()), escala, fill=FTOT)
+    ws.freeze_panes = ws.cell(6, 3)
+
+    # trazabilidad: qué columnas del COU original caen en cada componente
+    r = rt + 2
+    ws.cell(r, 1, "Mapeo desde las columnas del COU de origen").font = HSUB
+    r += 1
+    _hcell(ws, r, 1, "Columna en el COU original", center=False)
+    _hcell(ws, r, 2, "Componente armonizado", center=False)
+    for origen, clave in df_mod.trazabilidad(iot.Y):
+        r += 1
+        ws.cell(r, 1, str(origen)).font = CELDA
+        ws.cell(r, 2, df_mod.etiqueta(clave)).font = CELDA
+    r += 2
+    ws.cell(r, 1, "Dos componentes van colapsados porque no son armonizables entre países: el "
+                  "consumo, porque las ISFLSH caen de lados distintos (Uruguay las agrupa con "
+                  "gobierno; México, con consumo privado), y la formación de capital, porque la "
+                  "MUPNI de Colombia no separa la fija de la variación de existencias. El detalle "
+                  "original de esta fuente está en la hoja «16. COU Demanda final». "
+                  "Ver src/demanda_final.py.").font = NOTA
+    _fuente(ws, r + 2, fuente)
+
+    # ── 14-16. El COU que alimenta esta MIP ───────────────────────────────
+    if sut is not None:
+        subt_cou = (f"{pais} {anio} · COU doméstico a precios básicos, balanceado "
+                    f"(el que alimenta esta MIP) · {unidad}")
+        _hoja_cou(wb.create_sheet("14. COU Oferta (V)"), sut.V,
+                  codes, names, prod_codes,
+                  "V — Cuadro de oferta (producción)",
+                  "Filas: industrias · Columnas: productos · " + subt_cou, fuente, escala)
+        _hoja_cou(wb.create_sheet("15. COU Utilización (U)"), sut.U,
+                  prod_codes, prod_names, codes,
+                  "U — Cuadro de utilización intermedia",
+                  "Filas: productos · Columnas: industrias · " + subt_cou, fuente, escala)
+        # columnas NATIVAS de la fuente: acá se conserva el detalle que el esquema
+        # armonizado colapsa (FBKF vs existencias, ISFLSH vs gobierno, etc.)
+        _hoja_cou(wb.create_sheet("16. COU Demanda final"), sut.Y,
+                  prod_codes, prod_names, {},
+                  "Y — Demanda final del COU (columnas originales de la fuente)",
+                  "Filas: productos · Columnas: componentes tal como los publica la fuente · "
+                  + subt_cou, fuente, escala)
 
     ruta = Path(ruta); ruta.parent.mkdir(parents=True, exist_ok=True)
     wb.save(ruta)

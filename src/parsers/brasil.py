@@ -24,6 +24,18 @@ import pandas as pd
 
 
 def _n(x):
+    """Normaliza a texto. Los nulos devuelven '' a propósito: `str(nan)` es
+    'nan', que es no-vacío y no empieza con 'total', así que una fila o columna
+    final toda-NaN se colaba como un producto fantasma 'nan' (todo en ceros,
+    inocuo en los agregados pero que inflaba el conteo de productos y dejaba
+    filas sin etiqueta). Mismo blindaje que `_industry_cols` en argentina.py."""
+    if x is None:
+        return ""
+    try:
+        if pd.isna(x):
+            return ""
+    except (TypeError, ValueError):
+        pass
     return re.sub(r"\s+", " ", str(x)).strip()
 
 

@@ -35,6 +35,90 @@ def _row_scale(df: pd.DataFrame, factor: pd.Series) -> pd.DataFrame:
     return df.mul(factor.reindex(df.index).fillna(0.0), axis=0)
 
 
+# Notas de método que se estampan en la portada de cada libro, para que quien lo
+# abra sepa sobre qué supuesto está parado sin tener que leer el repositorio.
+NOTA_DIRECTO = (
+    "SIN PRORRATEO. La fuente publica la utilización a precios básicos y el corte "
+    "doméstico/importado medido celda a celda, así que no se aplica ningún supuesto de "
+    "reparto: ni el del Cap. 7 (impuestos y márgenes) ni el del Cap. 8 (origen)."
+)
+
+NOTA_PRORRATEO = (
+    "CON PRORRATEO. Esta fuente publica impuestos, márgenes e importaciones sólo POR "
+    "PRODUCTO, no celda a celda, así que se reparten proporcionalmente por fila, como "
+    "prescribe el Handbook §7.77 y la Tabla 7.1 para ese caso. El supuesto sobreestima "
+    "los encadenamientos domésticos e infla los multiplicadores. Está MEDIDO donde sí "
+    "existe el dato: México 2013 +5,65 % en el multiplicador medio; Brasil 2010 +1,34 % "
+    "y 2015 +1,57 %; Uruguay 2016 subestima los insumos importados un 15,8 % frente a la "
+    "matriz M del BCU. Detalle en reports/mexico_validacion.md y reports/brasil_todos.md."
+)
+
+
+def ensamblar_directo(parsed: dict, verbose: bool = False) -> tuple[SUT, dict]:
+    """
+    Arma el SUT SIN NINGÚN PRORRATEO, para fuentes que ya publican la utilización
+    a precios básicos y con el corte doméstico/importado medido celda a celda.
+
+    Es la alternativa a `valorar_argentina`, que tiene que repartir impuestos,
+    márgenes e importaciones proporcionalmente por fila porque la fuente sólo los
+    da por producto. Ese prorrateo está prescrito por el Handbook §7.77 como
+    *fallback*, pero medido contra el dato real de INEGI sobreestima el consumo
+    intermedio doméstico un 15,7 % e infla los multiplicadores un 5,65 % en
+    promedio (hasta +58 % en manufactura de exportación). Donde hay dato, se usa
+    el dato.
+
+    Espera en `parsed`:
+        V_pi     producto × industria, producción a precios básicos
+        U_dom    producto × industria, utilización DOMÉSTICA a precios básicos
+        Y_dom    producto × componentes, demanda final DOMÉSTICA a precios básicos
+        U_imp    producto × industria, utilización IMPORTADA a precios básicos
+        imptax_j impuestos netos sobre productos por industria (opcional)
+    """
+    V_pi = parsed["V_pi"]
+    U_dom = parsed["U_dom"]
+    Y_dom = parsed["Y_dom"]
+    U_imp = parsed["U_imp"]
+    ind = list(U_dom.columns)
+
+    V = V_pi.T.clip(lower=0.0)
+    g = V.sum(axis=1)
+
+    importado_j = U_imp.sum(axis=0).reindex(ind).fillna(0.0)
+    if "imptax_j" in parsed:
+        impuestos_j = parsed["imptax_j"].reindex(ind).fillna(0.0)
+    else:
+        impuestos_j = pd.Series(0.0, index=ind)
+    # el VAB cierra la columna por identidad contable, sin supuestos:
+    #   g_j = Σ_p U_dom[p,j] + importado_j + impuestos_j + VAB_j
+    vab_j = (g.reindex(ind).fillna(0.0) - U_dom.sum(axis=0).reindex(ind).fillna(0.0)
+             - importado_j - impuestos_j)
+
+    VA = pd.concat([
+        pd.DataFrame([importado_j.to_numpy()], index=["consumo_intermedio_importado"], columns=ind),
+        pd.DataFrame([impuestos_j.to_numpy()], index=["impuestos_netos_productos"], columns=ind),
+        pd.DataFrame([vab_j.to_numpy()], index=["valor_agregado_bruto"], columns=ind),
+    ])
+
+    sut = SUT(V=V, U=U_dom, Y=Y_dom, VA=VA, M=None,
+              pais=parsed["pais"], anio=parsed["anio"], unidad=parsed["unidad"],
+              valoracion="básicos",
+              meta={"prod_labels": parsed.get("prod_labels", {}),
+                    "ind_labels": parsed.get("ind_labels", {}),
+                    "sin_prorrateo": True})
+
+    rep = {
+        "metodo": "directo (sin prorrateo)",
+        "importado_total": float(importado_j.sum()),
+        "impuestos_total": float(impuestos_j.sum()),
+        "va_total": float(vab_j.sum()),
+        "balance": sut.resumen_balance(),
+    }
+    if verbose:
+        print(f"  [directo] importado {rep['importado_total']:,.0f} · "
+              f"VAB {rep['va_total']:,.0f} · balanceado={rep['balance']['balanceado']}")
+    return sut, rep
+
+
 def valorar_argentina(parsed: dict, verbose: bool = False) -> tuple[SUT, dict]:
     """Construye el SUT doméstico a precios básicos desde el dict del parser AR."""
     U = parsed["U_pc"].copy()          # prod × ind (precios comprador)

@@ -228,6 +228,23 @@ def _split_code_name(texto: str) -> tuple[str, str]:
     return code, name
 
 
+def _unidad(df: pd.DataFrame) -> str:
+    """Lee la unidad del encabezado ('Año 2023 (millones de pesos)').
+
+    INDEC cambió la escala: 2004–2022 vienen en MILES de pesos y 2023 en
+    MILLONES. Hardcodearla desalineaba el libro por un factor de 1000, así que
+    se lee del archivo y sólo se cae a 'miles' si no dice nada.
+    """
+    for r in range(min(8, df.shape[0])):
+        for c in range(min(4, df.shape[1])):
+            t = _norm(df.iat[r, c])
+            if "MILLONES DE PESOS" in t:
+                return "millones de pesos corrientes"
+            if "MILES DE PESOS" in t:
+                return "miles de pesos corrientes"
+    return "miles de pesos corrientes"
+
+
 def parse(ruta: str, anio: int, verbose: bool = False) -> dict:
     xl = pd.ExcelFile(ruta)
     of_sheet = next(s for s in xl.sheet_names if _norm(s).startswith(("MAT OFERTA", "MAT_OF")))
@@ -309,5 +326,5 @@ def parse(ruta: str, anio: int, verbose: bool = False) -> dict:
         "prod_labels": labels, "ind_labels": ind_labels,
         "ind_code": ind_code, "ind_name": ind_name,
         "prod_code": prod_code, "prod_name": prod_name,
-        "pais": "Argentina", "anio": anio, "unidad": "miles de pesos corrientes",
+        "pais": "Argentina", "anio": anio, "unidad": _unidad(of),
     }

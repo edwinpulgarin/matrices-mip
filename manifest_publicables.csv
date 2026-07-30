@@ -1,22 +1,31 @@
-pais,anio,estado,archivo,dimension,fuente
-Argentina,2004,CONSISTENTE,matrices/Argentina/MIP_Argentina_2004_LIBRO.xlsx,162,INDEC — COU 2004
-Argentina,2018,CONSISTENTE,matrices/Argentina/MIP_Argentina_2018_LIBRO.xlsx,107,INDEC — COU 2018
-Argentina,2019,CONSISTENTE,matrices/Argentina/MIP_Argentina_2019_LIBRO.xlsx,107,INDEC — COU 2019
-Argentina,2020,CONSISTENTE,matrices/Argentina/MIP_Argentina_2020_LIBRO.xlsx,107,INDEC — COU 2020
-Argentina,2021,CONSISTENTE,matrices/Argentina/MIP_Argentina_2021_LIBRO.xlsx,107,INDEC — COU 2021
-Argentina,2022,CONSISTENTE,matrices/Argentina/MIP_Argentina_2022_LIBRO.xlsx,107,INDEC — COU 2022
-Brasil,2010,CONSISTENTE,matrices/Brasil/MIP_Brasil_2010_LIBRO.xlsx,68,IBGE — COU nível 68 2010
-Brasil,2011,CONSISTENTE,matrices/Brasil/MIP_Brasil_2011_LIBRO.xlsx,68,IBGE — COU nível 68 2011
-Brasil,2012,CONSISTENTE,matrices/Brasil/MIP_Brasil_2012_LIBRO.xlsx,68,IBGE — COU nível 68 2012
-Brasil,2013,CONSISTENTE,matrices/Brasil/MIP_Brasil_2013_LIBRO.xlsx,68,IBGE — COU nível 68 2013
-Brasil,2014,CONSISTENTE,matrices/Brasil/MIP_Brasil_2014_LIBRO.xlsx,68,IBGE — COU nível 68 2014
-Brasil,2015,CONSISTENTE,matrices/Brasil/MIP_Brasil_2015_LIBRO.xlsx,68,IBGE — COU nível 68 2015
-Brasil,2016,CONSISTENTE,matrices/Brasil/MIP_Brasil_2016_LIBRO.xlsx,68,IBGE — COU nível 68 2016
-Brasil,2017,CONSISTENTE,matrices/Brasil/MIP_Brasil_2017_LIBRO.xlsx,68,IBGE — COU nível 68 2017
-Brasil,2018,CONSISTENTE,matrices/Brasil/MIP_Brasil_2018_LIBRO.xlsx,68,IBGE — COU nível 68 2018
-Brasil,2019,CONSISTENTE,matrices/Brasil/MIP_Brasil_2019_LIBRO.xlsx,68,IBGE — COU nível 68 2019
-Brasil,2020,CONSISTENTE,matrices/Brasil/MIP_Brasil_2020_LIBRO.xlsx,68,IBGE — COU nível 68 2020
-Brasil,2021,CONSISTENTE,matrices/Brasil/MIP_Brasil_2021_LIBRO.xlsx,68,IBGE — COU nível 68 2021
-Uruguay,2012,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2012_LIBRO.xlsx,107,BCU — COU 2012
-Uruguay,2016,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2016_LIBRO.xlsx,95,BCU — COU 2016
-Uruguay,2017,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2017_LIBRO.xlsx,95,BCU — COU 2017
+pais,anio,estado,archivo,dimension,metodo
+Argentina,2004,CONSISTENTE,matrices/Argentina/MIP_Argentina_2004_LIBRO.xlsx,162,prorrateo
+Argentina,2018,CONSISTENTE,matrices/Argentina/MIP_Argentina_2018_LIBRO.xlsx,107,prorrateo
+Argentina,2019,CONSISTENTE,matrices/Argentina/MIP_Argentina_2019_LIBRO.xlsx,107,prorrateo
+Argentina,2020,CONSISTENTE,matrices/Argentina/MIP_Argentina_2020_LIBRO.xlsx,107,prorrateo
+Argentina,2021,CONSISTENTE,matrices/Argentina/MIP_Argentina_2021_LIBRO.xlsx,107,prorrateo
+Argentina,2022,CONSISTENTE,matrices/Argentina/MIP_Argentina_2022_LIBRO.xlsx,107,prorrateo
+Argentina,2023,CONSISTENTE,matrices/Argentina/MIP_Argentina_2023_LIBRO.xlsx,107,prorrateo
+Brasil,2010,CONSISTENTE,matrices/Brasil/MIP_Brasil_2010_LIBRO.xlsx,67,sin prorrateo
+Brasil,2011,CONSISTENTE,matrices/Brasil/MIP_Brasil_2011_LIBRO.xlsx,68,prorrateo
+Brasil,2012,CONSISTENTE,matrices/Brasil/MIP_Brasil_2012_LIBRO.xlsx,68,prorrateo
+Brasil,2013,CONSISTENTE,matrices/Brasil/MIP_Brasil_2013_LIBRO.xlsx,68,prorrateo
+Brasil,2014,CONSISTENTE,matrices/Brasil/MIP_Brasil_2014_LIBRO.xlsx,68,prorrateo
+Brasil,2015,CONSISTENTE,matrices/Brasil/MIP_Brasil_2015_LIBRO.xlsx,67,sin prorrateo
+Brasil,2016,CONSISTENTE,matrices/Brasil/MIP_Brasil_2016_LIBRO.xlsx,68,prorrateo
+Brasil,2017,CONSISTENTE,matrices/Brasil/MIP_Brasil_2017_LIBRO.xlsx,68,prorrateo
+Brasil,2018,CONSISTENTE,matrices/Brasil/MIP_Brasil_2018_LIBRO.xlsx,68,prorrateo
+Brasil,2019,CONSISTENTE,matrices/Brasil/MIP_Brasil_2019_LIBRO.xlsx,68,prorrateo
+Brasil,2020,CONSISTENTE,matrices/Brasil/MIP_Brasil_2020_LIBRO.xlsx,68,prorrateo
+Brasil,2021,CONSISTENTE,matrices/Brasil/MIP_Brasil_2021_LIBRO.xlsx,68,prorrateo
+Colombia,2014,CONSISTENTE,matrices/Colombia/MIP_Colombia_2014_LIBRO.xlsx,61,sin prorrateo
+Colombia,2015,CONSISTENTE,matrices/Colombia/MIP_Colombia_2015_LIBRO.xlsx,61,sin prorrateo
+Colombia,2016,CONSISTENTE,matrices/Colombia/MIP_Colombia_2016_LIBRO.xlsx,61,sin prorrateo
+Colombia,2017,CONSISTENTE,matrices/Colombia/MIP_Colombia_2017_LIBRO.xlsx,61,sin prorrateo
+Colombia,2018,CONSISTENTE,matrices/Colombia/MIP_Colombia_2018_LIBRO.xlsx,61,sin prorrateo
+Colombia,2019,CONSISTENTE,matrices/Colombia/MIP_Colombia_2019_LIBRO.xlsx,61,sin prorrateo
+Colombia,2020,CONSISTENTE,matrices/Colombia/MIP_Colombia_2020_LIBRO.xlsx,61,sin prorrateo
+Mexico,2013,CONSISTENTE,matrices/Mexico/MIP_Mexico_2013_LIBRO.xlsx,262,sin prorrateo
+Uruguay,2012,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2012_LIBRO.xlsx,107,prorrateo
+Uruguay,2016,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2016_LIBRO.xlsx,95,prorrateo
+Uruguay,2017,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2017_LIBRO.xlsx,95,prorrateo
