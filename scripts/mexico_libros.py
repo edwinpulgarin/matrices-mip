@@ -67,7 +67,7 @@ def main():
                         fuente=(f"INEGI — SCNM, COU {anio} (nivel {nivel.lower()} SCIAN), "
                                 f"utilización doméstica a precios básicos medida, sin prorrateo"),
                         cou_intermedio=d["U_pc"].sum(axis=0), nota_metodo=NOTA_DIRECTO,
-                        sut=sutb, prod_codes=d["prod_code"], prod_names=d["prod_name"],
+                        sut=sutb, cou_orig=d, prod_codes=d["prod_code"], prod_names=d["prod_name"],
                         escala=1.0, unidad="millones de pesos corrientes")
             ok = "✅" if (rel < 1e-6 and lfx < 1e-6 and iot.min_valor() >= -1e-9) else "⚠️"
             filas.append(f"| {anio} | {nivel.lower()} | {iot.Z.shape[0]}×{iot.Z.shape[0]} | "

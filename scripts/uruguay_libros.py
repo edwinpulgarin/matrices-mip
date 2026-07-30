@@ -46,7 +46,7 @@ def main():
             build_libro(iot, an, ROOT / "matrices" / "Uruguay" / f"MIP_Uruguay_{anio}_LIBRO.xlsx",
                         pais="Uruguay", anio=anio, codes=d["ind_code"], names=d["ind_name"],
                         fuente=f"BCU — COU {anio}", cou_intermedio=d["U_pc"].sum(axis=0), nota_metodo=NOTA_PRORRATEO,
-                        sut=sutb, prod_codes=d["prod_code"], prod_names=d["prod_name"],
+                        sut=sutb, cou_orig=d, prod_codes=d["prod_code"], prod_names=d["prod_name"],
                         escala=1.0, unidad="millones de pesos uruguayos corrientes")
             ok = "✅" if (rel < 1e-6 and lfx < 1e-6 and iot.min_valor() >= -1e-9) else "⚠️"
             filas.append(f"| {anio} | {iot.Z.shape[0]}×{iot.Z.shape[0]} | {sut.g.sum():,.0f} | "

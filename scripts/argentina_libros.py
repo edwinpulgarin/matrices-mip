@@ -47,7 +47,7 @@ def main():
             codes=d["ind_code"], names=d["ind_name"],
             fuente=f"INDEC — COU {anio}",
             cou_intermedio=d["U_pc"].sum(axis=0), nota_metodo=NOTA_PRORRATEO,
-            sut=sutb, prod_codes=d["prod_code"], prod_names=d["prod_name"],
+            sut=sutb, cou_orig=d, prod_codes=d["prod_code"], prod_names=d["prod_name"],
             escala=escala, unidad="millones de pesos corrientes",
         )
         rel = float((iot.balance_fila_columna().abs() / iot.x.replace(0, 1)).max())

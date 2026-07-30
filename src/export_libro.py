@@ -144,6 +144,110 @@ def _hoja_cou(ws, M: pd.DataFrame, row_codes: dict, row_names: dict, col_codes: 
     _fuente(ws, rt + 2, fuente)
 
 
+# Puente de valoración tal como lo publica cada fuente. El orden es el del
+# Handbook (Cap. 7): se parte de la producción a precios básicos y se llega a la
+# oferta a precios de comprador sumando importación, impuestos y márgenes.
+# Ninguna fuente trae todas las columnas: Argentina abre los márgenes en
+# comercio/transporte/distribución, Brasil y Uruguay los dan combinados, y sólo
+# INDEC separa el IVA de los demás impuestos a los productos.
+PUENTE = [
+    ("OPB",        "Producción a precios básicos"),
+    ("IMPO",       "Importaciones"),
+    ("Ajuste",     "Ajuste CIF/FOB"),
+    ("DI",         "Derechos de importación"),
+    ("IP",         "Impuestos netos sobre los productos"),
+    ("IVA",        "Impuesto al valor agregado"),
+    ("Comisiones", "Comisiones"),
+    ("MgC",        "Márgenes de comercio"),
+    ("MgT",        "Márgenes de transporte"),
+    ("MgD",        "Márgenes de distribución"),
+    ("Mg",         "Márgenes de comercio y transporte"),
+    ("OPC",        "Oferta total a precios de comprador"),
+]
+
+
+def _hay(obj) -> bool:
+    """¿Esta pieza del COU vino con contenido?
+
+    Los parsers devuelven DataFrames, y `if df:` lanza ValueError en pandas. Se
+    centraliza acá para no repetir el mismo tropiezo en cada punto de decisión.
+    """
+    if obj is None:
+        return False
+    if isinstance(obj, (pd.DataFrame, pd.Series)):
+        return not obj.empty
+    return bool(obj)
+
+
+def _hoja_puente(ws, val, prod_keys, prod_codes, prod_names, subt, fuente, escala):
+    """Puente de valoración por producto: de precios básicos a precios de comprador."""
+    _link_indice(ws)
+    ws.column_dimensions["A"].width = 11
+    ws.column_dimensions["B"].width = 46
+    ws.cell(2, 2, "Puente de valoración — de precios básicos a precios de comprador").font = TIT
+    ws.cell(3, 2, subt).font = NOTA
+
+    # sólo las columnas que esta fuente realmente publica con contenido
+    cols = []
+    for k, etiqueta in PUENTE:
+        s = val.get(k)
+        if s is None:
+            continue
+        s = s if isinstance(s, pd.Series) else pd.Series(float(s), index=prod_keys)
+        s = s.reindex(prod_keys).fillna(0.0)
+        if float(np.abs(s).sum()) == 0.0:
+            continue
+        cols.append((k, etiqueta, s))
+
+    # "Mg" es una columna DERIVADA que los parsers agregan por conveniencia
+    # (la suma de los márgenes que publique la fuente). Donde el instituto los
+    # abre —Argentina— sumar ambas cosas contaría el margen dos veces.
+    desagregados = {"MgC", "MgT", "MgD", "Comisiones"} & {c[0] for c in cols}
+    if desagregados:
+        cols = [c for c in cols if c[0] != "Mg"]
+
+    claves = [c[0] for c in cols]
+    i_opc = claves.index("OPC") if "OPC" in claves else None
+    hr = 5
+    _hcell(ws, hr, 1, "Código", center=False)
+    _hcell(ws, hr, 2, "Producto", center=False)
+    for j, (k, etiqueta, _) in enumerate(cols):
+        _hcell(ws, hr, 3 + j, etiqueta, wrap=True)
+        ws.column_dimensions[gcl(3 + j)].width = 17
+    col_dif = 3 + len(cols)
+    if i_opc is not None:
+        _hcell(ws, hr, col_dif, "Diferencia (Σ componentes − oferta total)", wrap=True)
+        ws.column_dimensions[gcl(col_dif)].width = 18
+
+    peor = 0.0
+    for i, k in enumerate(prod_keys):
+        rr = hr + 1 + i
+        ws.cell(rr, 1, prod_codes.get(k, k)).font = CELDAB
+        ws.cell(rr, 2, prod_names.get(k, k)).font = CELDA
+        for j, (ck, _, s) in enumerate(cols):
+            # la oferta total se resalta: es la columna con la que cierra la fila
+            _valor(ws, rr, 3 + j, float(s[k]), escala,
+                   fill=FTOT if ck == "OPC" else None)
+        if i_opc is not None:
+            suma = sum(float(s[k]) for j, (_, _, s) in enumerate(cols) if j != i_opc)
+            dif = suma - float(cols[i_opc][2][k])
+            peor = max(peor, abs(dif))
+            _valor(ws, rr, col_dif, dif, escala, fmt="0.000",
+                   fill=FOK if abs(dif / escala) < 1e-6 else FBAD)
+    rt = hr + 1 + len(prod_keys)
+    ws.cell(rt, 2, "Total").font = CELDAB
+    for j, (_, _, s) in enumerate(cols):
+        _valor(ws, rt, 3 + j, float(s.sum()), escala, fill=FTOT)
+    ws.freeze_panes = ws.cell(hr + 1, 3)
+    ws.cell(rt + 2, 1,
+            "La suma de las columnas intermedias reconstruye la oferta a precios de "
+            "comprador partiendo de la producción a precios básicos. Es el dato tal "
+            "como lo publica la fuente, sin ninguna transformación: la columna de "
+            "diferencia muestra el residuo de redondeo del propio cuadro oficial.").font = NOTA
+    _fuente(ws, rt + 4, fuente)
+    return peor
+
+
 def _hoja_mip(wb, Z, g, f, Yh, zm, imptax, vab, codes, names, subt, fuente, escala):
     """Tabla insumo-producto completa: Z + demanda final abierta + bloque primario + totales."""
     ws = wb.create_sheet("MIP")
@@ -203,6 +307,7 @@ def build_libro(iot: IOT, an: Analisis, ruta: str | Path, *,
                 cou_intermedio: pd.Series | None = None,
                 nota_metodo: str | None = None,
                 sut: SUT | None = None,
+                cou_orig: dict | None = None,
                 prod_codes: dict | None = None, prod_names: dict | None = None,
                 escala: float = 1000.0,
                 unidad: str = "millones de pesos corrientes") -> Path:
@@ -281,10 +386,26 @@ def build_libro(iot: IOT, an: Analisis, ruta: str | Path, *,
     if es_D and cou_intermedio is not None:
         toc.append(("12. Auditoría COU", "Reconciliación por industria contra el COU"))
     toc.append(("13. Demanda final", "Y abierta por componente (P.3 · P.51 · P.52+P.53 · P.6) y su mapeo al COU"))
+    # El COU ORIGINAL, tal como lo publica el instituto: es el punto de partida y
+    # permite auditar el libro entero de punta a punta sin salir del archivo.
+    # Las entradas se agregan sólo si la hoja se va a escribir: si no, el índice
+    # queda con hipervínculos rotos. No toda fuente publica todas las piezas
+    # —Colombia y la MIP del IBGE ya entregan precios básicos y no traen puente—.
+    if cou_orig is not None:
+        if _hay(cou_orig.get("V_pi")):
+            toc.append(("14. COU orig · Oferta", "Producción por producto × industria, tal como la publica la fuente"))
+        if _hay(cou_orig.get("val")):
+            toc.append(("15. COU orig · Valoración", "Puente por producto: de precios básicos a precios de comprador"))
+        if _hay(cou_orig.get("U_pc")):
+            toc.append(("16. COU orig · Utilización", "Utilización intermedia a precios de comprador: producto × industria"))
+        if _hay(cou_orig.get("Y_pc")) or _hay(cou_orig.get("Y_dom")):
+            toc.append(("17. COU orig · Demanda final", "Demanda final con las columnas originales de la fuente"))
+    # El SUT derivado: el mismo cuadro ya valorado a precios básicos, con el
+    # insumo importado separado y balanceado. Es lo que entra en la MIP.
     if sut is not None:
-        toc += [("14. COU Oferta (V)", "Cuadro de oferta: producción por industria × producto"),
-                ("15. COU Utilización (U)", "Cuadro de utilización intermedia: producto × industria"),
-                ("16. COU Demanda final", "Demanda final del COU: producto × componente")]
+        toc += [("18. SUT · Oferta (V)", "Oferta ya valorada y balanceada: industria × producto"),
+                ("19. SUT · Utilización (U)", "Utilización doméstica a precios básicos, balanceada"),
+                ("20. SUT · Demanda final", "Demanda final doméstica a precios básicos, balanceada")]
     for tab, desc in toc:
         cell = ws.cell(r, 2, tab); cell.font = LINKF
         cell.hyperlink = f"#'{tab}'!A1"
@@ -531,27 +652,70 @@ def build_libro(iot: IOT, an: Analisis, ruta: str | Path, *,
                   "consumo, porque las ISFLSH caen de lados distintos (Uruguay las agrupa con "
                   "gobierno; México, con consumo privado), y la formación de capital, porque la "
                   "MUPNI de Colombia no separa la fija de la variación de existencias. El detalle "
-                  "original de esta fuente está en la hoja «16. COU Demanda final». "
+                  "original de esta fuente está en la hoja «17. COU orig · Demanda final». "
                   "Ver src/demanda_final.py.").font = NOTA
     _fuente(ws, r + 2, fuente)
 
-    # ── 14-16. El COU que alimenta esta MIP ───────────────────────────────
+    # ── 14-17. El COU ORIGINAL, tal como lo publica el instituto ──────────
+    # Sin valorar, sin balancear y sin separar el insumo importado: es la materia
+    # prima del libro. Con esto el archivo se audita entero sin abrir otra fuente.
+    if cou_orig is not None:
+        subt_orig = (f"{pais} {anio} · COU original de {fuente}, sin transformar · {unidad}")
+        # Contrato de los parsers: V_pi y U_pc vienen ambos PRODUCTO × INDUSTRIA,
+        # que es como publican el cuadro los cinco institutos. (La V del SUT
+        # derivado sí es industria × producto, porque el Modelo D la usa así.)
+        # En México la matriz es cuadrada —productos e industrias comparten la
+        # clasificación SCIAN—, así que la orientación no se puede deducir de la
+        # forma: se toma el índice de U_pc como la lista de productos.
+        V_pi = cou_orig.get("V_pi")
+        U_pc = cou_orig.get("U_pc")
+        prod_keys = list(U_pc.index) if _hay(U_pc) else (list(V_pi.index) if _hay(V_pi) else [])
+        if _hay(V_pi) and list(V_pi.index) != prod_keys and list(V_pi.columns) == prod_keys:
+            V_pi = V_pi.T
+        if _hay(V_pi):
+            _hoja_cou(wb.create_sheet("14. COU orig · Oferta"), V_pi,
+                      prod_codes, prod_names, codes,
+                      "V — Cuadro de oferta original (producción a precios básicos)",
+                      "Filas: productos · Columnas: industrias · " + subt_orig, fuente, escala)
+        val = cou_orig.get("val")
+        if _hay(val):
+            _hoja_puente(wb.create_sheet("15. COU orig · Valoración"), val, prod_keys,
+                         prod_codes, prod_names, subt_orig, fuente, escala)
+        if _hay(U_pc):
+            _hoja_cou(wb.create_sheet("16. COU orig · Utilización"), U_pc,
+                      prod_codes, prod_names, codes,
+                      "U — Utilización intermedia original (precios de comprador)",
+                      "Filas: productos · Columnas: industrias · " + subt_orig, fuente, escala)
+        # Y_pc donde la fuente publica a precios de comprador; Y_dom donde ya
+        # entrega el corte doméstico a precios básicos (Colombia, MIP del IBGE).
+        Y_or = cou_orig.get("Y_pc")
+        etiqueta_y = "Y — Demanda final original (precios de comprador)"
+        if not _hay(Y_or):
+            Y_or = cou_orig.get("Y_dom")
+            etiqueta_y = "Y — Demanda final original (doméstica, precios básicos)"
+        if _hay(Y_or):
+            _hoja_cou(wb.create_sheet("17. COU orig · Demanda final"), Y_or,
+                      prod_codes, prod_names, {}, etiqueta_y,
+                      "Filas: productos · Columnas: componentes tal como los publica la "
+                      "fuente · " + subt_orig, fuente, escala)
+
+    # ── 18-20. El SUT derivado que alimenta esta MIP ──────────────────────
     if sut is not None:
-        subt_cou = (f"{pais} {anio} · COU doméstico a precios básicos, balanceado "
+        subt_cou = (f"{pais} {anio} · SUT doméstico a precios básicos, balanceado "
                     f"(el que alimenta esta MIP) · {unidad}")
-        _hoja_cou(wb.create_sheet("14. COU Oferta (V)"), sut.V,
+        _hoja_cou(wb.create_sheet("18. SUT · Oferta (V)"), sut.V,
                   codes, names, prod_codes,
-                  "V — Cuadro de oferta (producción)",
+                  "V — Cuadro de oferta valorado y balanceado",
                   "Filas: industrias · Columnas: productos · " + subt_cou, fuente, escala)
-        _hoja_cou(wb.create_sheet("15. COU Utilización (U)"), sut.U,
+        _hoja_cou(wb.create_sheet("19. SUT · Utilización (U)"), sut.U,
                   prod_codes, prod_names, codes,
-                  "U — Cuadro de utilización intermedia",
+                  "U — Utilización intermedia doméstica, a precios básicos",
                   "Filas: productos · Columnas: industrias · " + subt_cou, fuente, escala)
         # columnas NATIVAS de la fuente: acá se conserva el detalle que el esquema
         # armonizado colapsa (FBKF vs existencias, ISFLSH vs gobierno, etc.)
-        _hoja_cou(wb.create_sheet("16. COU Demanda final"), sut.Y,
+        _hoja_cou(wb.create_sheet("20. SUT · Demanda final"), sut.Y,
                   prod_codes, prod_names, {},
-                  "Y — Demanda final del COU (columnas originales de la fuente)",
+                  "Y — Demanda final doméstica a precios básicos (columnas de la fuente)",
                   "Filas: productos · Columnas: componentes tal como los publica la fuente · "
                   + subt_cou, fuente, escala)
 

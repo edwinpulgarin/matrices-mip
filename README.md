@@ -18,7 +18,7 @@ verifica **por construcción** (`fila = columna` a ~1e-15, `L·f = g`, sin negat
 | `transformacion.py` | Cap. 12 | SUT → MIP simétrica (Modelo D industria×industria; B producto×producto) |
 | `analisis.py` | Cap. 20 | A = Z·ĝ⁻¹, L = (I−A)⁻¹, multiplicadores |
 | `demanda_final.py` | Cap. 2 | esquema armonizado de demanda final (SCN 2008) |
-| `export_libro.py` | — | libro Excel auditable (16 pestañas: MIP, Auditoría COU, demanda final abierta y el COU de origen) |
+| `export_libro.py` | — | libro Excel auditable (hasta 21 pestañas: MIP, Auditoría COU, demanda final abierta, el COU original de la fuente con su puente de valoración, y el SUT valorado y balanceado) |
 
 ## Cobertura
 
