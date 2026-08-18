@@ -22,7 +22,7 @@ from src.valoracion import valorar_argentina, NOTA_PRORRATEO
 from src.balanceo import balancear
 from src.transformacion import transformar
 from src.analisis import calcular
-from src.export_libro import build_libro
+from src.export_libro import build_libro, avisar_libros_abiertos
 
 RAW = Path(r"c:/Users/edwin/Documents/MIP V2/data/raw/argentina")
 ANIOS = {2004: "cou_2004.xls", 2018: "cou_2018.xls", 2019: "cou_2019.xls",
@@ -31,9 +31,14 @@ ANIOS = {2004: "cou_2004.xls", 2018: "cou_2018.xls", 2019: "cou_2019.xls",
 
 
 def main():
+    avisar_libros_abiertos(ROOT / "matrices")
     for anio, fn in ANIOS.items():
         d = parse(RAW / fn, anio)
-        sut, _ = valorar_argentina(d)
+        # MIP DOMÉSTICA: la matriz que se publica tiene sólo el insumo de origen
+        # nacional; el importado sale de las celdas y va a la fila primaria
+        # «consumo intermedio importado». La versión total NO se publica: el
+        # libro entero se deriva de esta matriz.
+        sut = valorar_argentina(d)[0]
         sutb, _ = balancear(sut)
         iot = transformar(sutb, "D")
         an = calcular(iot)
@@ -47,8 +52,10 @@ def main():
             codes=d["ind_code"], names=d["ind_name"],
             fuente=f"INDEC — COU {anio}",
             cou_intermedio=d["U_pc"].sum(axis=0), nota_metodo=NOTA_PRORRATEO,
-            sut=sutb, cou_orig=d, prod_codes=d["prod_code"], prod_names=d["prod_name"],
+            sut=sutb, sut_prev=sut,
+            cou_orig=d, prod_codes=d["prod_code"], prod_names=d["prod_name"],
             escala=escala, unidad="millones de pesos corrientes",
+            clasif_prod="productos, CPC 1.1", clasif_ind="industrias, CIIU",
         )
         rel = float((iot.balance_fila_columna().abs() / iot.x.replace(0, 1)).max())
         print(f"[OK] {anio}: {iot.Z.shape[0]}×{iot.Z.shape[0]} · fila=col {rel:.1e} · {ruta.name}")

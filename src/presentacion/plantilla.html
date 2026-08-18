@@ -526,7 +526,8 @@ table.datos tr.inicio-grupo td { border-top: 1px solid var(--regla); }
         <div>
           <h3 style="margin-bottom:4px">Multiplicador de producción medio</h3>
           <p class="sutil" style="margin-bottom:14px">Cuánta producción total activa una
-            unidad de demanda final. Más alto = cadenas domésticas más largas.</p>
+            unidad de demanda final. La matriz es total —incluye el insumo importado—,
+            así que mide el arrastre completo, no la profundidad de la cadena local.</p>
           <div id="barras-mult"></div>
         </div>
         <div>
@@ -553,7 +554,7 @@ table.datos tr.inicio-grupo td { border-top: 1px solid var(--regla); }
       <div style="margin-top:38px">
         <h3 style="margin-bottom:4px">Composición de la demanda final</h3>
         <p class="sutil" style="margin-bottom:16px">Participación de cada componente en la
-          demanda final doméstica a precios básicos.</p>
+          demanda final a precios básicos.</p>
         <div id="composicion"></div>
       </div>
 
@@ -997,7 +998,7 @@ function reglaMult(p) {
 function pasos() {
   const items = [
     ["Cuadro de oferta y utilización", "El dato oficial: qué produce cada industria y qué producto usa cada una, a precios de comprador."],
-    ["Valoración", "Se retiran impuestos y márgenes de comercio y transporte, y se separa el insumo importado: queda sólo el flujo doméstico a precios básicos."],
+    ["Valoración", "Se retiran los impuestos sobre los productos y el margen de comercio se le devuelve a la rama que lo presta: el cuadro queda a precios básicos."],
     ["Balanceo", "Un ajuste biproporcional cierra simultáneamente el balance por producto y por industria, sin mover los totales."],
     ["Transformación", "La estructura de ventas convierte el cuadro rectangular en una matriz cuadrada industria por industria."],
   ];

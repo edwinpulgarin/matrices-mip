@@ -1,0 +1,930 @@
+<title>El corte nacional / importado — y por qué las importaciones son una fila</title>
+
+<style>
+  /* ── Tokens: tema claro completo en :root ───────────────────────────── */
+  :root {
+    --ground:      #F6F7F9;
+    --surface:     #FFFFFF;
+    --surface-alt: #EEF1F5;
+    --ink:         #131A22;
+    --ink-soft:    #3D4A57;
+    --muted:       #64717F;
+    --rule:        #D5DCE4;
+    --rule-strong: #AFBAC6;
+
+    --azul:    #1F4E79;
+    --azul-bg: #E3ECF5;
+    --verde:   #2E7D32;
+    --verde-bg:#E1F0E2;
+    --ambar:   #C25A08;
+    --ambar-bg:#FBEADA;
+    --vino:    #A81616;
+    --vino-bg: #F8E2E2;
+    --violeta: #6B2E96;
+    --violeta-bg:#EFE5F8;
+
+    --sombra: 0 1px 2px rgba(19,26,34,.06), 0 8px 24px rgba(19,26,34,.05);
+
+    --serif: "Palatino Linotype", "Book Antiqua", Palatino, "Iowan Old Style", Georgia, serif;
+    --sans:  "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --mono:  "Cascadia Mono", Consolas, "SF Mono", "DejaVu Sans Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0D1319;
+      --surface:     #141C24;
+      --surface-alt: #1B2530;
+      --ink:         #E6ECF2;
+      --ink-soft:    #C0CBD6;
+      --muted:       #8A97A5;
+      --rule:        #2A3742;
+      --rule-strong: #3E4E5C;
+
+      --azul:    #7FB2E5;
+      --azul-bg: #16293C;
+      --verde:   #74C57A;
+      --verde-bg:#13301A;
+      --ambar:   #EFA262;
+      --ambar-bg:#3A2411;
+      --vino:    #EE8080;
+      --vino-bg: #3A1717;
+      --violeta: #BC94E0;
+      --violeta-bg:#2A1A3C;
+
+      --sombra: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0D1319;
+    --surface:     #141C24;
+    --surface-alt: #1B2530;
+    --ink:         #E6ECF2;
+    --ink-soft:    #C0CBD6;
+    --muted:       #8A97A5;
+    --rule:        #2A3742;
+    --rule-strong: #3E4E5C;
+
+    --azul:    #7FB2E5;
+    --azul-bg: #16293C;
+    --verde:   #74C57A;
+    --verde-bg:#13301A;
+    --ambar:   #EFA262;
+    --ambar-bg:#3A2411;
+    --vino:    #EE8080;
+    --vino-bg: #3A1717;
+    --violeta: #BC94E0;
+    --violeta-bg:#2A1A3C;
+
+    --sombra: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hoja { max-width: 1220px; margin: 0 auto; padding: 0 28px 96px; }
+
+  /* ── Portada ─────────────────────────────────────────────────────────── */
+  header.portada {
+    padding: 72px 0 40px;
+    border-bottom: 3px solid var(--azul);
+    margin-bottom: 8px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--azul);
+    margin: 0 0 20px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(2.1rem, 5.2vw, 3.4rem);
+    line-height: 1.1;
+    letter-spacing: -.01em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+  h1 em { font-style: italic; color: var(--azul); }
+  .bajada {
+    font-family: var(--serif);
+    font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin: 0 0 32px;
+  }
+  .ficha {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 40px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+  }
+  .ficha b { color: var(--ink-soft); font-weight: 600; }
+
+  /* ── Estructura de sección: cuerpo + carril de citas ─────────────────── */
+  section.paso {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+    padding: 52px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 1000px) {
+    section.paso { grid-template-columns: minmax(0, 1fr) 300px; gap: 48px; }
+    .carril { padding-top: 52px; }
+  }
+  .cuerpo { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+  .cuerpo > * { margin: 0; }
+
+  .num {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .14em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(1.5rem, 3.2vw, 2rem);
+    line-height: 1.2;
+    margin: 0;
+    text-wrap: balance;
+    max-width: 26ch;
+  }
+  h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: .95rem;
+    letter-spacing: .01em;
+    margin: 0;
+    color: var(--ink-soft);
+  }
+  p { max-width: 66ch; }
+  p.ancho { max-width: none; }
+  strong { font-weight: 600; }
+  .dato { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ── Cita del Handbook ───────────────────────────────────────────────── */
+  .cita {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--azul);
+    border-radius: 2px;
+    padding: 18px 20px;
+    box-shadow: var(--sombra);
+  }
+  .cita + .cita { margin-top: 18px; }
+  .cita .ref {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .06em;
+    color: var(--azul);
+    margin-bottom: 10px;
+  }
+  .cita blockquote {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .cita .gloss {
+    margin: 12px 0 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    border-top: 1px dashed var(--rule);
+    padding-top: 10px;
+  }
+
+  /* ── Fórmula ─────────────────────────────────────────────────────────── */
+  .formula {
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 18px 22px;
+    font-family: var(--mono);
+    font-size: 14.5px;
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+  .formula .nac { color: var(--verde); font-weight: 600; }
+  .formula .imp { color: var(--ambar); font-weight: 600; }
+  .formula .cmt { color: var(--muted); }
+
+  /* ── Tablas ──────────────────────────────────────────────────────────── */
+  .tabla-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 2px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  caption {
+    caption-side: top;
+    text-align: left;
+    padding: 14px 16px 12px;
+    font-size: 13px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--rule);
+  }
+  caption b { color: var(--ink-soft); }
+  th, td { padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--rule); }
+  th:first-child, td:first-child { text-align: left; }
+  thead th {
+    font-size: 11.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: nowrap;
+  }
+  tbody td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  tbody tr:last-child td { border-bottom: none; }
+  tr.suma td { border-top: 2px solid var(--rule-strong); font-weight: 600; }
+  td.res-nac { color: var(--verde); font-weight: 600; }
+  td.res-imp { color: var(--ambar); font-weight: 600; }
+
+  /* ── Esquema de matriz ───────────────────────────────────────────────── */
+  .esquemas { display: grid; gap: 24px; }
+  @media (min-width: 760px) { .esquemas.par { grid-template-columns: 1fr 1fr; } }
+
+  .esquema {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 18px;
+    box-shadow: var(--sombra);
+    overflow-x: auto;
+  }
+  .esquema h4 {
+    margin: 0 0 4px;
+    font-family: var(--sans);
+    font-size: .9rem;
+    font-weight: 600;
+  }
+  .esquema .pie {
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+  .mx { border-collapse: collapse; font-family: var(--mono); font-size: 11.5px; margin-top: 14px; }
+  .mx td, .mx th {
+    border: 1px solid var(--rule);
+    padding: 5px 9px;
+    text-align: center;
+    white-space: nowrap;
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+  .mx th { color: var(--muted); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; border: none; padding-bottom: 6px; }
+  .mx td.lbl { text-align: left; color: var(--muted); border: none; padding-right: 12px; }
+  .mx td.z    { background: var(--vino-bg);    color: var(--vino); }
+  .mx td.fd   { background: var(--surface-alt); }
+  .mx td.tot  { background: var(--surface-alt); color: var(--ink); font-weight: 600; }
+  .mx td.zm   { background: var(--ambar-bg); color: var(--ambar); font-weight: 600; }
+  .mx td.prim { background: var(--azul-bg); color: var(--azul); }
+  .mx tr.destacada td:not(.lbl) { outline: 2px solid var(--ambar); outline-offset: -2px; }
+  .mx td.col-destacada { outline: 2px solid var(--ambar); outline-offset: -2px; }
+
+  /* ── Cajas de nota ───────────────────────────────────────────────────── */
+  .nota {
+    border-left: 3px solid var(--verde);
+    background: var(--verde-bg);
+    padding: 14px 18px;
+    border-radius: 2px;
+    font-size: 15px;
+  }
+  .nota.alerta { border-left-color: var(--ambar); background: var(--ambar-bg); }
+  .nota.clave  { border-left-color: var(--violeta); background: var(--violeta-bg); }
+  .nota p { max-width: none; margin: 0; }
+  .nota p + p { margin-top: 8px; }
+
+  .par-titulo {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  ul.limpia { margin: 0; padding-left: 1.15em; max-width: 66ch; }
+  ul.limpia li { margin-bottom: 7px; }
+  ul.limpia li::marker { color: var(--muted); }
+
+  code {
+    font-family: var(--mono);
+    font-size: .92em;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 1px 5px;
+  }
+
+  footer.cierre {
+    padding: 48px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  footer.cierre p { max-width: 72ch; }
+  footer.cierre b { color: var(--ink-soft); }
+
+  @media print {
+    body { background: #fff; color: #000; font-size: 11pt; }
+    section.paso { break-inside: avoid; page-break-inside: avoid; }
+    .esquema, .cita, .tabla-wrap { break-inside: avoid; }
+    .hoja { max-width: none; padding: 0; }
+  }
+</style>
+
+<div class="hoja">
+
+  <header class="portada">
+    <p class="eyebrow">Reconstrucción de MIP desde COU · nota metodológica</p>
+    <h1>El corte nacional / importado, y por qué las importaciones son <em>una fila</em></h1>
+    <p class="bajada">
+      Cómo se parte cada celda del cuadro de utilización entre insumo de origen nacional e
+      importado, en qué se apoya ese paso, y por qué el resultado entra en la matriz como un
+      renglón del bloque de insumos primarios y no como una columna de la matriz.
+    </p>
+    <div class="ficha">
+      <span><b>Referencia</b> UN Handbook on SUT and IOT · Series F No. 74 Rev. 1 (2018)</span>
+      <span><b>Ejemplos</b> Colombia 2019 · 61 × 61 · miles de millones de pesos</span>
+      <span><b>Modelo</b> D · industria × industria</span>
+    </div>
+  </header>
+
+  <!-- 1 ─────────────────────────────────────────────────────────────────── -->
+  <section class="paso">
+    <div class="cuerpo">
+      <p class="num">Paso 1 · el punto de partida</p>
+      <h2>El COU entrega una sola matriz, con los dos orígenes mezclados</h2>
+      <p>
+        En el cuadro de oferta y utilización, la celda que cruza un producto con una industria
+        dice cuánto de ese producto consumió esa industria — pero <strong>no dice cuánto era
+        nacional y cuánto importado</strong>. Los dos orígenes están sumados en el mismo número.
+      </p>
+      <p>
+        Para una matriz insumo-producto doméstica hay que separarlos, porque son cosas
+        económicamente distintas: el insumo nacional activa producción dentro del país y el
+        importado se va afuera. Esa separación es todo el contenido del paso.
+      </p>
+      <div class="formula">
+        <span class="cmt">// lo que publica la fuente, por celda</span><br>
+        U[producto, industria] &nbsp;=&nbsp; <span class="nac">nacional</span> &nbsp;+&nbsp; <span class="imp">importado</span> &nbsp;&nbsp;<span class="cmt">← una sola cifra, sin abrir</span>
+      </div>
+      <div class="nota">
+        <p>
+          <strong>Antes del corte hay que llegar a precios básicos.</strong> El COU publica la
+          utilización a precios de comprador, con impuestos y márgenes adentro. Esos se retiran
+          primero (pasos 1 y 2 del motor, capítulo 7); el corte por origen viene después, sobre
+          celdas ya valoradas a básicos.
+        </p>
+      </div>
+    </div>
+    <aside class="carril">
+      <div class="cita">
+        <span class="ref">Handbook § 8.16 · cap. 8, pág. 253</span>
+        <blockquote>
+          “If the imports use table is subtracted from the use table at purchasers’ prices, the
+          corresponding domestic use table can be derived which shows only consumption of
+          domestic produced output.”
+        </blockquote>
+        <p class="gloss">
+          La utilización doméstica es la utilización total <em>menos</em> la matriz de
+          importaciones. Ése es el objeto que hay que construir.
+        </p>
+      </div>
+      <div class="cita">
+        <span class="ref">Handbook § 8.33 · cap. 8, pág. 258</span>
+        <blockquote>
+          “The procedure should, preferably, be applied at basic prices.”
+        </blockquote>
+        <p class="gloss">
+          Por eso el corte va en el paso 3 y no antes: primero la valoración, después el origen.
+        </p>
+      </div>
+    </aside>
+  </section>
+
+  <!-- 2 ─────────────────────────────────────────────────────────────────── -->
+  <section class="paso">
+    <div class="cuerpo">
+      <p class="num">Paso 2 · cómo se parte cada celda</p>
+      <h2>Con el dato medido si existe; si no, con la proporción de la fila</h2>
+      <p>
+        Cuando la fuente publica el corte celda a celda, se usa el dato y no se supone nada.
+        Cuando no lo publica —que es el caso de la mayoría de los COU— se aplica la
+        <strong>participación nacional del producto</strong> a todas las celdas de su fila:
+      </p>
+      <div class="formula">
+        participación nacional<sub>p</sub> &nbsp;=&nbsp; producción nacional a precios básicos<sub>p</sub> &nbsp;/&nbsp; oferta básica total<sub>p</sub><br>
+        <span class="nac">U<sup>nac</sup>[p, j]</span> &nbsp;=&nbsp; U[p, j] × participación nacional<sub>p</sub><br>
+        <span class="imp">U<sup>imp</sup>[p, j]</span> &nbsp;=&nbsp; U[p, j] − <span class="nac">U<sup>nac</sup>[p, j]</span>
+      </div>
+      <p>
+        Es el <strong>supuesto de proporcionalidad de las importaciones</strong> del Handbook.
+        Dice, con todas las letras, que si el 50 % de la oferta de semiconductores es importada,
+        entonces se asume que <em>cada</em> industria que compra semiconductores importa el 50 %
+        de los que usa.
+      </p>
+
+      <div class="tabla-wrap">
+        <table>
+          <caption><b>Los productos donde más pesa el supuesto</b> — Colombia 2019, participación nacional en la oferta</caption>
+          <thead>
+            <tr><th>Producto</th><th>Nacional</th><th>Uso intermedio total</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>45 · Maquinaria de oficina, contabilidad e informática</td><td class="n">0,9 %</td><td class="n">235</td></tr>
+            <tr><td>47 · Equipo de radio, televisión y comunicaciones</td><td class="n">4,2 %</td><td class="n">1.670</td></tr>
+            <tr><td>48 · Aparatos médicos e instrumentos ópticos</td><td class="n">14,9 %</td><td class="n">2.847</td></tr>
+            <tr><td>43 · Maquinaria para uso general</td><td class="n">18,7 %</td><td class="n">5.235</td></tr>
+            <tr><td>44 · Maquinaria para usos especiales</td><td class="n">29,7 %</td><td class="n">1.844</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Una celda, seguida hasta el final</h3>
+      <div class="tabla-wrap">
+        <table>
+          <caption>Producto <b>45</b> consumido por la industria <b>052 · Fabricación de aparatos y equipo eléctrico</b></caption>
+          <tbody>
+            <tr><td>U a precios básicos, nacional + importado</td><td class="n">119,1</td></tr>
+            <tr><td>× participación nacional del producto 45</td><td class="n">0,0085</td></tr>
+            <tr><td>= insumo <b>nacional</b> — entra en la matriz Z</td><td class="n res-nac">1,0</td></tr>
+            <tr><td>insumo <b>importado</b> — se va a la fila</td><td class="n res-imp">118,1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="nota alerta">
+        <p>
+          <strong>El Handbook pone una condición, y la anotamos en cada libro.</strong> La
+          proporcionalidad se usa <em>sólo después</em> de haber agotado la información directa.
+          Por eso ocho de los treinta y ocho libros llevan el corte medido —Argentina 1997,
+          Brasil 2010 y 2015, Uruguay 2017 y los cuatro de México— y los otros treinta declaran,
+          en rojo y en la propia hoja, que su matriz importada es resultado del supuesto y no un
+          dato observado.
+        </p>
+      </div>
+    </div>
+    <aside class="carril">
+      <div class="cita">
+        <span class="ref">Handbook § 8.33 · cap. 8, pág. 258</span>
+        <blockquote>
+          “This assumes that imports are used in the same proportion across all industry
+          intermediate inputs and final uses… For example, if imports of semi-conductors
+          represent 50 per cent of the domestic supply of semi-conductors, then it is assumed
+          that each industry that purchases semi-conductors purchases 50 per cent of them from
+          foreign sources.”
+        </blockquote>
+        <p class="gloss">
+          Es exactamente la fórmula de arriba: una tasa por producto, aplicada a toda la fila.
+        </p>
+      </div>
+      <div class="cita">
+        <span class="ref">Handbook § 8.38 · cap. 8, pág. 259</span>
+        <blockquote>
+          “It is important that the import proportionality assumption or related ratio procedures
+          be used <em>only after</em> direct information about import use has been compiled.”
+        </blockquote>
+        <p class="gloss">
+          La condición que obliga a buscar el dato en cada fuente antes de suponer, y a decir
+          cuándo se supuso.
+        </p>
+      </div>
+      <div class="cita">
+        <span class="ref">Handbook § 8.33 · cap. 8, pág. 258</span>
+        <blockquote>
+          “This procedure results in the same distribution of imported products across a given
+          row… thus providing another reason to work at the most detailed level of products
+          available.”
+        </blockquote>
+        <p class="gloss">
+          El propio Handbook advierte que el supuesto uniforma la fila: cuanto más agregado el
+          producto, más se nota.
+        </p>
+      </div>
+    </aside>
+  </section>
+
+  <!-- 3 ─────────────────────────────────────────────────────────────────── -->
+  <section class="paso">
+    <div class="cuerpo">
+      <p class="num">Paso 3 · de la matriz importada al renglón</p>
+      <h2>La fila es la suma por columna de la matriz de importaciones</h2>
+      <p>
+        Del corte salen dos matrices del mismo tamaño: la nacional y la importada. La nacional
+        se transforma y se convierte en la matriz Z. La importada se colapsa: de cada columna se
+        toma su total, y ese vector es el renglón.
+      </p>
+      <div class="formula">
+        <span class="cmt">// la matriz nacional se transforma (Modelo D)</span><br>
+        Z &nbsp;=&nbsp; D · <span class="nac">U<sup>nac</sup></span> &nbsp;&nbsp;<span class="cmt">← industria × industria</span><br><br>
+        <span class="cmt">// la matriz importada se suma por columna</span><br>
+        <span class="imp">zm<sub>j</sub></span> &nbsp;=&nbsp; Σ<sub>p</sub> <span class="imp">U<sup>imp</sup>[p, j]</span> &nbsp;&nbsp;<span class="cmt">← una cifra por industria</span>
+      </div>
+      <p>
+        Esto no es una simplificación nuestra: el Handbook describe el mismo movimiento, en el
+        mismo orden. La caja 12.3 aplica la transformación <em>por separado</em> a la utilización
+        doméstica y a la importada, y el texto indica que el vector de sumas por columna de la
+        tabla de importaciones se inserta como <em>un solo renglón</em> en el bloque de insumos
+        primarios.
+      </p>
+      <div class="nota clave">
+        <p>
+          <strong>Sumar antes o después de transformar da lo mismo, y eso es verificable.</strong>
+          Las columnas de la matriz de participaciones <code>D</code> suman 1, así que la suma
+          por columna de <code>D · U<sup>imp</sup></code> es idéntica a la suma por columna de
+          <code>U<sup>imp</sup></code>. El renglón del libro es el mismo objeto que el
+          <code>B<sup>m</sup> = T · U<sup>m</sup></code> de la caja 12.3, colapsado.
+        </p>
+      </div>
+      <p>
+        En Colombia 2019, la columna de la industria 052 acumula <span class="dato">1.631,5</span>
+        de insumo importado — de los cuales <span class="dato">118,1</span> vienen de la celda del
+        producto 45 que seguimos arriba. Sumando las 61 columnas, el total del país es
+        <span class="dato">98.304</span>.
+      </p>
+    </div>
+    <aside class="carril">
+      <div class="cita">
+        <span class="ref">Handbook § 12.46 · cap. 12, pág. 383</span>
+        <blockquote>
+          “…the transformation of the SUTs into IOTs takes place <em>separately</em> for the
+          domestic use table (not including imports) and the imports use table…”
+        </blockquote>
+        <p class="gloss">
+          Dos transformaciones, no una: es la razón por la que el corte va antes del Modelo D.
+        </p>
+      </div>
+      <div class="cita">
+        <span class="ref">Handbook § 12.46 · cap. 12, pág. 384</span>
+        <blockquote>
+          “The vector of column sums of the ITI is inserted as a single row into the primary input
+          part of the first subtable… Sometimes this type of IOT is also called the national or
+          domestic version, or described as an IOT with endogenous imports.”
+        </blockquote>
+        <p class="gloss">
+          La instrucción literal: sumas por columna → <em>un solo renglón</em> → bloque de
+          insumos primarios. Es la fila del libro.
+        </p>
+      </div>
+      <div class="cita">
+        <span class="ref">Handbook · caja 12.3, Modelo D</span>
+        <blockquote>
+          “Model D: Industry-by-industry IOTs based on fixed product sales structure assumption.
+          No negatives. Each product has its own specific sales structure, irrespective of the
+          industry where it is produced.”
+          <span style="display:block; margin-top:10px; font-family:var(--mono); font-size:13px; line-height:1.8;">
+            T = D<br>
+            B<sup>d</sup> = T U<sup>d</sup> &nbsp;<span style="color:var(--muted)">domestic intermediates</span><br>
+            B<sup>m</sup> = T U<sup>m</sup> &nbsp;<span style="color:var(--muted)">imported intermediates</span>
+          </span>
+        </blockquote>
+        <p class="gloss">
+          El modelo que usamos, con su fórmula: la misma matriz T se aplica a la parte doméstica
+          y a la importada.
+        </p>
+      </div>
+    </aside>
+  </section>
+
+  <!-- 4 ─────────────────────────────────────────────────────────────────── -->
+  <section class="paso">
+    <div class="cuerpo">
+      <p class="num">Paso 4 · fila y no columna</p>
+      <h2>Una importación es un insumo, no una producción</h2>
+      <p>
+        La matriz Z tiene el mismo conjunto de sectores en filas y en columnas: la fila dice
+        <em>quién produjo</em> y la columna dice <em>quién consumió</em>. Un producto importado no
+        lo produjo ningún sector del país, así que no puede tener fila propia dentro de la matriz.
+        Lo que sí tiene es un lugar natural: el bloque de insumos primarios, leído hacia abajo en
+        la columna del que lo compró — junto a los impuestos y al valor agregado.
+      </p>
+      <p>
+        Por eso el renglón lleva <strong>una cifra por columna</strong>: es un costo de la
+        industria que está en esa columna, igual que su nómina o los impuestos que paga.
+      </p>
+
+      <div class="esquema">
+        <h4>MIP doméstica — la matriz que se publica</h4>
+        <table class="mx">
+          <tr>
+            <td class="lbl"></td>
+            <th>ind 1</th><th>ind 2</th><th>ind 3</th><th>dem. final</th><th>producción</th>
+          </tr>
+          <tr>
+            <td class="lbl">ind 1</td>
+            <td class="z">z</td><td class="z">z</td><td class="z">z</td><td class="fd">f</td><td class="tot">g</td>
+          </tr>
+          <tr>
+            <td class="lbl">ind 2</td>
+            <td class="z">z</td><td class="z">z</td><td class="z">z</td><td class="fd">f</td><td class="tot">g</td>
+          </tr>
+          <tr>
+            <td class="lbl">ind 3</td>
+            <td class="z">z</td><td class="z">z</td><td class="z">z</td><td class="fd">f</td><td class="tot">g</td>
+          </tr>
+          <tr class="destacada">
+            <td class="lbl">consumo interm. importado</td>
+            <td class="zm">zm</td><td class="zm">zm</td><td class="zm">zm</td><td></td><td></td>
+          </tr>
+          <tr>
+            <td class="lbl">impuestos netos</td>
+            <td class="prim">t</td><td class="prim">t</td><td class="prim">t</td><td></td><td></td>
+          </tr>
+          <tr>
+            <td class="lbl">valor agregado bruto</td>
+            <td class="prim">W</td><td class="prim">W</td><td class="prim">W</td><td></td><td></td>
+          </tr>
+          <tr>
+            <td class="lbl">producción total</td>
+            <td class="tot">g</td><td class="tot">g</td><td class="tot">g</td><td></td><td></td>
+          </tr>
+        </table>
+        <p class="pie">
+          Z lleva sólo insumo de origen nacional. El importado está en el renglón naranja, dentro
+          del bloque primario: una cifra por columna, que se suma hacia abajo con impuestos y
+          valor agregado hasta dar la producción de esa industria.
+        </p>
+      </div>
+    </div>
+    <aside class="carril">
+      <div class="cita">
+        <span class="ref">Handbook § 8.13 · cap. 8, pág. 253</span>
+        <blockquote>
+          “…but is <em>not</em> an IOT, as imports form an input and not an output.”
+        </blockquote>
+        <p class="gloss">
+          La frase que zanja la discusión de fila contra columna: la importación entra por el lado
+          del costo, no por el de la producción.
+        </p>
+      </div>
+      <div class="cita">
+        <span class="ref">Handbook § 8.17 · cap. 8, pág. 253</span>
+        <blockquote>
+          “Table 8.6 shows the IOT for domestic output and this <em>forms the basis for
+          input-output analyses</em>. It should be noted that, in this table, the use of imported
+          goods and services is only shown in an aggregated form <em>in one row</em>.”
+        </blockquote>
+        <p class="gloss">
+          Dos cosas en una: la matriz doméstica es la base del análisis insumo-producto, y las
+          importaciones van agregadas en un renglón. Es la definición de lo que se publica.
+        </p>
+      </div>
+    </aside>
+  </section>
+
+  <!-- 5 ─────────────────────────────────────────────────────────────────── -->
+  <section class="paso">
+    <div class="cuerpo">
+      <p class="num">Paso 5 · la otra versión</p>
+      <h2>Si el importado se deja adentro, deja de ser fila — y el Handbook avisa por qué</h2>
+      <p>
+        Existe una segunda versión, igualmente válida y también descrita por el Handbook: sumar la
+        matriz importada dentro de Z, de modo que las celdas incluyan los dos orígenes. Ahí ya no
+        hay renglón de importaciones; lo que aparece es un vector que <em>abastece cada fila</em>,
+        al lado de la producción, para que el total de usos cuadre.
+      </p>
+
+      <div class="esquema">
+        <h4>MIP total — la hoja complementaria del libro</h4>
+        <table class="mx">
+          <tr>
+            <td class="lbl"></td>
+            <th>ind 1</th><th>ind 2</th><th>ind 3</th><th>dem. final</th><th>producción</th><th>importac.</th><th>total usos</th>
+          </tr>
+          <tr>
+            <td class="lbl">ind 1</td>
+            <td class="z">z</td><td class="z">z</td><td class="z">z</td><td class="fd">f</td><td class="tot">g</td><td class="zm col-destacada">m</td><td class="tot">g+m</td>
+          </tr>
+          <tr>
+            <td class="lbl">ind 2</td>
+            <td class="z">z</td><td class="z">z</td><td class="z">z</td><td class="fd">f</td><td class="tot">g</td><td class="zm col-destacada">m</td><td class="tot">g+m</td>
+          </tr>
+          <tr>
+            <td class="lbl">ind 3</td>
+            <td class="z">z</td><td class="z">z</td><td class="z">z</td><td class="fd">f</td><td class="tot">g</td><td class="zm col-destacada">m</td><td class="tot">g+m</td>
+          </tr>
+          <tr>
+            <td class="lbl">impuestos netos</td>
+            <td class="prim">t</td><td class="prim">t</td><td class="prim">t</td><td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td class="lbl">valor agregado bruto</td>
+            <td class="prim">W</td><td class="prim">W</td><td class="prim">W</td><td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td class="lbl">producción total</td>
+            <td class="tot">g</td><td class="tot">g</td><td class="tot">g</td><td></td><td></td><td></td><td></td>
+          </tr>
+        </table>
+        <p class="pie">
+          El mismo dato, leído desde el otro lado: acá las importaciones son una columna indexada
+          por fila. Ya no hay renglón primario, porque el importado está dentro de las celdas.
+        </p>
+      </div>
+
+      <div class="nota alerta">
+        <p>
+          <strong>La advertencia del Handbook sobre esta presentación es explícita:</strong> no
+          sirve para calcular multiplicadores tal como está, porque los coeficientes de la columna
+          incluyen la importación. Si se usa igual, el modelo supone que un aumento de la demanda
+          arrastra importaciones en la misma proporción que la producción doméstica — que no es
+          realista.
+        </p>
+        <p>
+          Ésa es la razón de fondo por la que la MIP del libro es la doméstica y la total queda en
+          su propia hoja: para análisis se usa la primera; la segunda está para quien necesita esa
+          definición contable, que es la del Cuadro 7 del DANE.
+        </p>
+      </div>
+    </div>
+    <aside class="carril">
+      <div class="cita">
+        <span class="ref">Handbook § 12.81 · cap. 12, pág. 397</span>
+        <blockquote>
+          “This import row, however, is neither intermediate consumption nor primary input but
+          just a <em>bookkeeping entry</em> to balance the total use in the corresponding rows.”
+        </blockquote>
+        <p class="gloss">
+          En la versión total, la importación no es un insumo de la columna: es una partida de
+          cuadre de la fila. Cambia de naturaleza, no sólo de lugar.
+        </p>
+      </div>
+      <div class="cita">
+        <span class="ref">Handbook § 12.82 · cap. 12, pág. 398</span>
+        <blockquote>
+          “…this alternative presentation can in general <em>not</em> be taken directly as a basis
+          for input-output modelling such as, for example, for calculating impact multipliers. The
+          reason is that the input coefficients, which sum to one, include the import row.”
+        </blockquote>
+        <p class="gloss">
+          El argumento técnico que ordena las dos hojas: la doméstica para modelar, la total para
+          leer la contabilidad.
+        </p>
+      </div>
+      <div class="cita">
+        <span class="ref">Handbook § 12.47 · cap. 12, pág. 384</span>
+        <blockquote>
+          “Both versions of these IOTs are completely self-contained and may be used for
+          analytical applications.”
+        </blockquote>
+        <p class="gloss">
+          Ninguna de las dos es incorrecta. Lo que no se puede es mezclarlas ni compararlas entre
+          sí sin decir cuál es cuál.
+        </p>
+      </div>
+    </aside>
+  </section>
+
+  <!-- 6 ─────────────────────────────────────────────────────────────────── -->
+  <section class="paso">
+    <div class="cuerpo">
+      <p class="num">Paso 6 · la prueba</p>
+      <h2>La columna cierra, y ahí se ve que el renglón está en su lugar</h2>
+      <p>
+        Si el insumo importado está bien retirado de Z y bien puesto en el bloque primario, la
+        columna de cada industria tiene que sumar exactamente su producción. Ésta es la columna de
+        la industria que veníamos siguiendo:
+      </p>
+      <div class="tabla-wrap">
+        <table>
+          <caption>Industria <b>052 · Fabricación de aparatos y equipo eléctrico</b> — Colombia 2019</caption>
+          <tbody>
+            <tr><td>Suma de la columna de Z <span style="color:var(--muted)">(insumo nacional)</span></td><td class="n">2.750,4</td></tr>
+            <tr><td>+ consumo intermedio importado <span style="color:var(--muted)">(el renglón)</span></td><td class="n res-imp">1.631,5</td></tr>
+            <tr><td>+ impuestos netos sobre los productos</td><td class="n">190,1</td></tr>
+            <tr><td>+ valor agregado bruto</td><td class="n">2.227,0</td></tr>
+            <tr class="suma"><td>= producción total de la industria</td><td class="n">6.799,0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        La diferencia contra la producción que declara la fuente es de
+        <span class="dato">−9 × 10⁻¹³</span>: ruido de punto flotante. En los 38 libros esta
+        identidad se verifica industria por industria, y es una de las siete comprobaciones que
+        tiene que pasar cada matriz antes de publicarse.
+      </p>
+    </div>
+    <aside class="carril">
+      <div class="cita">
+        <span class="ref">Dónde mirarlo en el libro</span>
+        <blockquote style="font-family:var(--sans); font-size:14px; line-height:1.6;">
+          Hoja <b>«SUT importado»</b> — la matriz U<sup>imp</sup> completa, con aviso en rojo si
+          sale del supuesto.<br><br>
+          Hoja <b>«MIP completa»</b> — el renglón, bajo el consumo intermedio.<br><br>
+          Hoja <b>«Balances»</b> — esta verificación, para todas las industrias.<br><br>
+          Hoja <b>«Auditoría COU»</b> — la reconciliación contra el cuadro original.
+        </blockquote>
+      </div>
+    </aside>
+  </section>
+
+  <!-- 7 ─────────────────────────────────────────────────────────────────── -->
+  <section class="paso">
+    <div class="cuerpo">
+      <p class="num">Paso 7 · el costo del supuesto</p>
+      <h2>Cuánto se paga por suponer la proporción en vez de medirla</h2>
+      <p>
+        El supuesto no es gratis y se puede medir: basta con reconstruir el mismo año por los dos
+        caminos allí donde el instituto publica el corte real. Siempre falla en la misma
+        dirección — deja insumo importado dentro de la matriz doméstica, y eso infla los
+        multiplicadores.
+      </p>
+      <div class="tabla-wrap">
+        <table>
+          <caption><b>Cuatro países, misma dirección</b> — multiplicador de producción medio, prorrateo contra dato medido</caption>
+          <thead>
+            <tr><th>País y año</th><th>Con prorrateo</th><th>Con dato medido</th><th>Sesgo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>México 2013</td><td class="n">1,6032</td><td class="n">1,5174</td><td class="n res-imp">+5,65 %</td></tr>
+            <tr><td>Uruguay 2017</td><td class="n">1,6689</td><td class="n">1,6023</td><td class="n res-imp">+4,16 %</td></tr>
+            <tr><td>Colombia 2020</td><td class="n">1,7728</td><td class="n">1,7046</td><td class="n res-imp">+4,00 %</td></tr>
+            <tr><td>Colombia 2019</td><td class="n">1,7553</td><td class="n">1,7073</td><td class="n res-imp">+2,81 %</td></tr>
+            <tr><td>Brasil 2015</td><td class="n">1,8411</td><td class="n">1,8118</td><td class="n res-imp">+1,61 %</td></tr>
+            <tr><td>Brasil 2010</td><td class="n">1,8372</td><td class="n">1,8132</td><td class="n res-imp">+1,32 %</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Colombia permite ver el mecanismo completo, porque el DANE publica tanto la matriz
+        nacional como la total. Nuestra Z doméstica queda <span class="dato">+3,84 %</span> por
+        encima de su Cuadro 5, y el espejo de esa diferencia es el insumo importado, que nos queda
+        <span class="dato">−21,7 %</span> por debajo: es el mismo dinero, mal ubicado.
+      </p>
+      <div class="nota">
+        <p>
+          <strong>Y la contraprueba, en el mismo cuadro.</strong> La versión total, donde las dos
+          partes se vuelven a sumar y el supuesto se cancela, reproduce el Cuadro 8 del DANE con
+          una diferencia de <span class="dato">−0,01 %</span> en 2019. O sea que la valoración, el
+          Modelo D y el balanceo coinciden con el instituto: toda la brecha de la versión
+          doméstica es el corte por origen, que la fuente no publica.
+        </p>
+      </div>
+    </div>
+    <aside class="carril">
+      <div class="cita">
+        <span class="ref">Handbook § 8.39 · cap. 8, pág. 259</span>
+        <blockquote>
+          “The product imbalances, and the balancing process, can often be used to correct for
+          implausible results from an initial allocation based on proportions.”
+        </blockquote>
+        <p class="gloss">
+          El balanceo del capítulo 11 corrige parte del daño, pero no lo elimina: el sesgo medido
+          es lo que queda después de balancear.
+        </p>
+      </div>
+      <div class="cita">
+        <span class="ref">Handbook § 8.38 · cap. 8, pág. 259</span>
+        <blockquote>
+          “…it is essential to evaluate the generalized results for reasonableness, and to adjust
+          these percentages in the light of an understanding of how the specific economy
+          operates.”
+        </blockquote>
+        <p class="gloss">
+          La medición de esta tabla es justamente esa evaluación, hecha con el dato real de cuatro
+          institutos.
+        </p>
+      </div>
+    </aside>
+  </section>
+
+  <footer class="cierre">
+    <p>
+      <b>Fuente de las citas.</b> United Nations, <i>Handbook on Supply, Use and Input-Output
+      Tables with Extensions and Applications</i>, Series F No. 74, Rev. 1 (Nueva York, 2018).
+      Capítulo 8, sección C (compilación de la tabla de utilización de importaciones) y capítulo
+      12, secciones sobre la transformación de COU en MIP y la presentación alternativa de las
+      importaciones. Los números de párrafo son los de la publicación.
+    </p>
+    <p>
+      <b>Fuente de las cifras.</b> DANE, cuadro de oferta y utilización 2019, y Matriz
+      insumo-producto 2019 (Cuadros 5, 7 y 8); INEGI, IBGE y BCU para las mediciones del sesgo.
+      Todos los valores salen de los libros publicados en este repositorio y se pueden
+      reconstruir desde sus hojas.
+    </p>
+  </footer>
+
+</div>

@@ -36,6 +36,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from .. import crudo as _crudo
+
 HR_GRUPO = 2         # fila del encabezado de grupo
 HR_DET = 3           # fila del encabezado de detalle (código + nombre)
 R0 = 5               # primera fila de producto
@@ -116,7 +118,9 @@ def parse(carpeta: str | Path, anio: int = 2015, verbose: bool = False) -> dict:
     U_imp = bloque(t04, ind_cols)
     V_pi = bloque(t01, v_cols)
 
-    # demanda final doméstica (la importada va en la tabla 04, no se usa acá)
+    # demanda final: la doméstica sale de la tabla 03 y la importada de la 04,
+    # que tiene exactamente las mismas columnas. La importada hace falta para la
+    # versión TOTAL de la MIP (nacional + importado dentro de la matriz).
     fd_cols, fd_names = [], []
     for c in range(C_FD0, C_FD1):
         det = _n(t03.iat[HR_DET, c]) or _n(t03.iat[HR_GRUPO, c])
@@ -125,13 +129,18 @@ def parse(carpeta: str | Path, anio: int = 2015, verbose: bool = False) -> dict:
         fd_cols.append(c); fd_names.append(det)
     Y_dom = pd.DataFrame(_num(t03.iloc[rows, fd_cols]).to_numpy(),
                          index=prod_keys, columns=fd_names)
+    Y_imp = pd.DataFrame(_num(t04.iloc[rows, fd_cols]).to_numpy(),
+                         index=prod_keys, columns=fd_names)
 
     # ── cuña de impuestos y márgenes: MEDIDA celda a celda ────────────────
     # Las tablas 05-10 dan a qué celda va a parar cada impuesto y cada margen,
     # sobre productos nacionales e importados. Sumadas dan la cuña completa.
     cuna = pd.DataFrame(0.0, index=prod_keys, columns=ind_keys)
+    crudo_cuna = []
     for h in _HOJAS_CUNA:
-        cuna = cuna + bloque(hoja(h), ind_cols)
+        t = hoja(h)
+        crudo_cuna.append(_crudo.hoja(f"Tabela {h}", t, f, h))
+        cuna = cuna + bloque(t, ind_cols)
     imptax_j = cuna.sum(axis=0)
 
     # Consumo intermedio a PRECIOS DE COMPRADOR, para la hoja de auditoría COU:
@@ -146,6 +155,10 @@ def parse(carpeta: str | Path, anio: int = 2015, verbose: bool = False) -> dict:
 
     return {
         "V_pi": V_pi, "U_pc": U_pc, "U_dom": U_dom, "U_imp": U_imp, "Y_dom": Y_dom,
+        "Y_imp": Y_imp,
+        "crudo": [_crudo.hoja("Tabela 01 produção", t01, f, "01"),
+                  _crudo.hoja("Tabela 03 nacional", t03, f, "03"),
+                  _crudo.hoja("Tabela 04 importado", t04, f, "04")] + crudo_cuna,
         "imptax_j": imptax_j,
         "prod_labels": {k: f"{k} - {prod_name[k]}" for k in prod_keys},
         "ind_labels": {k: f"{k} - {ind_name[k]}" for k in ind_keys},

@@ -6,7 +6,7 @@ Industria × industria, Modelo D, precios básicos, millones de pesos corrientes
 
 | Año | Nivel | Dim | VBP | VAB | fila=columna | L·f=x | min Z | mult. medio |
 |----:|:------|----:|----:|----:|:---:|:---:|:---:|:---:|
-| 2013 | rama | 262×262 | 27,642,696 | 15,642,668 | 1.9e-15 | 4.2e-17 | 0.00 | 1.5174 ✅ |
+| 2013 | rama | 262×262 | 27,642,696 | 15,642,668 | 1.2e-15 | 1.3e-17 | 0.00 | 1.5174 ✅ |
 
 ## Control de comparabilidad
 
@@ -15,7 +15,7 @@ La misma MIP recalculada con el prorrateo proporcional que sí necesitan Argenti
 | Año | Consumo interm. doméstico | Σᵢaᵢⱼ medio | Multiplicador medio |
 |----:|----:|----:|----:|
 | 2013 · sin prorrateo (publicado) | 8,091,685 | 0.3581 | 1.5174 |
-| 2013 · proporcionalidad (control) | 9,362,070 | 0.3911 | 1.6032 |
+| 2013 · proporcionalidad (control) | 9,362,070 | 0.3910 | 1.6032 |
 
 **Sesgo del prorrateo: +5.65 %** en el multiplicador medio (1.6032 vs 1.5174).
 

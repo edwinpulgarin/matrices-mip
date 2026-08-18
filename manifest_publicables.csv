@@ -1,31 +1,39 @@
-pais,anio,estado,archivo,dimension,metodo
-Argentina,2004,CONSISTENTE,matrices/Argentina/MIP_Argentina_2004_LIBRO.xlsx,162,prorrateo
-Argentina,2018,CONSISTENTE,matrices/Argentina/MIP_Argentina_2018_LIBRO.xlsx,107,prorrateo
-Argentina,2019,CONSISTENTE,matrices/Argentina/MIP_Argentina_2019_LIBRO.xlsx,107,prorrateo
-Argentina,2020,CONSISTENTE,matrices/Argentina/MIP_Argentina_2020_LIBRO.xlsx,107,prorrateo
-Argentina,2021,CONSISTENTE,matrices/Argentina/MIP_Argentina_2021_LIBRO.xlsx,107,prorrateo
-Argentina,2022,CONSISTENTE,matrices/Argentina/MIP_Argentina_2022_LIBRO.xlsx,107,prorrateo
-Argentina,2023,CONSISTENTE,matrices/Argentina/MIP_Argentina_2023_LIBRO.xlsx,107,prorrateo
-Brasil,2010,CONSISTENTE,matrices/Brasil/MIP_Brasil_2010_LIBRO.xlsx,67,sin prorrateo
-Brasil,2011,CONSISTENTE,matrices/Brasil/MIP_Brasil_2011_LIBRO.xlsx,68,prorrateo
-Brasil,2012,CONSISTENTE,matrices/Brasil/MIP_Brasil_2012_LIBRO.xlsx,68,prorrateo
-Brasil,2013,CONSISTENTE,matrices/Brasil/MIP_Brasil_2013_LIBRO.xlsx,68,prorrateo
-Brasil,2014,CONSISTENTE,matrices/Brasil/MIP_Brasil_2014_LIBRO.xlsx,68,prorrateo
-Brasil,2015,CONSISTENTE,matrices/Brasil/MIP_Brasil_2015_LIBRO.xlsx,67,sin prorrateo
-Brasil,2016,CONSISTENTE,matrices/Brasil/MIP_Brasil_2016_LIBRO.xlsx,68,prorrateo
-Brasil,2017,CONSISTENTE,matrices/Brasil/MIP_Brasil_2017_LIBRO.xlsx,68,prorrateo
-Brasil,2018,CONSISTENTE,matrices/Brasil/MIP_Brasil_2018_LIBRO.xlsx,68,prorrateo
-Brasil,2019,CONSISTENTE,matrices/Brasil/MIP_Brasil_2019_LIBRO.xlsx,68,prorrateo
-Brasil,2020,CONSISTENTE,matrices/Brasil/MIP_Brasil_2020_LIBRO.xlsx,68,prorrateo
-Brasil,2021,CONSISTENTE,matrices/Brasil/MIP_Brasil_2021_LIBRO.xlsx,68,prorrateo
-Colombia,2014,CONSISTENTE,matrices/Colombia/MIP_Colombia_2014_LIBRO.xlsx,61,sin prorrateo
-Colombia,2015,CONSISTENTE,matrices/Colombia/MIP_Colombia_2015_LIBRO.xlsx,61,sin prorrateo
-Colombia,2016,CONSISTENTE,matrices/Colombia/MIP_Colombia_2016_LIBRO.xlsx,61,sin prorrateo
-Colombia,2017,CONSISTENTE,matrices/Colombia/MIP_Colombia_2017_LIBRO.xlsx,61,sin prorrateo
-Colombia,2018,CONSISTENTE,matrices/Colombia/MIP_Colombia_2018_LIBRO.xlsx,61,sin prorrateo
-Colombia,2019,CONSISTENTE,matrices/Colombia/MIP_Colombia_2019_LIBRO.xlsx,61,sin prorrateo
-Colombia,2020,CONSISTENTE,matrices/Colombia/MIP_Colombia_2020_LIBRO.xlsx,61,sin prorrateo
-Mexico,2013,CONSISTENTE,matrices/Mexico/MIP_Mexico_2013_LIBRO.xlsx,262,sin prorrateo
-Uruguay,2012,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2012_LIBRO.xlsx,107,prorrateo
-Uruguay,2016,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2016_LIBRO.xlsx,95,prorrateo
-Uruguay,2017,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2017_LIBRO.xlsx,95,prorrateo
+pais,anio,variante,estado,archivo,dimension,metodo
+Argentina,1997,reconstruida,CONSISTENTE,matrices/Argentina/MIP_Argentina_1997_LIBRO.xlsx,124,sin prorrateo
+Argentina,2004,reconstruida,CONSISTENTE,matrices/Argentina/MIP_Argentina_2004_LIBRO.xlsx,162,prorrateo en valoración y origen
+Argentina,2018,reconstruida,CONSISTENTE,matrices/Argentina/MIP_Argentina_2018_LIBRO.xlsx,107,prorrateo en valoración y origen
+Argentina,2019,reconstruida,CONSISTENTE,matrices/Argentina/MIP_Argentina_2019_LIBRO.xlsx,107,prorrateo en valoración y origen
+Argentina,2020,reconstruida,CONSISTENTE,matrices/Argentina/MIP_Argentina_2020_LIBRO.xlsx,107,prorrateo en valoración y origen
+Argentina,2021,reconstruida,CONSISTENTE,matrices/Argentina/MIP_Argentina_2021_LIBRO.xlsx,107,prorrateo en valoración y origen
+Argentina,2022,reconstruida,CONSISTENTE,matrices/Argentina/MIP_Argentina_2022_LIBRO.xlsx,107,prorrateo en valoración y origen
+Argentina,2023,reconstruida,CONSISTENTE,matrices/Argentina/MIP_Argentina_2023_LIBRO.xlsx,107,prorrateo en valoración y origen
+Brasil,2010,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2010_LIBRO.xlsx,67,sin prorrateo
+Brasil,2011,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2011_LIBRO.xlsx,68,prorrateo en valoración y origen
+Brasil,2012,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2012_LIBRO.xlsx,68,prorrateo en valoración y origen
+Brasil,2013,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2013_LIBRO.xlsx,68,prorrateo en valoración y origen
+Brasil,2014,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2014_LIBRO.xlsx,68,prorrateo en valoración y origen
+Brasil,2015,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2015_LIBRO.xlsx,67,sin prorrateo
+Brasil,2016,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2016_LIBRO.xlsx,68,prorrateo en valoración y origen
+Brasil,2017,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2017_LIBRO.xlsx,68,prorrateo en valoración y origen
+Brasil,2018,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2018_LIBRO.xlsx,68,prorrateo en valoración y origen
+Brasil,2019,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2019_LIBRO.xlsx,68,prorrateo en valoración y origen
+Brasil,2020,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2020_LIBRO.xlsx,68,prorrateo en valoración y origen
+Brasil,2021,reconstruida,CONSISTENTE,matrices/Brasil/MIP_Brasil_2021_LIBRO.xlsx,68,prorrateo en valoración y origen
+Colombia,2014,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2014_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2015,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2015_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2016,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2016_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2017,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2017_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2018,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2018_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2019,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2019_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2020,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2020_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2021,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2021_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2022,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2022_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2023,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2023_LIBRO.xlsx,61,prorrateo en valoración y origen
+Colombia,2024,reconstruida,CONSISTENTE,matrices/Colombia/MIP_Colombia_2024_LIBRO.xlsx,61,prorrateo en valoración y origen
+Mexico,2008,OFICIAL,CONSISTENTE,matrices/Mexico/MIP_Mexico_2008_LIBRO_OFICIAL.xlsx,262,sin prorrateo
+Mexico,2013,OFICIAL,CONSISTENTE,matrices/Mexico/MIP_Mexico_2013_LIBRO_OFICIAL.xlsx,262,sin prorrateo
+Mexico,2013,reconstruida,CONSISTENTE,matrices/Mexico/MIP_Mexico_2013_LIBRO.xlsx,262,sin prorrateo
+Mexico,2018,OFICIAL,CONSISTENTE,matrices/Mexico/MIP_Mexico_2018_LIBRO_OFICIAL.xlsx,263,sin prorrateo
+Uruguay,2012,reconstruida,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2012_LIBRO.xlsx,107,prorrateo en valoración y origen
+Uruguay,2016,reconstruida,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2016_LIBRO.xlsx,95,prorrateo en valoración y origen
+Uruguay,2017,reconstruida,CONSISTENTE,matrices/Uruguay/MIP_Uruguay_2017_LIBRO.xlsx,95,prorrateo en la valoración

@@ -47,16 +47,27 @@ def _br(a):
     return p_br.parse(RAW / "brasil", a), False
 
 def _uy(a):
-    src = {2012: (NI / "Uruguay_2012_Detallada_COU_C.xlsx", "COU_C"),
-           2016: (NI / "Uruguay_2016-2017 Detallada_COU_C.xlsx", "2016 CORRIENTE"),
-           2017: (NI / "Uruguay_2016-2017 Detallada_COU_C.xlsx", "2017 CORRIENTE")}[a]
-    return p_uy.parse(src[0], a, hoja=src[1]), False
+    # El tercer elemento es la carpeta con la utilización abierta en nacional e
+    # importada, que el BCU publica sólo para 2017. Sin pasarla, 2017 se
+    # construía por prorrateo y la presentación mostraba un multiplicador
+    # (1,6689) que no era el del libro publicado (1,6023): justo la brecha que
+    # mide el sesgo. Se carga igual que en `uruguay_libros.py`.
+    src = {2012: (NI / "Uruguay_2012_Detallada_COU_C.xlsx", "COU_C", None),
+           2016: (NI / "Uruguay_2016-2017 Detallada_COU_C.xlsx", "2016 CORRIENTE", None),
+           2017: (NI / "Uruguay_2016-2017 Detallada_COU_C.xlsx", "2017 CORRIENTE",
+                  RAW / "uruguay" / "cou_2017")}[a]
+    # `limpio` sigue en False incluso en 2017: el BCU mide el ORIGEN pero no
+    # publica impuestos ni márgenes celda a celda, así que la valoración sigue
+    # siendo la del Cap. 7 (`valorar_argentina`, que toma el corte medido por
+    # `dom_share_U`) y no el ensamblado directo.
+    return p_uy.parse(src[0], a, hoja=src[1], carpeta_detalle=src[2]), False
 
 def _mx(a):
     return p_mx.parse_sin_prorrateo(STG / f"MEX_COU_{a}", a), True
 
 def _co(a):
-    return p_co.parse(RAW / "colombia", a), True
+    # sólo el COU: la MUPNI salió del camino de entrega
+    return p_co.parse_cou(RAW / "colombia", a), False
 
 PAISES = {
     "Argentina": {"anios": [2004, 2018, 2019, 2020, 2021, 2022, 2023], "foco": 2023,
@@ -67,13 +78,18 @@ PAISES = {
                   "carga": _uy, "moneda": "pesos uruguayos", "fuente": "BCU"},
     "México":    {"anios": [2013], "foco": 2013,
                   "carga": _mx, "moneda": "pesos mexicanos", "fuente": "INEGI"},
-    "Colombia":  {"anios": list(range(2014, 2021)), "foco": 2020,
+    "Colombia":  {"anios": list(range(2014, 2025)), "foco": 2023,
                   "carga": _co, "moneda": "pesos colombianos", "fuente": "DANE"},
 }
 
 
 def construir(d, limpio):
     sut, rep = (ensamblar_directo(d) if limpio else valorar_argentina(d))
+    # La presentación tiene que mostrar exactamente la matriz que se publica, y
+    # la que se publica es la DOMÉSTICA: Z lleva sólo insumo de origen nacional
+    # y el importado va en fila primaria. Con eso el multiplicador vuelve a
+    # medir profundidad de cadena doméstica, que es la lectura económica de la
+    # presentación.
     sutb, _ = balancear(sut)
     iot = transformar(sutb, "D")
     return sut, sutb, iot, calcular(iot), rep

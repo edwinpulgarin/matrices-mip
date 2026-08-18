@@ -10,6 +10,10 @@ APILADAS en una misma hoja ('AAAA CORRIENTE'):
         + filas de valor agregado al final (VAB en 'Valor agregado bruto').
 
 Devuelve la estructura canónica. Unidad: millones de pesos uruguayos corrientes.
+
+Para 2017 el BCU publica ADEMÁS la utilización intermedia abierta en nacional e
+importada, celda a celda (`carpeta_detalle`). Con eso el corte por origen deja de
+ser un supuesto: ver `_split_origen`.
 """
 
 from __future__ import annotations
@@ -19,6 +23,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+from .. import crudo as _crudo
 
 
 def _n(x):
@@ -79,7 +85,73 @@ def _clasif_actividades(ruta: str | Path) -> dict:
     return out
 
 
-def parse(ruta: str | Path, anio: int, hoja: str | None = None, verbose: bool = False) -> dict:
+# Archivos del desglose por origen. El BCU los publica sólo para 2017; 2012 y
+# 2016 traen únicamente la utilización total, así que ahí el origen se sigue
+# prorrateando por fila.
+_DETALLE = {
+    "nac": ("Utilizacion intermedia Nacional_pc_C", "Utilización Intermedia Nac_pc_C"),
+    "imp": ("Utilizacion intermedia Importada_pc_C", "Utilización Intermedia M_pc_C"),
+    "tot": ("Utilizacion intermedia Total_pc_C", "Utilización Intermedia Tot_pc_C"),
+}
+
+
+def _leer_detalle(carpeta: Path, patron: str, hoja: str) -> pd.DataFrame | None:
+    """Lee una matriz producto × industria del desglose detallado del BCU.
+
+    Mismo layout en los tres archivos: fila 7 con 'Código', 'Denominación' y los
+    códigos de industria (A.1, A.2, …); debajo una fila por producto.
+    """
+    cand = [f for f in carpeta.glob("*.xlsx") if patron in f.name and not f.name.startswith("~$")]
+    if not cand:
+        return None
+    df = pd.read_excel(cand[0], sheet_name=hoja, header=None)
+    hr = next((r for r in range(df.shape[0]) if _n(df.iat[r, 0]) == "Código"), None)
+    if hr is None:
+        return None
+    ind_cols = [c for c in range(df.shape[1]) if _is_ind(df.iat[hr, c])]
+    rows = _prod_rows(df, hr + 1, df.shape[0])
+    M = pd.DataFrame(_num(df.iloc[rows, ind_cols]),
+                     index=[_n(df.iat[r, 0]) for r in rows],
+                     columns=[_n(df.iat[hr, c]) for c in ind_cols])
+    return M.groupby(level=0).sum()
+
+
+def _split_origen(carpeta: Path, U_pc: pd.DataFrame, tol: float = 1e-6):
+    """Participación doméstica MEDIDA celda a celda, o None si no hay datos.
+
+    Devuelve NaN en las celdas donde la fuente no mide nada (uso total cero):
+    ahí no hay proporción que leer y quien llame debe caer al prorrateo por fila.
+    Antes de devolver nada se exige que nacional + importada reproduzca la
+    utilización total del COU; si no cierra, el desglose no corresponde a este
+    COU y se descarta en vez de mezclar dos fuentes que no casan.
+    """
+    mats = {k: _leer_detalle(carpeta, pat, hoja) for k, (pat, hoja) in _DETALLE.items()}
+    if any(m is None for m in mats.values()):
+        return None, {}
+
+    nac, imp = (mats[k].reindex(index=U_pc.index, columns=U_pc.columns).fillna(0.0)
+                for k in ("nac", "imp"))
+    suma = nac + imp
+    escala = max(float(U_pc.to_numpy().sum()), 1.0)
+    dif = float((suma - U_pc).abs().to_numpy().max()) / escala
+    if dif > tol:
+        raise ValueError(
+            f"UY: el desglose nacional/importado no reproduce la utilización total "
+            f"del COU (dif. relativa {dif:.2e} > {tol:.0e}); revisar que ambos "
+            f"archivos sean del mismo año y la misma apertura.")
+
+    share = (nac / suma.where(suma > 0)).clip(0, 1)
+    rep = {
+        "importado_medido": float(imp.to_numpy().sum()),
+        "celdas_medidas": int((suma > 0).to_numpy().sum()),
+        "celdas_totales": int(suma.size),
+        "dif_rel_vs_cou": dif,
+    }
+    return share, rep
+
+
+def parse(ruta: str | Path, anio: int, hoja: str | None = None,
+          carpeta_detalle: str | Path | None = None, verbose: bool = False) -> dict:
     ruta = str(ruta)
     if hoja is None:
         hoja = f"{anio} CORRIENTE"
@@ -149,11 +221,33 @@ def parse(ruta: str | Path, anio: int, hoja: str | None = None, verbose: bool = 
     clasif = _clasif_actividades(ruta)
     ind_name = {k: clasif.get(k, k) for k in ind_keys}
 
+    # Corte por origen medido, si el año lo publica (sólo 2017).
+    dom_share_U, rep_origen, crudo_detalle = None, {}, []
+    if carpeta_detalle is not None:
+        carpeta_detalle = Path(carpeta_detalle)
+        dom_share_U, rep_origen = _split_origen(carpeta_detalle, U_pc)
+        if dom_share_U is not None:
+            for k in ("nac", "imp"):
+                pat, hj = _DETALLE[k]
+                f = next((f for f in carpeta_detalle.glob("*.xlsx")
+                          if pat in f.name and not f.name.startswith("~$")), None)
+                if f is not None:
+                    crudo_detalle.append(_crudo.hoja(
+                        f"Util. intermedia {'nacional' if k == 'nac' else 'importada'}",
+                        pd.read_excel(f, sheet_name=hj, header=None), f, hj))
+
     if verbose:
-        print(f"  [UY {anio}] prod={len(of_codes)} ind={len(ind_keys)} fd={fd_names}")
+        print(f"  [UY {anio}] prod={len(of_codes)} ind={len(ind_keys)} fd={fd_names}"
+              + (f" · origen MEDIDO ({rep_origen['celdas_medidas']}/"
+                 f"{rep_origen['celdas_totales']} celdas)" if dom_share_U is not None else ""))
 
     return {
         "V_pi": V_pi, "U_pc": U_pc, "Y_pc": Y_pc, "val": val, "VA": VA,
+        # Participación doméstica por celda cuando el BCU la mide; None si el año
+        # sólo publica la utilización total.
+        "dom_share_U": dom_share_U, "origen": rep_origen,
+        # el BCU apila oferta y utilización en una sola hoja por año
+        "crudo": [_crudo.hoja("COU completo", df, ruta, hoja)] + crudo_detalle,
         "prod_labels": {k: f"{k} - {prod_name.get(k, k)}" for k in of_codes},
         "ind_labels": {k: f"{k} - {ind_name.get(k, k)}" for k in ind_keys},
         "ind_code": ind_code, "ind_name": ind_name,

@@ -24,7 +24,7 @@ from src.valoracion import (valorar_argentina as valorar, ensamblar_directo,
 from src.balanceo import balancear
 from src.transformacion import transformar
 from src.analisis import calcular
-from src.export_libro import build_libro
+from src.export_libro import build_libro, avisar_libros_abiertos
 
 RAW = Path(r"c:/Users/edwin/Documents/MIP V2/data/raw/brasil")
 # años con Matriz de Insumo-Produto publicada: son los únicos donde el IBGE mide
@@ -47,13 +47,14 @@ def _pipeline(sut):
 
 
 def main():
+    avisar_libros_abiertos(ROOT / "matrices")
     filas = ["# Brasil — MIP reconstruidas desde el IBGE (UN Handbook F74 Rev.1)\n",
              "Industria × industria, Modelo D, precios básicos, millones de reales corrientes.\n",
              "**2010 y 2015 salen sin prorrateo**: la publicación de la Matriz de Insumo-Produto "
              "del IBGE mide el consumo intermedio nacional e importado y el destino de cada "
              "impuesto y margen celda a celda (Tabelas 03-10). Es nivel 67, no 68. El resto de "
              "los años sólo tiene el COU, que publica importaciones, impuestos y márgenes por "
-             "producto, así que dependen del prorrateo del Handbook §7.77.\n",
+             "producto, así que dependen del prorrateo del Handbook §8.33.\n",
              "| Año | Origen | Dim | VBP | VAB | fila=columna | L·f=x | min Z | mult. medio |",
              "|----:|:-------|----:|----:|----:|:---:|:---:|:---:|:---:|"]
     comparacion = []
@@ -71,9 +72,9 @@ def main():
                 nota = NOTA_DIRECTO
             else:
                 d = parse(RAW, anio)
-                sut, _ = valorar(d)
+                sut = valorar(d)[0]
                 vab = d["VA"].values.sum()
-                fuente = f"IBGE — COU nível 68, {anio} (prorrateo proporcional, Handbook §7.77)"
+                fuente = f"IBGE — COU nível 68, {anio} (prorrateo proporcional, Handbook §8.33)"
                 origen = "COU n68 · prorrateo"
                 nota = NOTA_PRORRATEO
             sutb, iot, an = _pipeline(sut)
@@ -82,8 +83,11 @@ def main():
             build_libro(iot, an, ROOT / "matrices" / "Brasil" / f"MIP_Brasil_{anio}_LIBRO.xlsx",
                         pais="Brasil", anio=anio, codes=d["ind_code"], names=d["ind_name"],
                         fuente=fuente, cou_intermedio=d["U_pc"].sum(axis=0), nota_metodo=nota,
-                        sut=sutb, cou_orig=d, prod_codes=d["prod_code"], prod_names=d["prod_name"],
-                        escala=1.0, unidad="millones de reales corrientes")
+                        sut=sutb, sut_prev=sut,
+                        cou_orig=d, prod_codes=d["prod_code"], prod_names=d["prod_name"],
+                        escala=1.0, unidad="millones de reales corrientes",
+                        clasif_prod="produtos, nível IBGE",
+                        clasif_ind="atividades, nível IBGE")
             ok = "✅" if (rel < 1e-6 and lfx < 1e-6 and iot.min_valor() >= -1e-9) else "⚠️"
             filas.append(f"| {anio} | {origen} | {iot.Z.shape[0]}×{iot.Z.shape[0]} | "
                          f"{sut.g.sum():,.0f} | {vab:,.0f} | {rel:.1e} | {lfx:.1e} | "
@@ -94,7 +98,12 @@ def main():
 
             if limpio:   # control: el mismo año por el camino con prorrateo
                 dp = parse(RAW, anio)
-                sp, _ = valorar(dp)
+                # Las dos matrices son DOMÉSTICAS, que es el objeto que se
+                # publica: así el control vuelve a medir los dos supuestos
+                # juntos —impuestos y márgenes dentro de la fila (§7.76) y el
+                # corte por origen (§8.33)—, que es lo que cargan los otros diez
+                # años.
+                sp = valorar(dp)[0]
                 _, _, anp = _pipeline(sp)
                 sesgo = 100 * (anp.mult_produccion.mean() / an.mult_produccion.mean() - 1)
                 comparacion.append(
@@ -107,9 +116,12 @@ def main():
 
     if comparacion:
         filas += ["\n## Control: cuánto cambia el multiplicador por prorratear\n",
-                  "Los dos años donde existe el dato medido permiten cuantificar el sesgo que "
-                  "cargan los otros diez. Ojo: el nivel de agregación también difiere (67 vs 68), "
-                  "así que parte de la diferencia es de agregación y no sólo de método.\n",
+                  "Los dos años donde existe el dato medido permiten cuantificar los supuestos "
+                  "que cargan los otros diez. Como la matriz publicada es DOMÉSTICA, acá se "
+                  "miden los dos juntos: el reparto de impuestos y márgenes dentro de la fila "
+                  "(§7.76) y el corte por origen (§8.33). Ojo: el nivel de agregación también "
+                  "difiere (67 vs 68), así que parte de la diferencia es de agregación y no "
+                  "sólo de método.\n",
                   "| Año | Sin prorrateo | Con prorrateo | Diferencia |",
                   "|----:|----:|----:|----:|"] + comparacion
     (ROOT / "reports" / "brasil_todos.md").write_text("\n".join(filas) + "\n", encoding="utf-8")

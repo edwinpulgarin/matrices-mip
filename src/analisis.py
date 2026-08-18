@@ -123,7 +123,13 @@ def calcular(iot: IOT) -> Analisis:
     A = pd.DataFrame(A_arr, index=sectores, columns=sectores)
     L = pd.DataFrame(L_arr, index=sectores, columns=sectores)
 
+    # El cierre de Leontief es L·f = x en la MIP doméstica. En la total el insumo
+    # importado está DENTRO de Z, así que parte de la demanda final la abastece la
+    # importación y no la producción del país: la identidad correcta es
+    # L·(f − m) = x. Se deduce de x + m = Z·1 + f con Z = A·x̂.
     f = iot.f.reindex(sectores).to_numpy(dtype=float)
+    if iot.m is not None:
+        f = f - iot.m.reindex(sectores).fillna(0.0).to_numpy(dtype=float)
     check = float(np.abs(L_arr @ f - x).max())
 
     mult = pd.Series(L_arr.sum(axis=0), index=sectores, name="mult_produccion")

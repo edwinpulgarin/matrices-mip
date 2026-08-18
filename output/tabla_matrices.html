@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matrices insumo-producto · control de calidad</title>
+</head>
+<body>
+<style>
+:root{
+  --tinta:#10161F; --suave:#5A6675; --papel:#F6F8FB; --panel:#FFFFFF;
+  --linea:#DCE3EC; --linea-fuerte:#B9C6D6;
+  --azul:#0B4EA2; --azul-hondo:#17375E; --azul-tenue:#E8F0FA;
+  --ok:#146B45; --ok-fondo:#E4F2EA;
+  --aviso:#9A5B08; --aviso-fondo:#FBEEDC;
+  --sombra:0 1px 2px rgba(16,22,31,.06), 0 8px 24px rgba(16,22,31,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --tinta:#E8EDF4; --suave:#95A3B4; --papel:#0E1218; --panel:#161C25;
+    --linea:#273140; --linea-fuerte:#3A475A;
+    --azul:#6BA5EC; --azul-hondo:#9CC2F0; --azul-tenue:#17222F;
+    --ok:#5FD09B; --ok-fondo:#122A1F;
+    --aviso:#E2A44B; --aviso-fondo:#2A2114;
+    --sombra:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --tinta:#E8EDF4; --suave:#95A3B4; --papel:#0E1218; --panel:#161C25;
+  --linea:#273140; --linea-fuerte:#3A475A;
+  --azul:#6BA5EC; --azul-hondo:#9CC2F0; --azul-tenue:#17222F;
+  --ok:#5FD09B; --ok-fondo:#122A1F;
+  --aviso:#E2A44B; --aviso-fondo:#2A2114;
+  --sombra:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+}
+:root[data-theme="light"]{
+  --tinta:#10161F; --suave:#5A6675; --papel:#F6F8FB; --panel:#FFFFFF;
+  --linea:#DCE3EC; --linea-fuerte:#B9C6D6;
+  --azul:#0B4EA2; --azul-hondo:#17375E; --azul-tenue:#E8F0FA;
+  --ok:#146B45; --ok-fondo:#E4F2EA;
+  --aviso:#9A5B08; --aviso-fondo:#FBEEDC;
+  --sombra:0 1px 2px rgba(16,22,31,.06), 0 8px 24px rgba(16,22,31,.05);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--papel); color:var(--tinta);
+  font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.5;
+}
+.envoltura{max-width:1180px; margin:0 auto; padding:0 24px 72px}
+
+.barra-inst{height:6px; background:var(--azul)}
+header.cabecera{padding:34px 0 22px; border-bottom:1px solid var(--linea)}
+h1{
+  margin:0; font-size:31px; font-weight:700; letter-spacing:-.022em;
+  text-wrap:balance;
+}
+.bajada{margin:8px 0 0; color:var(--suave); max-width:66ch}
+.sello{
+  display:inline-block; margin-bottom:12px; font-size:11px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--azul);
+}
+
+.fichas{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:26px 0 28px}
+@media (max-width:820px){.fichas{grid-template-columns:repeat(2,1fr)}}
+.ficha{
+  background:var(--panel); border:1px solid var(--linea); border-radius:10px;
+  padding:16px 18px; box-shadow:var(--sombra);
+}
+.ficha .n{
+  font-size:32px; font-weight:700; letter-spacing:-.03em; line-height:1.05;
+  font-variant-numeric:tabular-nums;
+}
+.ficha .r{
+  margin-top:4px; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--suave); font-weight:600;
+}
+.ficha.acento .n{color:var(--azul)}
+.ficha.buena .n{color:var(--ok)}
+.ficha.ojo .n{color:var(--aviso)}
+
+.controles{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px}
+input[type="search"], select{
+  font:inherit; font-size:14px; color:var(--tinta); background:var(--panel);
+  border:1px solid var(--linea-fuerte); border-radius:8px; padding:8px 12px;
+}
+input[type="search"]{min-width:230px}
+input:focus-visible, select:focus-visible, .chip:focus-visible, tr.fila:focus-visible{
+  outline:2px solid var(--azul); outline-offset:2px;
+}
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chip{
+  font:inherit; font-size:13px; cursor:pointer; padding:7px 13px; border-radius:999px;
+  border:1px solid var(--linea-fuerte); background:var(--panel); color:var(--suave);
+}
+.chip[aria-pressed="true"]{background:var(--azul); border-color:var(--azul); color:#fff; font-weight:600}
+.cuenta{margin-left:auto; font-size:13px; color:var(--suave); font-variant-numeric:tabular-nums}
+
+.marco{
+  background:var(--panel); border:1px solid var(--linea); border-radius:10px;
+  box-shadow:var(--sombra); overflow-x:auto;
+}
+table{border-collapse:collapse; width:100%; font-size:13.5px}
+thead th{
+  position:sticky; top:0; z-index:2; background:var(--azul-hondo); color:#fff;
+  text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  font-weight:600; padding:11px 12px; white-space:nowrap; cursor:pointer;
+  user-select:none;
+}
+thead th:hover{background:var(--azul)}
+thead th .fl{opacity:.45; margin-left:5px; font-size:10px}
+thead th[aria-sort] .fl{opacity:1}
+td{padding:10px 12px; border-top:1px solid var(--linea); vertical-align:middle}
+.num{text-align:right; font-variant-numeric:tabular-nums}
+tr.fila{cursor:pointer}
+tr.fila:hover td{background:var(--azul-tenue)}
+tr.fila[aria-expanded="true"] td{background:var(--azul-tenue); font-weight:600}
+.pais{font-weight:600; white-space:nowrap}
+.anio{font-variant-numeric:tabular-nums; color:var(--suave)}
+
+.pin{
+  display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600;
+  padding:3px 9px; border-radius:999px; white-space:nowrap;
+}
+.pin.ok{background:var(--ok-fondo); color:var(--ok)}
+.pin.ojo{background:var(--aviso-fondo); color:var(--aviso)}
+.pin::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+
+tr.detalle td{background:var(--papel); padding:0; border-top:0}
+.panel{padding:20px 22px 24px; display:grid; gap:20px; grid-template-columns:1.1fr 1fr}
+@media (max-width:820px){.panel{grid-template-columns:1fr}}
+.panel h3{
+  margin:0 0 10px; font-size:11px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--suave); font-weight:700;
+}
+dl{margin:0; display:grid; grid-template-columns:auto 1fr; gap:7px 16px; font-size:13.5px}
+dt{color:var(--suave)}
+dd{margin:0; text-align:right; font-variant-numeric:tabular-nums}
+.pendiente{
+  margin-top:14px; padding:11px 14px; border-radius:8px; font-size:13.5px;
+  background:var(--aviso-fondo); color:var(--aviso); border:1px solid currentColor;
+}
+.pendiente b{display:block; margin-bottom:3px}
+.ruta{
+  margin-top:12px; font-size:12px; color:var(--suave); word-break:break-all;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+table.mini{width:100%; font-size:13px; border-collapse:collapse}
+table.mini th{
+  text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--suave); padding:0 8px 6px 0; font-weight:700; background:none; position:static;
+}
+table.mini td{padding:5px 8px 5px 0; border-top:1px solid var(--linea)}
+.avance{display:flex; align-items:center; gap:9px; min-width:132px}
+.pista{flex:1; height:7px; border-radius:99px; background:var(--linea); overflow:hidden}
+.pista i{display:block; height:100%; background:var(--azul); border-radius:99px;
+  transition:width .28s ease}
+@media (prefers-reduced-motion:reduce){.pista i{transition:none}}
+.pista i.casi{background:var(--aviso)}
+.pista i.llena{background:var(--ok)}
+.pc{font-size:12.5px; font-variant-numeric:tabular-nums; color:var(--suave);
+  min-width:38px; text-align:right}
+.de{font-size:11px; font-variant-numeric:tabular-nums; color:var(--suave);
+  opacity:.72; min-width:26px}
+
+.visto{
+  font:inherit; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;
+  padding:5px 11px; border-radius:999px; border:1px dashed var(--linea-fuerte);
+  background:transparent; color:var(--suave);
+}
+.visto:hover{border-style:solid; color:var(--azul); border-color:var(--azul)}
+.visto.si{background:var(--ok-fondo); border:1px solid var(--ok); color:var(--ok)}
+.visto:focus-visible{outline:2px solid var(--azul); outline-offset:2px}
+
+.pendiente ul{margin:6px 0 0; padding-left:18px}
+.pendiente li{margin:2px 0}
+.listo{
+  margin-top:14px; padding:11px 14px; border-radius:8px; font-size:13.5px;
+  background:var(--ok-fondo); color:var(--ok); border:1px solid currentColor;
+}
+.listo b{display:block; margin-bottom:2px}
+.noaplica{
+  margin-top:10px; padding:10px 14px; border-radius:8px; font-size:13px;
+  border:1px dashed var(--linea-fuerte); color:var(--suave);
+}
+.noaplica b{display:block; margin-bottom:3px; color:var(--tinta)}
+.noaplica ul{margin:4px 0 0; padding-left:18px}
+.vacio{color:var(--suave); font-size:13.5px; font-style:italic}
+footer{margin-top:26px; font-size:12.5px; color:var(--suave)}
+footer code{font-size:12px}
+</style>
+<div class="barra-inst"></div>
+<div class="envoltura">
+  <header class="cabecera">
+    <span class="sello">Matrices insumo-producto · control de calidad</span>
+    <h1>Las 38 matrices, una por una</h1>
+    <p class="bajada">Cada fila es una matriz publicada. Hacé clic para ver cómo se armó,
+      qué controles pasó y cómo se compara contra la matriz que publica el instituto.
+      Las columnas ordenan; los filtros acotan.</p>
+  </header>
+
+  <section class="fichas">
+    <div class="ficha acento"><div class="n" id="n-medio">—</div>
+      <div class="r">Avance promedio</div></div>
+    <div class="ficha buena"><div class="n" id="n-completas">—</div>
+      <div class="r">Técnicamente al 100 %</div></div>
+    <div class="ficha ojo"><div class="n" id="n-vistos">—</div>
+      <div class="r">Cerradas por el equipo</div></div>
+    <div class="ficha"><div class="n">33<span style="font-size:18px">/35</span></div>
+      <div class="r">Sin modificar una celda</div></div>
+  </section>
+
+  <div class="controles">
+    <input id="buscar" type="search" placeholder="Buscar país, año o método…"
+           aria-label="Buscar">
+    <div class="chips">
+      <button class="chip" data-campo="pais" data-valor="todos"
+              aria-pressed="true">Todos</button><button class="chip" data-campo="pais" data-valor="Argentina" aria-pressed="false">Argentina</button><button class="chip" data-campo="pais" data-valor="Brasil" aria-pressed="false">Brasil</button><button class="chip" data-campo="pais" data-valor="Colombia" aria-pressed="false">Colombia</button><button class="chip" data-campo="pais" data-valor="México" aria-pressed="false">México</button><button class="chip" data-campo="pais" data-valor="Uruguay" aria-pressed="false">Uruguay</button>
+    </div>
+    <div class="chips">
+      <button class="chip" data-campo="estado" data-valor="todos"
+              aria-pressed="true">Todas</button>
+      <button class="chip" data-campo="estado" data-valor="completa"
+              aria-pressed="false">Al 100 %</button>
+      <button class="chip" data-campo="estado" data-valor="curso"
+              aria-pressed="false">Les falta algo</button>
+      <button class="chip" data-campo="estado" data-valor="sinvisto"
+              aria-pressed="false">Sin visto</button>
+    </div>
+    <span class="cuenta" id="cuenta"></span>
+  </div>
+
+  <div class="marco">
+    <table>
+      <thead><tr><th data-col="pais" scope="col">País<span class="fl">◆</span></th><th data-col="anio" scope="col">Año<span class="fl">◆</span></th><th data-col="dim" scope="col">Dim.<span class="fl">◆</span></th><th data-col="modo" scope="col">Cómo se cerró<span class="fl">◆</span></th><th data-col="avance" scope="col">Avance<span class="fl">◆</span></th><th data-col="filacol" scope="col">Fila = columna<span class="fl">◆</span></th><th data-col="mult" scope="col">Multiplicador<span class="fl">◆</span></th><th data-col="visto" scope="col">Visto del equipo<span class="fl">◆</span></th></tr></thead>
+      <tbody id="cuerpo"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <p><strong>Cómo se calcula el avance.</strong> Cuatro requisitos verificables, cada
+      uno vale lo mismo: pasar las siete verificaciones sobre el Excel, leer toda la
+      utilización que publica la fuente, armarla sin modificar ninguna celda leída, y
+      contrastarla contra la matriz del instituto. Los que no aplican salen del
+      denominador: no se penaliza a una matriz por no tener contra qué compararse
+      cuando el instituto no publica matriz de ese año, ni a las matrices oficiales por
+      no compararse contra sí mismas. Cada fila dice exactamente qué le falta.</p>
+    <p><strong>El visto del equipo va aparte, a propósito.</strong> El avance mide lo
+      que se puede verificar solo; el visto es una decisión de personas. Mezclarlos en
+      un mismo número deja a una matriz impecable en 80 % por una firma que falta.</p>
+    <p><strong>Cómo se cerró el cuadro.</strong> «Cerraba solo»: el cuadro publicado ya
+      cumple las dos identidades contables. «Sin tocar celdas»: quedó un residuo chico y
+      se anotó aparte, en su propia columna de demanda final, sin modificar ningún dato
+      leído. «RAS»: el ajuste del Cap. 11 del Handbook, que sí reescribe celdas — hoy
+      sólo lo necesitan dos matrices.</p>
+    <p><strong>Las marcas del equipo se guardan en este navegador.</strong> La página es
+      estática y no hay servidor donde dejarlas: si se abre en otra máquina, hay que
+      volver a marcar.</p>
+    <p>Se genera con <code>py -3 scripts/tabla_interactiva.py</code> a partir de
+      <code>manifest_publicables.csv</code>, <code>estado_ras.csv</code>,
+      <code>cobertura.csv</code> y <code>validacion_oficiales.csv</code>. No recalcula
+      nada: si un número no está en esos archivos, acá no aparece.</p>
+  </footer>
+</div>
+<script>
+const DATOS = [{"pais": "Argentina", "anio": 2004, "id": "Argentina 2004", "variante": "reconstruida", "oficial": false, "dim": 162, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Argentina/MIP_Argentina_2004_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.00015552962602871656, "residuo": 6.154675037824457e-08, "mueve": 0.0, "negativos": 0, "filacol": 2.137229614996852e-15, "mult": 1.9763573080608203, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2004, no hay contra qué contrastarla"]}, {"pais": "Argentina", "anio": 2018, "id": "Argentina 2018", "variante": "reconstruida", "oficial": false, "dim": 107, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Argentina/MIP_Argentina_2018_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 2.4090799278763035e-06, "residuo": 1.904111920306487e-09, "mueve": 0.0, "negativos": 0, "filacol": 9.581626848872575e-16, "mult": 2.010812831668725, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2018, no hay contra qué contrastarla"]}, {"pais": "Argentina", "anio": 2019, "id": "Argentina 2019", "variante": "reconstruida", "oficial": false, "dim": 107, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Argentina/MIP_Argentina_2019_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.003878139759291235, "residuo": 0.0004441165182354939, "mueve": 0.0, "negativos": 0, "filacol": 1.1738773991996544e-15, "mult": 1.9880502977969514, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2019, no hay contra qué contrastarla"]}, {"pais": "Argentina", "anio": 2020, "id": "Argentina 2020", "variante": "reconstruida", "oficial": false, "dim": 107, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Argentina/MIP_Argentina_2020_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 4.236673252488323e-06, "residuo": 1.1280275129876142e-09, "mueve": 0.0, "negativos": 0, "filacol": 1.3437585594665557e-15, "mult": 1.9958913352183785, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2020, no hay contra qué contrastarla"]}, {"pais": "Argentina", "anio": 2021, "id": "Argentina 2021", "variante": "reconstruida", "oficial": false, "dim": 107, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Argentina/MIP_Argentina_2021_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 1.5361847376217278e-07, "residuo": 8.205694515787798e-11, "mueve": 0.0, "negativos": 0, "filacol": 1.9679181337000757e-15, "mult": 2.028912206439674, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2021, no hay contra qué contrastarla"]}, {"pais": "Argentina", "anio": 2022, "id": "Argentina 2022", "variante": "reconstruida", "oficial": false, "dim": 107, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Argentina/MIP_Argentina_2022_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.0011425936366871356, "residuo": 0.00015524675639821294, "mueve": 0.0, "negativos": 0, "filacol": 7.394053723764958e-16, "mult": 2.039600386812299, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2022, no hay contra qué contrastarla"]}, {"pais": "Argentina", "anio": 2023, "id": "Argentina 2023", "variante": "reconstruida", "oficial": false, "dim": 107, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Argentina/MIP_Argentina_2023_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.002081158911609019, "residuo": 0.000280670925140017, "mueve": 0.0, "negativos": 0, "filacol": 9.43372742562172e-16, "mult": 2.0076253336483645, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2023, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2010, "id": "Brasil 2010", "variante": "reconstruida", "oficial": false, "dim": 67, "valoracion": "todo medido celda a celda", "archivo": "matrices/Brasil/MIP_Brasil_2010_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.0009562928475496219, "residuo": 8.879144389888382e-05, "mueve": 0.0, "negativos": 0, "filacol": 6.412145441087344e-16, "mult": 2.0997942487396695, "cobertura": "si", "contrastes": [{"objeto": "D", "n": 67, "dif": -1.811023622178e-05, "corr": 0.999999993391862, "desvio": 0.00173610026713978}, {"objeto": "A", "n": 67, "dif": -0.00796278552033236, "corr": 0.999999828941218, "desvio": 0.0264867158009409}, {"objeto": "L", "n": 67, "dif": -0.00574964527648714, "corr": 0.999999986654137, "desvio": 0.0135594765127374}], "falta": [], "avance": 100, "cumple_n": 4, "aplican_n": 4, "no_aplican": []}, {"pais": "Brasil", "anio": 2011, "id": "Brasil 2011", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2011_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.001388002827732268, "residuo": 0.0001082162044154789, "mueve": 0.0, "negativos": 0, "filacol": 5.520610498541063e-16, "mult": 2.0753332704698444, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2011, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2012, "id": "Brasil 2012", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2012_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.0012120275914516408, "residuo": 9.92218622728102e-05, "mueve": 0.0, "negativos": 0, "filacol": 8.365693803226176e-16, "mult": 2.1087453777680225, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2012, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2013, "id": "Brasil 2013", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2013_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.0013308553390283888, "residuo": 0.000113001398406083, "mueve": 0.0, "negativos": 0, "filacol": 7.296890569003254e-16, "mult": 2.121250770468163, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2013, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2014, "id": "Brasil 2014", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2014_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.000831394001968534, "residuo": 7.604904192372261e-05, "mueve": 0.0, "negativos": 0, "filacol": 9.259692377953709e-16, "mult": 2.1320377876168415, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2014, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2015, "id": "Brasil 2015", "variante": "reconstruida", "oficial": false, "dim": 67, "valoracion": "todo medido celda a celda", "archivo": "matrices/Brasil/MIP_Brasil_2015_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.00028728374186109734, "residuo": 2.913807900076336e-05, "mueve": 0.0, "negativos": 0, "filacol": 5.704955494802255e-16, "mult": 2.1768601021916063, "cobertura": "si", "contrastes": [{"objeto": "D", "n": 67, "dif": 2.36220472071835e-06, "corr": 0.999999999407031, "desvio": 0.000659395038575556}, {"objeto": "A", "n": 67, "dif": -0.00368987758390116, "corr": 0.999999975652435, "desvio": 0.0101671597235461}, {"objeto": "L", "n": 67, "dif": -0.00268322751206806, "corr": 0.999999998471775, "desvio": 0.00515653965409929}], "falta": [], "avance": 100, "cumple_n": 4, "aplican_n": 4, "no_aplican": []}, {"pais": "Brasil", "anio": 2016, "id": "Brasil 2016", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2016_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.0063988814193808915, "residuo": 0.0006568611317091284, "mueve": 0.0, "negativos": 0, "filacol": 9.874676131785386e-16, "mult": 2.099493954395601, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2016, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2017, "id": "Brasil 2017", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2017_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.0006259678798956077, "residuo": 5.571168639734031e-05, "mueve": 0.0, "negativos": 0, "filacol": 8.058877570120647e-16, "mult": 2.0989008480476623, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2017, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2018, "id": "Brasil 2018", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2018_LIBRO.xlsx", "verificaciones": true, "modo": "no hizo falta", "desbalance": 1.6140101184967671e-15, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": 7.271958037262931e-16, "mult": 2.1593519253469378, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2018, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2019, "id": "Brasil 2019", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2019_LIBRO.xlsx", "verificaciones": true, "modo": "no hizo falta", "desbalance": 7.279961593059609e-16, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": 6.919729918004551e-16, "mult": 2.1729538301358566, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2019, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2020, "id": "Brasil 2020", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2020_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.0029482063704363726, "residuo": 0.00030018812060939786, "mueve": 0.0, "negativos": 0, "filacol": 7.000488395808367e-16, "mult": 2.1991011155482934, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2020, no hay contra qué contrastarla"]}, {"pais": "Brasil", "anio": 2021, "id": "Brasil 2021", "variante": "reconstruida", "oficial": false, "dim": 68, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Brasil/MIP_Brasil_2021_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.00021939299778144428, "residuo": 1.7729890188742394e-05, "mueve": 0.0, "negativos": 0, "filacol": 6.432070026682661e-16, "mult": 2.2975625539857365, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2021, no hay contra qué contrastarla"]}, {"pais": "Colombia", "anio": 2014, "id": "Colombia 2014", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2014_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.012546463193578872, "residuo": 0.0005247528294911489, "mueve": 0.0, "negativos": 0, "filacol": 1.1287554474377017e-15, "mult": 1.9921100440735173, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2014, no hay contra qué contrastarla"]}, {"pais": "Colombia", "anio": 2016, "id": "Colombia 2016", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2016_LIBRO.xlsx", "verificaciones": true, "modo": "no hizo falta", "desbalance": 3.674726067769407e-15, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": 8.942917421562717e-16, "mult": 2.0107377500413723, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2016, no hay contra qué contrastarla"]}, {"pais": "Colombia", "anio": 2018, "id": "Colombia 2018", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2018_LIBRO.xlsx", "verificaciones": true, "modo": "no hizo falta", "desbalance": 1.8947806286936004e-14, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": 1.1398962265679815e-15, "mult": 2.0029401956466377, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2018, no hay contra qué contrastarla"]}, {"pais": "Colombia", "anio": 2019, "id": "Colombia 2019", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2019_LIBRO.xlsx", "verificaciones": true, "modo": "no hizo falta", "desbalance": 2.021099337273174e-14, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": 9.443163678369144e-16, "mult": 2.0121070054828767, "cobertura": "si", "contrastes": [{"objeto": "Z", "n": 58, "dif": 0.0905680406755094, "corr": 0.972781025139609, "desvio": 20.2330522634244}, {"objeto": "L dom.", "n": 58, "dif": 3.25949757125317, "corr": 0.99180354190371, "desvio": 13.5628090454022}, {"objeto": "L total", "n": 58, "dif": -0.0130688452755101, "corr": 0.990633974436668, "desvio": 12.1826973853832}], "falta": [], "avance": 100, "cumple_n": 4, "aplican_n": 4, "no_aplican": []}, {"pais": "Colombia", "anio": 2020, "id": "Colombia 2020", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2020_LIBRO.xlsx", "verificaciones": true, "modo": "no hizo falta", "desbalance": 1.1967035549643792e-14, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": 6.805557481090454e-16, "mult": 2.0292782144271224, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2020, no hay contra qué contrastarla"]}, {"pais": "Colombia", "anio": 2021, "id": "Colombia 2021", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2021_LIBRO.xlsx", "verificaciones": true, "modo": "no hizo falta", "desbalance": 7.105427357601002e-15, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": 5.542319937677808e-16, "mult": 2.0725510927434008, "cobertura": "si", "contrastes": [{"objeto": "Z", "n": 58, "dif": 0.128335404870938, "corr": 0.963928397459019, "desvio": 22.7602689023657}, {"objeto": "L dom.", "n": 58, "dif": 3.60891319082355, "corr": 0.989945873724103, "desvio": 14.9952936255864}, {"objeto": "L total", "n": 58, "dif": 0.0826060686699437, "corr": 0.988748183304931, "desvio": 13.1183705510506}], "falta": [], "avance": 100, "cumple_n": 4, "aplican_n": 4, "no_aplican": []}, {"pais": "Colombia", "anio": 2022, "id": "Colombia 2022", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2022_LIBRO.xlsx", "verificaciones": true, "modo": "no hizo falta", "desbalance": 4.330927151299658e-14, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": 8.18921935686051e-16, "mult": 2.108692435989566, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2022, no hay contra qué contrastarla"]}, {"pais": "Colombia", "anio": 2023, "id": "Colombia 2023", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2023_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.0051724471303443926, "residuo": 0.0005701629992014132, "mueve": 0.0, "negativos": 0, "filacol": 6.513546944347546e-16, "mult": 2.0617708391715888, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2023, no hay contra qué contrastarla"]}, {"pais": "Colombia", "anio": 2024, "id": "Colombia 2024", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2024_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.0008609754678156541, "residuo": 9.169822728393599e-05, "mueve": 0.0, "negativos": 0, "filacol": 6.044660309199489e-16, "mult": 2.0349193046204728, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2024, no hay contra qué contrastarla"]}, {"pais": "México", "anio": 2008, "id": "México 2008 oficial", "variante": "OFICIAL", "oficial": true, "dim": 262, "valoracion": "la publica el instituto, ya construida", "archivo": "matrices/Mexico/MIP_Mexico_2008_LIBRO_OFICIAL.xlsx", "verificaciones": true, "modo": "matriz publicada", "desbalance": null, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": null, "mult": null, "cobertura": null, "contrastes": [], "falta": [], "avance": 100, "cumple_n": 2, "aplican_n": 2, "no_aplican": ["no hay cuadro que leer: la matriz viene construida", "es la matriz del instituto: no se contrasta contra sí misma"]}, {"pais": "México", "anio": 2013, "id": "México 2013 oficial", "variante": "OFICIAL", "oficial": true, "dim": 262, "valoracion": "la publica el instituto, ya construida", "archivo": "matrices/Mexico/MIP_Mexico_2013_LIBRO_OFICIAL.xlsx", "verificaciones": true, "modo": "matriz publicada", "desbalance": 2.624242878620295e-05, "residuo": 1.7286302442054267e-06, "mueve": 0.0, "negativos": 0, "filacol": 2.4216673303935756e-15, "mult": 2.04449985821115, "cobertura": null, "contrastes": [], "falta": [], "avance": 100, "cumple_n": 2, "aplican_n": 2, "no_aplican": ["no hay cuadro que leer: la matriz viene construida", "es la matriz del instituto: no se contrasta contra sí misma"]}, {"pais": "México", "anio": 2013, "id": "México 2013", "variante": "reconstruida", "oficial": false, "dim": 262, "valoracion": "todo medido celda a celda", "archivo": "matrices/Mexico/MIP_Mexico_2013_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 2.624242878620295e-05, "residuo": 1.7286302442054267e-06, "mueve": 0.0, "negativos": 0, "filacol": 2.4216673303935756e-15, "mult": 2.04449985821115, "cobertura": "si", "contrastes": [{"objeto": "Z", "n": 262, "dif": -4.4202419502426e-10, "corr": 0.999708137064299, "desvio": 3.70708412914451}], "falta": [], "avance": 100, "cumple_n": 4, "aplican_n": 4, "no_aplican": []}, {"pais": "México", "anio": 2018, "id": "México 2018 oficial", "variante": "OFICIAL", "oficial": true, "dim": 263, "valoracion": "la publica el instituto, ya construida", "archivo": "matrices/Mexico/MIP_Mexico_2018_LIBRO_OFICIAL.xlsx", "verificaciones": true, "modo": "matriz publicada", "desbalance": null, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": null, "mult": null, "cobertura": null, "contrastes": [], "falta": [], "avance": 100, "cumple_n": 2, "aplican_n": 2, "no_aplican": ["no hay cuadro que leer: la matriz viene construida", "es la matriz del instituto: no se contrasta contra sí misma"]}, {"pais": "Uruguay", "anio": 2012, "id": "Uruguay 2012", "variante": "reconstruida", "oficial": false, "dim": 107, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Uruguay/MIP_Uruguay_2012_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.002726706715353492, "residuo": 0.0002285852349545035, "mueve": 0.0, "negativos": 0, "filacol": 1.0891021711593947e-15, "mult": 2.0053587662390275, "cobertura": "si", "contrastes": [], "falta": [], "avance": 100, "cumple_n": 3, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2012, no hay contra qué contrastarla"]}, {"pais": "Colombia", "anio": 2015, "id": "Colombia 2015", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2015_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.00025588536335721597, "residuo": 5.551923672208978e-06, "mueve": 0.0, "negativos": 0, "filacol": 5.80682970006658e-16, "mult": 2.0237217300248647, "cobertura": "si", "contrastes": [], "falta": ["Contrastarla contra la matriz del instituto"], "avance": 75, "cumple_n": 3, "aplican_n": 4, "no_aplican": []}, {"pais": "Colombia", "anio": 2017, "id": "Colombia 2017", "variante": "reconstruida", "oficial": false, "dim": 61, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Colombia/MIP_Colombia_2017_LIBRO.xlsx", "verificaciones": true, "modo": "no hizo falta", "desbalance": 8.268133652481165e-15, "residuo": 0.0, "mueve": 0.0, "negativos": 0, "filacol": 6.307175463057755e-16, "mult": 2.0011105089843717, "cobertura": "si", "contrastes": [], "falta": ["Contrastarla contra la matriz del instituto"], "avance": 75, "cumple_n": 3, "aplican_n": 4, "no_aplican": []}, {"pais": "Uruguay", "anio": 2016, "id": "Uruguay 2016", "variante": "reconstruida", "oficial": false, "dim": 95, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Uruguay/MIP_Uruguay_2016_LIBRO.xlsx", "verificaciones": true, "modo": "discrepancia", "desbalance": 0.014565234875511068, "residuo": 0.0004413153226838384, "mueve": 0.0, "negativos": 0, "filacol": 1.1209905963475807e-15, "mult": 1.9836923259459995, "cobertura": "si", "contrastes": [], "falta": ["Contrastarla contra la matriz del instituto"], "avance": 75, "cumple_n": 3, "aplican_n": 4, "no_aplican": []}, {"pais": "Argentina", "anio": 1997, "id": "Argentina 1997", "variante": "reconstruida", "oficial": false, "dim": 124, "valoracion": "todo medido celda a celda", "archivo": "matrices/Argentina/MIP_Argentina_1997_LIBRO.xlsx", "verificaciones": true, "modo": "RAS", "desbalance": 0.04455571615608437, "residuo": 0.0, "mueve": 0.002368574025078521, "negativos": 45, "filacol": 6.654431837444956e-16, "mult": 2.039740638515403, "cobertura": null, "contrastes": [{"objeto": "Z", "n": 124, "dif": 4.18670311752578e-06, "corr": 0.979827938669524, "desvio": 21.9892864220527}], "falta": ["Armarla sin modificar ninguna celda leída"], "avance": 67, "cumple_n": 2, "aplican_n": 3, "no_aplican": ["no hay cuadro que leer: la matriz viene construida"]}, {"pais": "Uruguay", "anio": 2017, "id": "Uruguay 2017", "variante": "reconstruida", "oficial": false, "dim": 95, "valoracion": "impuestos y márgenes repartidos dentro de cada fila", "archivo": "matrices/Uruguay/MIP_Uruguay_2017_LIBRO.xlsx", "verificaciones": true, "modo": "RAS", "desbalance": 0.024621775114117915, "residuo": 0.0, "mueve": 0.0014074594662761082, "negativos": 14, "filacol": 6.76668350995966e-13, "mult": 1.9694056616314044, "cobertura": "si", "contrastes": [], "falta": ["Armarla sin modificar ninguna celda leída"], "avance": 67, "cumple_n": 2, "aplican_n": 3, "no_aplican": ["el instituto no publica matriz de 2017, no hay contra qué contrastarla"]}];
+const $ = (s, e=document) => e.querySelector(s);
+const num = (v, d=4) => v === null || v === undefined ? "—" : v.toFixed(d);
+const pct = (v, d=3) => v === null || v === undefined ? "—" : (v*100).toFixed(d) + " %";
+const exp = v => v === null || v === undefined ? "—" : v.toExponential(1).replace("e", "e");
+
+let orden = {col:"avance", asc:false};   // primero las más cerca de cerrar
+let filtros = {pais:"todos", estado:"todos", texto:""};
+let abierta = null;
+
+const COLS = [
+  {k:"pais",  t:"País",           v:r=>`<span class="pais">${r.pais}</span>`},
+  {k:"anio",  t:"Año",            v:r=>`<span class="anio">${r.anio}</span>`, num:true},
+  {k:"dim",   t:"Dim.",           v:r=>r.dim ? `${r.dim}×${r.dim}` : "—", num:true},
+  {k:"modo",  t:"Cómo se cerró",  v:r=>etiquetaModo(r)},
+  {k:"avance",t:"Avance",         v:r=>barra(r)},
+  {k:"filacol", t:"Fila = columna", v:r=>exp(r.filacol), num:true},
+  {k:"mult",  t:"Multiplicador",  v:r=>num(r.mult), num:true},
+  {k:"visto", t:"Visto del equipo", v:r=>casilla(r)},
+];
+
+// El visto bueno del equipo vive en el navegador de quien revisa: la página es
+// estática y no hay dónde guardarlo del otro lado. Es lo que hace falta para
+// ir marcando durante la reunión.
+const CLAVE = "mip.vistos";
+let vistos = new Set(JSON.parse(localStorage.getItem(CLAVE) || "[]"));
+const guardar = () => localStorage.setItem(CLAVE, JSON.stringify([...vistos]));
+
+// El avance mide lo verificable; el visto del equipo es una decisión de
+// personas y se cuenta aparte. Mezclarlos en un solo número dejaba a Colombia
+// en 80 % teniendo todos sus controles en verde.
+const avanceDe = r => r.avance;
+
+function barra(r){
+  const a = Math.min(100, avanceDe(r));
+  const cl = a >= 100 ? "llena" : a >= 80 ? "casi" : "";
+  return `<div class="avance"><div class="pista"><i class="${cl}" style="width:${a}%"></i></div>
+          <span class="pc">${a} %</span>
+          <span class="de">${r.cumple_n}/${r.aplican_n}</span></div>`;
+}
+
+function casilla(r){
+  const m = vistos.has(r.id);
+  return `<button class="visto ${m ? "si" : ""}" data-visto="${r.id}"
+            aria-pressed="${m}" title="Marcar como revisada por el equipo">
+            ${m ? "✓ revisada" : "marcar"}</button>`;
+}
+
+function etiquetaModo(r){
+  const m = {
+    "no hizo falta":"cerraba solo",
+    "discrepancia":"sin tocar celdas",
+    "RAS":"RAS",
+    "matriz publicada":"publicada por el instituto",
+  }[r.modo] || r.modo;
+  return m;
+}
+
+function visibles(){
+  const t = filtros.texto.trim().toLowerCase();
+  let f = DATOS.filter(r =>
+    (filtros.pais === "todos" || r.pais === filtros.pais) &&
+    (filtros.estado === "todos"
+      || (filtros.estado === "completa" && avanceDe(r) >= 100)
+      || (filtros.estado === "curso" && avanceDe(r) < 100)
+      || (filtros.estado === "sinvisto" && !vistos.has(r.id))) &&
+    (!t || r.id.toLowerCase().includes(t) || r.valoracion.toLowerCase().includes(t)
+        || etiquetaModo(r).toLowerCase().includes(t))
+  );
+  const c = orden.col;
+  const val = (r) => c === "avance" ? avanceDe(r)
+                   : c === "visto"  ? (vistos.has(r.id) ? 1 : 0)
+                   : r[c];
+  f.sort((a,b) => {
+    let x = val(a), y = val(b);
+    if (x === null || x === undefined) x = -Infinity;
+    if (y === null || y === undefined) y = -Infinity;
+    if (typeof x === "string") return orden.asc ? x.localeCompare(y) : y.localeCompare(x);
+    return orden.asc ? x - y : y - x;
+  });
+  return f;
+}
+
+function detalle(r){
+  const contrastes = r.contrastes.length
+    ? `<table class="mini"><thead><tr><th>Objeto</th><th>n</th><th>Dif. suma</th>
+         <th>Correlación</th><th>Desvío</th></tr></thead><tbody>` +
+      r.contrastes.map(c => `<tr><td>${c.objeto}</td><td>${c.n}</td>
+        <td class="num">${c.dif.toFixed(4)} %</td>
+        <td class="num">${c.corr.toFixed(4)}</td>
+        <td class="num">${c.desvio.toFixed(2)} %</td></tr>`).join("") +
+      `</tbody></table>`
+    : r.oficial
+      ? `<p class="vacio">Es la matriz que publica el instituto: es la referencia contra
+         la que se contrastan las demás, no se compara contra sí misma.</p>`
+      : `<p class="vacio">El instituto no publica una matriz para este año, o falta bajar
+         el anexo para contrastarla.</p>`;
+
+  const pend = r.falta.length
+    ? `<div class="pendiente"><b>Falta para llegar al 100 %</b>` +
+      `<ul>${r.falta.map(f => `<li>${f}</li>`).join("")}</ul></div>`
+    : vistos.has(r.id)
+      ? `<div class="listo"><b>Cerrada.</b> Pasó todos los controles que le
+         corresponden y tiene el visto del equipo.</div>`
+      : `<div class="listo"><b>Técnicamente lista.</b> Pasó todos los controles que le
+         corresponden. Falta sólo el visto del equipo.</div>`;
+
+  return `<div class="panel">
+    <div>
+      <h3>Cómo se armó</h3>
+      <dl>
+        <dt>Cómo se llevó a precios básicos</dt><dd>${r.valoracion}</dd>
+        <dt>Cierre del cuadro</dt><dd>${etiquetaModo(r)}</dd>
+        <dt>Desbalance al entrar</dt><dd>${exp(r.desbalance)}</dd>
+        <dt>Residuo anotado aparte</dt><dd>${r.oficial ? "—" : pct(r.residuo)}</dd>
+        <dt>Celdas movidas por el RAS</dt><dd>${r.oficial ? "—" : pct(r.mueve)}</dd>
+        <dt>Negativos de la fuente conservados</dt><dd>${r.negativos || "—"}</dd>
+      </dl>
+      <h3 style="margin-top:18px">Controles</h3>
+      <dl>
+        <dt>Siete verificaciones sobre el Excel</dt>
+        <dd>${r.verificaciones ? "pasa" : "no pasa"}</dd>
+        <dt>Cobertura de la fuente</dt>
+        <dd>${r.cobertura === "si" ? "completa" : r.cobertura === "no" ? "revisar" : "—"}</dd>
+        <dt>Fila = columna</dt><dd>${exp(r.filacol)}</dd>
+        <dt>Multiplicador medio</dt><dd>${num(r.mult)}</dd>
+      </dl>
+      ${pend}
+      ${r.no_aplican.length ? `<div class="noaplica"><b>No le aplican</b>
+        <ul>${r.no_aplican.map(x => `<li>${x}</li>`).join("")}</ul></div>` : ""}
+      <p class="ruta">${r.archivo}</p>
+    </div>
+    <div>
+      <h3>Contra la matriz que publica el instituto</h3>
+      ${contrastes}
+    </div>
+  </div>`;
+}
+
+function pintar(){
+  const f = visibles();
+  const cuerpo = $("#cuerpo");
+  cuerpo.innerHTML = f.map(r => {
+    const ab = abierta === r.id;
+    const celdas = COLS.map(c =>
+      `<td class="${c.num ? "num" : ""}">${c.v(r)}</td>`).join("");
+    return `<tr class="fila" tabindex="0" data-id="${r.id}" aria-expanded="${ab}">${celdas}</tr>` +
+      (ab ? `<tr class="detalle"><td colspan="${COLS.length}">${detalle(r)}</td></tr>` : "");
+  }).join("");
+  const completas = DATOS.filter(r => avanceDe(r) >= 100).length;
+  const medio = Math.round(DATOS.reduce((a, r) => a + Math.min(100, avanceDe(r)), 0) / DATOS.length);
+  $("#cuenta").textContent = `${f.length} de ${DATOS.length} matrices`;
+  $("#n-completas").textContent = completas;
+  $("#n-medio").textContent = medio + " %";
+  $("#n-vistos").textContent = vistos.size;
+  document.querySelectorAll("thead th").forEach(th => {
+    const k = th.dataset.col;
+    if (k === orden.col) th.setAttribute("aria-sort", orden.asc ? "ascending" : "descending");
+    else th.removeAttribute("aria-sort");
+    const fl = th.querySelector(".fl");
+    if (fl) fl.textContent = k === orden.col ? (orden.asc ? "▲" : "▼") : "◆";
+  });
+}
+
+function alternar(id){
+  abierta = abierta === id ? null : id;
+  pintar();
+}
+
+document.addEventListener("click", e => {
+  const th = e.target.closest("thead th");
+  if (th){
+    const k = th.dataset.col;
+    orden = {col:k, asc: orden.col === k ? !orden.asc : true};
+    return pintar();
+  }
+  const btn = e.target.closest("[data-visto]");
+  if (btn){
+    const id = btn.dataset.visto;
+    vistos.has(id) ? vistos.delete(id) : vistos.add(id);
+    guardar();
+    return pintar();
+  }
+  const tr = e.target.closest("tr.fila");
+  if (tr) return alternar(tr.dataset.id);
+  const chip = e.target.closest(".chip");
+  if (chip){
+    const [campo, valor] = [chip.dataset.campo, chip.dataset.valor];
+    filtros[campo] = valor;
+    document.querySelectorAll(`.chip[data-campo="${campo}"]`).forEach(c =>
+      c.setAttribute("aria-pressed", c.dataset.valor === valor));
+    pintar();
+  }
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.fila")){
+    e.preventDefault();
+    alternar(e.target.dataset.id);
+  }
+});
+$("#buscar").addEventListener("input", e => { filtros.texto = e.target.value; pintar(); });
+
+pintar();
+</script>
+</body>
+</html>

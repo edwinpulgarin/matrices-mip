@@ -47,6 +47,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from .. import crudo as _crudo
+
 HR_CONCEPTO = 4      # fila con el concepto (OPC, MCT, DF...)
 HR_DETALLE = 5       # fila con el detalle (códigos de industria, componentes)
 R0 = 6               # primera fila de datos
@@ -184,6 +186,8 @@ def parse(carpeta: str | Path, anio: int = 2013, nivel: str = "RAMA",
 
     return {
         "V_pi": V_pi, "U_pc": U_pc, "Y_pc": Y_pc, "val": val, "VA": VA,
+        "crudo": [_crudo.hoja("Oferta", of, f_of, "Tabulado"),
+                  _crudo.hoja("Demanda p. comprador", us, f_us, "Tabulado")],
         "prod_labels": {k: f"{k} - {prod_name[k]}" for k in prod_keys},
         "ind_labels": {k: f"{k} - {ind_name[k]}" for k in ind_keys},
         "ind_code": ind_code, "ind_name": ind_name,
@@ -211,11 +215,15 @@ def parse_sin_prorrateo(carpeta: str | Path, anio: int = 2013, nivel: str = "RAM
     ind_keys = list(base["V_pi"].columns)
     pre = f"MEX_COU_{anio}_PRECIOSCORRIENTES_20x20_DEMANDA_"
 
+    crudos_pb = []
+
     def leer(concepto: str, origen: str):
         f = carpeta / f"{pre}{concepto}_{nivel}_SCIAN_{origen}.xlsx"
         if not f.exists():
             raise FileNotFoundError(f)
         x = _hoja(f)
+        crudos_pb.append(_crudo.hoja(f"Demanda pb {origen.replace('&', '+').lower()}",
+                                     x, f, "Tabulado"))
         rows, icols = _filas_rama(x), _cols_rama(x)
         pk = [_split(x.iat[r, 0])[0] for r in rows]
         U = pd.DataFrame(_num(x.iloc[rows, icols]).to_numpy(), index=pk,
@@ -242,7 +250,9 @@ def parse_sin_prorrateo(carpeta: str | Path, anio: int = 2013, nivel: str = "RAM
                 - U_pcb.sum(axis=0).reindex(ind_keys).fillna(0.0))
 
     base.update({"U_dom": U_dom, "Y_dom": Y_dom, "U_imp": U_imp, "Y_imp": Y_imp,
-                 "imptax_j": imptax_j})
+                 "imptax_j": imptax_j,
+                 # los tres tabulados a precios básicos que sólo usa este camino
+                 "crudo": base["crudo"] + crudos_pb})
     if verbose:
         print(f"  [MX {anio} sin prorrateo] U_dom {U_dom.to_numpy().sum():,.0f} · "
               f"U_imp {U_imp.to_numpy().sum():,.0f} · impuestos {imptax_j.sum():,.0f}")

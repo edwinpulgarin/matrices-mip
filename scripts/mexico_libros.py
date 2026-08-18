@@ -27,7 +27,7 @@ from src.valoracion import (ensamblar_directo, valorar_argentina as valorar_pror
 from src.balanceo import balancear
 from src.transformacion import transformar
 from src.analisis import calcular
-from src.export_libro import build_libro
+from src.export_libro import build_libro, avisar_libros_abiertos
 
 STG = Path(r"c:/Users/edwin/Documents/MIP V2/data/raw/_cepal_staging")
 # nivel rama SCIAN = 262 ramas, el máximo detalle publicado por INEGI
@@ -41,6 +41,7 @@ def _mip(sut):
 
 
 def main():
+    avisar_libros_abiertos(ROOT / "matrices")
     filas = ["# México — MIP reconstruidas desde COU INEGI (UN Handbook F74 Rev.1)\n",
              "Industria × industria, Modelo D, precios básicos, millones de pesos corrientes.\n",
              "**Se publica la versión sin prorrateo.** INEGI mide la utilización a precios "
@@ -58,7 +59,7 @@ def main():
     for anio, (carpeta, nivel) in FUENTES.items():
         try:
             d = parse_sin_prorrateo(carpeta, anio, nivel=nivel)
-            sut, _ = ensamblar_directo(d)
+            sut = ensamblar_directo(d)[0]
             sutb, iot, an, _ = _mip(sut)
             rel = float((iot.balance_fila_columna().abs() / iot.x.replace(0, 1)).max())
             lfx = an.check_Lf_x / max(sut.g.sum(), 1)
@@ -67,8 +68,11 @@ def main():
                         fuente=(f"INEGI — SCNM, COU {anio} (nivel {nivel.lower()} SCIAN), "
                                 f"utilización doméstica a precios básicos medida, sin prorrateo"),
                         cou_intermedio=d["U_pc"].sum(axis=0), nota_metodo=NOTA_DIRECTO,
-                        sut=sutb, cou_orig=d, prod_codes=d["prod_code"], prod_names=d["prod_name"],
-                        escala=1.0, unidad="millones de pesos corrientes")
+                        sut=sutb, sut_prev=sut,
+                        cou_orig=d, prod_codes=d["prod_code"], prod_names=d["prod_name"],
+                        escala=1.0, unidad="millones de pesos corrientes",
+                        clasif_prod="productos, rama SCIAN",
+                        clasif_ind="industrias, rama SCIAN")
             ok = "✅" if (rel < 1e-6 and lfx < 1e-6 and iot.min_valor() >= -1e-9) else "⚠️"
             filas.append(f"| {anio} | {nivel.lower()} | {iot.Z.shape[0]}×{iot.Z.shape[0]} | "
                          f"{sut.g.sum():,.0f} | {sut.VA.loc['valor_agregado_bruto'].sum():,.0f} | "

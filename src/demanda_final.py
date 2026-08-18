@@ -82,7 +82,10 @@ def _norm(s: str) -> str:
 _REGLAS: list[tuple[str, tuple[str, ...]]] = [
     ("discrepancia_estadistica", ("discrepancia",)),
     ("exportaciones", ("exporta",)),
-    ("formacion_bruta_capital", ("capital", "existencia", "estoque", "valioso")),
+    # «trabajos en curso» son los cultivos en pie que abre INDEC: variación de
+    # existencias de trabajos en curso (P.52), o sea formación bruta de capital.
+    ("formacion_bruta_capital", ("capital", "existencia", "estoque", "valioso",
+                                 "trabajos en curso")),
     ("consumo_final", ("consumo", "familias", "hogares", "governo", "gobierno", "isfls")),
 ]
 

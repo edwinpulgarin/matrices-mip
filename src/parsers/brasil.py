@@ -22,6 +22,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from .. import crudo as _crudo
+
 
 def _n(x):
     """Normaliza a texto. Los nulos devuelven '' a propósito: `str(nan)` es
@@ -154,6 +156,12 @@ def parse(carpeta: str | Path, anio: int, verbose: bool = False) -> dict:
 
     return {
         "V_pi": V_pi, "U_pc": U_pc, "Y_pc": Y_pc, "val": val, "VA": VA,
+        "crudo": [_crudo.hoja("Produção", prod, f1, "producao"),
+                  _crudo.hoja("Oferta", ofer, f1, "oferta"),
+                  _crudo.hoja("Importação", impo, f1, "importacao"),
+                  _crudo.hoja("Consumo interm.", ci, f2, "CI"),
+                  _crudo.hoja("Demanda", dem, f2, "demanda"),
+                  _crudo.hoja("Valor adicionado", va, f2, "VA")],
         "prod_labels": {k: f"{prod_code[k]} - {prod_name[k]}" for k in prod_keys},
         "ind_labels": {k: f"{ind_code[k]} - {ind_name[k]}" for k in ind_keys},
         "ind_code": ind_code, "ind_name": ind_name,

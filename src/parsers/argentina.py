@@ -28,6 +28,8 @@ import unicodedata
 import numpy as np
 import pandas as pd
 
+from .. import crudo as _crudo
+
 
 def _norm(x) -> str:
     s = unicodedata.normalize("NFKD", str(x)).encode("ascii", "ignore").decode()
@@ -90,6 +92,13 @@ _FD_KW = {
     "formacion_capital": ["FORMACION BRUTA"],
     "objetos_valiosos": ["OBJETOS VALIOSOS"],
     "var_existencias": ["VARIACION DE EXISTENCIAS"],
+    # INDEC abre desde 2018 una columna de demanda final propia para los cultivos
+    # en pie: la producción agrícola sembrada y todavía no cosechada. Es variación
+    # de existencias de trabajos en curso sobre recursos biológicos cultivados
+    # (SCN 2008, P.52). Se concentra en cereales, oleaginosas, legumbres, frutas y
+    # tabaco sin elaborar, y en esos productos pesa muchísimo: si no se lee, la
+    # fila del producto queda sin uso y el balanceo tiene que inventarlo.
+    "trabajos_en_curso": ["TRABAJOS EN CURSO"],
 }
 _FD_EXCLUDE = ["UTILIZACION INTERMEDIA", "UTILIZACION FINAL", "DEMANDA TOTAL"]
 _STOP_PROD = ("TOTAL", "VALOR AGREGADO", "VALOR BRUTO")
@@ -284,6 +293,31 @@ def parse(ruta: str, anio: int, verbose: bool = False) -> dict:
         index=ut_codes,
     )
 
+    # Qué columnas del bloque de demanda final quedaron sin reclamar. El parser
+    # elige por lista de palabras clave, así que una columna nueva de la fuente
+    # se descartaría sin ruido: fue exactamente lo que pasó con «Trabajos en
+    # curso» (INDEC la agregó en 2018 y quedó afuera hasta 2026). Se avisa acá,
+    # además del control de cobertura que corre en la valoración.
+    reclamadas = set(fdcols.values()) | set(ut_ind)
+    # En el formato 2004 el puente de valoración va en la misma hoja que la
+    # utilización, así que sus columnas aparecen acá y no son demanda final: se
+    # leen aparte, en `val`. Se descartan junto a los subtotales del cuadro.
+    _ignorar = (tuple(_FD_EXCLUDE) + ("PRODUCCION TOTAL",)
+                + tuple(k for kws in _VAL_KW.values() for k in map(_norm, kws)))
+    sin_leer = []
+    for c in range(2, ut.shape[1]):
+        if c in reclamadas:
+            continue
+        h = _head2(ut, ut_hr, c)
+        if not h or h == "NAN" or any(x in h for x in _ignorar):
+            continue
+        if not np.isfinite(_num(ut.iloc[ut_rows, [c]])).any():
+            continue
+        if abs(float(np.nansum(_num(ut.iloc[ut_rows, [c]])))) > 0:
+            sin_leer.append(h)
+    if sin_leer and verbose:
+        print(f"  [AR {anio}] AVISO columnas de utilización con datos y sin leer: {sin_leer}")
+
     # producción V (prod × ind) a precios básicos
     of_ind = _industry_cols(of, of_hr)
     of_ikeys = _unique([_name_key(of, of_hr, c) for c in of_ind])
@@ -323,8 +357,11 @@ def parse(ruta: str, anio: int, verbose: bool = False) -> dict:
 
     return {
         "V_pi": V_pi, "U_pc": U_pc, "Y_pc": Y_pc, "val": val, "VA": VA,
+        "crudo": [_crudo.hoja("Oferta", of, ruta, of_sheet),
+                  _crudo.hoja("Utilización", ut, ruta, ut_sheet)],
         "prod_labels": labels, "ind_labels": ind_labels,
         "ind_code": ind_code, "ind_name": ind_name,
         "prod_code": prod_code, "prod_name": prod_name,
+        "columnas_sin_leer": sin_leer,
         "pais": "Argentina", "anio": anio, "unidad": _unidad(of),
     }

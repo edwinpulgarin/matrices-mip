@@ -22,3 +22,7 @@ SUT_IOT_HB_Final_Cover.pdf
 
 # Scratch
 scratchpad/
+
+# Caché de conversión .xls -> .xlsx (LibreOffice). Es derivada: se regenera sola
+# a partir de los archivos de origen, y se rehace si el original cambia.
+data/_xls_convertidos/

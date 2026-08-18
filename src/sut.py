@@ -85,6 +85,58 @@ class SUT:
                  + self.VA.sum(axis=0).reindex(ind).fillna(0))
         return g - costo
 
+    def a_total(self) -> "SUT":
+        """Devuelve el mismo SUT en su versión TOTAL (nacional + importado).
+
+        La MIP doméstica trata al insumo importado como un primario exógeno: sale
+        de las celdas de `U` y va a la fila «consumo intermedio importado». La MIP
+        total lo deja adentro, endógeno, que es como publican su matriz el DANE
+        (Cuadro 7) y el INDEC (MIPAr97, cuadro 12).
+
+        La conversión no supone nada: `U_dom + U_imp` devuelve exactamente la
+        utilización valorada a precios básicos ANTES del corte por origen, así que
+        el supuesto de proporcionalidad de las importaciones (Cap. 8, §8.33) —el
+        que mide +5,65 % de sesgo en los multiplicadores de México— desaparece del
+        resultado. Es la razón por la que esta versión se puede publicar para los
+        cinco países aunque sólo tres midan el origen.
+
+        Las importaciones pasan a la oferta (`M`, por producto), de donde salen
+        para cerrar el balance de fila: producción + importaciones = usos.
+        """
+        U_imp = self.meta.get("U_imp")
+        Y_imp = self.meta.get("Y_imp")
+        if U_imp is None or Y_imp is None:
+            raise ValueError(
+                "el SUT no trae la utilización ni la demanda final importadas en "
+                "`meta`; sin ellas la versión total no es reconstruible")
+        U_imp = U_imp.reindex(index=self.U.index, columns=self.U.columns).fillna(0.0)
+        Y_imp = Y_imp.reindex(index=self.Y.index).fillna(0.0)
+        # La demanda final importada puede traer menos columnas que la doméstica
+        # (Colombia mide consumo y formación de capital, no exportaciones de
+        # producto importado): se alinean por nombre y lo que falta entra en cero.
+        Y_imp = Y_imp.reindex(columns=self.Y.columns).fillna(0.0)
+
+        # Las importaciones por producto son las que DECLARA la fuente, no las
+        # que se deducen del corte por origen. La identidad de la versión total
+        # lo obliga: como `U_dom + U_imp = U` cualquiera sea el reparto, el
+        # balance exige `M = importaciones + ajuste CIF/FOB` exacto.
+        #
+        # Deducirlas del corte fallaba donde el reparto tiene un tope: el INDEC
+        # imputa el ajuste CIF/FOB al flete aéreo, y en 2018 eso deja al producto
+        # con importaciones NETAS NEGATIVAS (7.513.861 − 12.050.618). La
+        # participación doméstica salía 2,44, se recortaba a 1, y el producto
+        # entraba desbalanceado en el 59 % de su oferta. Lo absorbía el RAS.
+        M = self.meta.get("M_prod")
+        M = (M.reindex(self.U.index).fillna(0.0) if M is not None
+             else U_imp.sum(axis=1) + Y_imp.sum(axis=1))
+
+        VA = self.VA.drop(index="consumo_intermedio_importado", errors="ignore")
+        meta = dict(self.meta)
+        meta["alcance"] = "total"
+        return SUT(V=self.V, U=self.U + U_imp, Y=self.Y + Y_imp, VA=VA, M=M,
+                   pais=self.pais, anio=self.anio, unidad=self.unidad,
+                   valoracion=self.valoracion, meta=meta)
+
     def resumen_balance(self, tol_rel: float = 1e-6) -> dict:
         bp = self.balance_producto()
         bi = self.balance_industria()
